@@ -1461,7 +1461,7 @@ begin
           begin
             PInteger(Dst)^ := SwapInt(PInteger(Src)^);
             if Result then
-              PInteger(Dst)^ := Integer(PDWord(Dst)^ - $80000000);
+              PInteger(Dst)^ := Integer(PDWord(Dst)^ xor $80000000);
           end;
         end else begin
           Result := true;
@@ -1686,7 +1686,7 @@ begin
           if Src = nil then
             IntValue := 0
           else
-            IntValue := Integer(PDWord(Src)^ + $80000000);
+            IntValue := Integer(PDWord(Src)^ xor $80000000);
           PInteger(Dst)^ := SwapInt(IntValue);
         end else begin
           if Src = nil then
