@@ -1,0 +1,51 @@
+package tdbf_d7r;
+
+{$R *.res}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO ON}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION ON}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES OFF}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DESCRIPTION 'TDbf V 5 for Delphi 7 RunTime'}
+{$IMPLICITBUILD OFF}
+
+requires
+  rtl,
+  dbrtl,
+  vcl;
+
+contains
+  Dbf_Common in 'Dbf_Common.pas',
+  Dbf_Str in 'Dbf_Str.pas',
+  Dbf_Cursor in 'Dbf_Cursor.pas',
+  Dbf_Parser in 'Dbf_Parser.pas',
+  Dbf_PrsDef in 'Dbf_PrsDef.pas',
+  Dbf_PrsCore in 'Dbf_PrsCore.pas',
+  Dbf_PrsSupp in 'Dbf_PrsSupp.pas',
+  Dbf_PgFile in 'Dbf_PgFile.pas',
+  Dbf_Memo in 'Dbf_Memo.pas',
+  Dbf_Lang in 'Dbf_Lang.pas',
+  Dbf_Fields in 'Dbf_Fields.pas',
+  Dbf_IdxFile in 'Dbf_IdxFile.pas',
+  Dbf_IdxCur in 'Dbf_IdxCur.pas',
+  Dbf_DbfFile in 'Dbf_DbfFile.pas',
+  Dbf_Wtil in 'Dbf_Wtil.pas',
+  Dbf in 'Dbf.pas';
+
+end.
