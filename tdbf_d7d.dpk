@@ -1,7 +1,6 @@
 package tdbf_d7d;
 
 {$R *.res}
-{$R Dbf.dcr}
 
 {$ALIGN 8}
 {$ASSERTIONS ON}

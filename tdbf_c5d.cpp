@@ -3,7 +3,6 @@
 #pragma hdrstop
 
 USEUNIT("Dbf_reg.pas");
-USERES("Dbf.dcr");
 USEPACKAGE("vcl50.bpi");
 USEPACKAGE("vcldb50.bpi");
 USEPACKAGE("tdbf_c5r.bpi");
