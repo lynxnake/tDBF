@@ -270,7 +270,7 @@ begin
     if not (FMode in [pfMemoryOpen, pfMemoryCreate]) then
       FreeAndNil(FStream);
 
-    // mode possibly overriden in case of auto-created file
+    // mode possibly overridden in case of auto-created file
     FMode := FUserMode;
     FActive := false;
     FCachedRecordCount := 0;
