@@ -2975,6 +2975,8 @@ begin
   end else begin
     DeleteKey(Buffer);
   end;
+  // range may be changed
+  ResyncRange(true);
 end;
 
 procedure TIndexFile.DeleteKey(Buffer: PChar);
@@ -3012,8 +3014,6 @@ begin
     end;
     // delete selected entry
     FLeaf.Delete;
-    // range may be changed
-    ResyncRange(true);
   end;
 end;
 
@@ -3385,7 +3385,8 @@ begin
     exit;
 
   // disable current range if any
-  currRecNo := SequentialRecNo;
+  if KeepPosition then
+    currRecNo := SequentialRecNo;
   ResetRange;
   // search lower bound
   Result := SearchKey(FLowBuffer, stGreaterEqual);
@@ -3415,7 +3416,8 @@ begin
   end;
   // set upper bound
   SetBracketHigh;
-  SequentialRecNo := currRecNo;
+  if KeepPosition then
+    SequentialRecNo := currRecNo;
 end;
 
 procedure TIndexFile.Resync(Relative: boolean);
