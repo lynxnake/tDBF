@@ -35,6 +35,20 @@ BUGS & WARNINGS
 
 
 ------------------------
+V6.2.7
+
+- added: TDbf.GetKeySize, if index is active retrieves key size
+- added: TDbf.ExtractKey, extracts key for current record and index
+- fixed: TDbf.GetRecordCount AV when no dbf file open
+- fixed: memory leak not releasing fmdxfile
+- fixed: index using field datetime has time encode error (rep by paez)
+- fixed: end-of-memo not found, packtable creates large files (rep by stayathome)
+- fixed: distinct index, keys added while duplicate error (rep by sysklop)
+- fixed: when packing a table, no files are left behind
+- fixed: AV when packing while index active (rep by ltolean)
+
+
+------------------------
 V6.2.6
 
 - fixed: fcanedit is false causing indexes not to update (rep dvdneg)
