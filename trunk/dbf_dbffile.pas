@@ -34,6 +34,7 @@ type
 
 //====================================================================
   TDbfIndexMissingEvent = procedure(var DeleteLink: Boolean) of object;
+  TUpdateNullField = (unClear, unSet);
 
 //====================================================================
   TDbfGlobals = class;
@@ -64,15 +65,19 @@ type
     FOnLocaleError: TDbfLocaleErrorEvent;
     FOnIndexMissing: TDbfIndexMissingEvent;
 
-    procedure ConstructFieldDefs;
     function  HasBlob: Boolean;
     function  GetMemoExt: string;
-    procedure WriteLockInfo(Buffer: PChar);
 
     function GetLanguageId: Integer;
     function GetLanguageStr: string;
     function GetUseFloatFields: Boolean;
     procedure SetUseFloatFields(NewUse: Boolean);
+    
+  protected
+    procedure ConstructFieldDefs;
+    procedure UpdateNullField(Buffer: Pointer; AFieldDef: TDbfFieldDef; Action: TUpdateNullField);
+    procedure WriteLockInfo(Buffer: PChar);
+
   public
     constructor Create;
     destructor Destroy; override;
@@ -1607,9 +1612,29 @@ begin
   end;
 end;
 
+procedure TDbfFile.UpdateNullField(Buffer: Pointer; AFieldDef: TDbfFieldDef; 
+  Action: TUpdateNullField);
+var
+  NullDst: pbyte;
+  Mask: byte;
+begin
+  // this field has null setting capability
+  NullDst := PByte(PChar(Buffer) + FNullField.Offset + (AFieldDef.NullPosition shr 3));
+  Mask := 1 shl (AFieldDef.NullPosition and $7);
+  if Action = unSet then
+  begin
+    // clear the field, set null flag
+    NullDst^ := NullDst^ or Mask;
+  end else begin
+    // set field data, clear null flag
+    NullDst^ := NullDst^ and not Mask;
+  end;
+end;
+
 procedure TDbfFile.SetFieldData(Column: Integer; DataType: TFieldType; Src, Dst: Pointer);
 const
   IsBlobFieldToPadChar: array[Boolean] of Char = (#32, '0');
+  SrcNilToUpdateNullField: array[boolean] of TUpdateNullField = (unClear, unSet);
 var
   FieldSize,FieldPrec: Integer;
   TempFieldDef: TDbfFieldDef;
@@ -1639,24 +1664,6 @@ var
 {$endif}
   end;
 
-  procedure UpdateNullField;
-  var
-    NullDst: pbyte;
-    Mask: byte;
-  begin
-    // this field has null setting capability
-    NullDst := PByte(PChar(Dst) + FNullField.Offset + (TempFieldDef.NullPosition shr 3));
-    Mask := 1 shl (TempFieldDef.NullPosition and $7);
-    if Src = nil then
-    begin
-      // clear the field, set null flag
-      NullDst^ := NullDst^ or Mask;
-    end else begin
-      // set field data, clear null flag
-      NullDst^ := NullDst^ and not Mask;
-    end;
-  end;
-
 begin
   TempFieldDef := TDbfFieldDef(FFieldDefs.Items[Column]);
   FieldSize := TempFieldDef.Size;
@@ -1667,7 +1674,7 @@ begin
 
   // foxpro has special _nullfield for flagging fields as `null'
   if (FNullField <> nil) and (TempFieldDef.NullPosition >= 0) then
-    UpdateNullField;
+    UpdateNullField(Dst, TempFieldDef, SrcNilToUpdateNullField[Src = nil]);
 
   // copy field data to record buffer
   Dst := PChar(Dst) + TempFieldDef.Offset;
@@ -1810,18 +1817,28 @@ var
   TempFieldDef: TDbfFieldDef;
   I: Integer;
 begin
+  // clear buffer (assume all string, fix specific fields later)
   FillChar(DestBuf^, RecordSize,' ');
+  
+  // set nullflags field so that all fields are null
+  if FNullField <> nil then
+    FillChar(PChar(DestBuf+FNullField.Offset)^, FNullField.Size, $FF);
+    
+  // check binary and default fields
   for I := 0 to FFieldDefs.Count-1 do
   begin
     TempFieldDef := FFieldDefs.Items[I];
+    // binary field?
     if TempFieldDef.NativeFieldType in ['I', 'O', '@', '+', '0', 'Y'] then
-    begin
-      // integer
       FillChar(PChar(DestBuf+TempFieldDef.Offset)^, TempFieldDef.Size, 0);
-    end;
     // copy default value?
     if TempFieldDef.HasDefault then
+    begin
       Move(TempFieldDef.DefaultBuf[0], DestBuf[TempFieldDef.Offset], TempFieldDef.Size);
+      // clear the null flag, this field has a value
+      if FNullField <> nil then
+        UpdateNullField(DestBuf, TempFieldDef, unClear);
+    end;
   end;
 end;
 
