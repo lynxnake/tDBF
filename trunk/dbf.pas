@@ -215,6 +215,7 @@ type
     procedure GetFieldDefsFromDbfFieldDefs;
     procedure InitDbfFile(FileOpenMode: TPagedFileMode);
     function  ParseIndexName(const AIndexName: string): string;
+    procedure ParseFilter(const AFilter: string);
     function  GetDbfFieldDefs: TDbfFieldDefs;
     function  SearchKeyBuffer(Buffer: PChar; SearchType: TSearchKeyType): Boolean;
     procedure SetRangeBuffer(LowRange: PChar; HighRange: PChar);
@@ -1216,18 +1217,12 @@ begin
     FDbfFile.OpenIndex(lIndexName, lIndex.SortField, false, lIndex.Options);
   end;
 
-  // parse filter
-  if Length(Filter) > 0 then
-  begin
-    // create parser
-    FParser := TDbfParser.Create(FDbfFile);
-    // parse expression
-    try
-      FParser.ParseExpression(Filter);
-    except
-      // oops, a problem with parsing, clear filter for now
-      on E: EDbfError do Filter := EmptyStr;
-    end;
+  // parse filter expression
+  try
+    ParseFilter(Filter);
+  except
+    // oops, a problem with parsing, clear filter for now
+    on E: EDbfError do Filter := EmptyStr;
   end;
 
   SetIndexName(FIndexName);
@@ -2064,10 +2059,10 @@ end;
 
 {$endif}
 
-procedure TDbf.SetFilterText(const Value: String);
+procedure TDbf.ParseFilter(const AFilter: string);
 begin
   // parser created?
-  if Length(Value) > 0 then
+  if Length(AFilter) > 0 then
   begin
     if (FParser = nil) and (FDbfFile <> nil) then
     begin
@@ -2082,9 +2077,15 @@ begin
       FParser.PartialMatch := not (foNoPartialCompare in FilterOptions);
       FParser.CaseInsensitive := foCaseInsensitive in FilterOptions;
       // parse expression
-      FParser.ParseExpression(Value);
+      FParser.ParseExpression(AFilter);
     end;
   end;
+end;
+
+procedure TDbf.SetFilterText(const Value: String);
+begin
+  // parse
+  ParseFilter(Value);
 
   // call dataset method
   inherited;
