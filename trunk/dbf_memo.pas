@@ -2,12 +2,12 @@ unit dbf_memo;
 
 interface
 
-{$I Dbf_Common.inc}
+{$I dbf_common.inc}
 
 uses
   Classes,
-  Dbf_PgFile,
-  Dbf_Common;
+  dbf_pgfile,
+  dbf_common;
 
 type
 
@@ -95,7 +95,7 @@ type
 implementation
 
 uses
-  SysUtils, Dbf_DbfFile;
+  SysUtils, dbf_dbffile;
 
 //====================================================================
 //=== Memo and binary fields support

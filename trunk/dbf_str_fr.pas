@@ -2,7 +2,7 @@ unit dbf_str;
 
 interface
 
-{$I Dbf_Common.inc}
+{$I dbf_common.inc}
 
 var
   STRING_FILE_NOT_FOUND: string;

@@ -2,14 +2,14 @@ unit dbf_fields;
 
 interface
 
-{$I Dbf_Common.inc}
+{$I dbf_common.inc}
 
 uses
   Classes,
   SysUtils,
-  Db,
-  Dbf_Common,
-  Dbf_Str;
+  db,
+  dbf_common,
+  dbf_str;
 
 type
   PDbfFieldDef = ^TDbfFieldDef;
@@ -107,9 +107,9 @@ type
 implementation
 
 uses
-  Dbf_DbfFile;      // for dbf header structures
+  dbf_dbffile;      // for dbf header structures
 
-{$I Dbf_Struct.inc}
+{$I dbf_struct.inc}
 
 // I keep changing that fields...
 // Last time has been asked by Venelin Georgiev

@@ -2,12 +2,12 @@ unit dbf_pgfile;
 
 interface
 
-{$I Dbf_Common.inc}
+{$I dbf_common.inc}
 
 uses
   Classes,
   SysUtils,
-  Dbf_Common;
+  dbf_common;
 
 //const
 //  MaxHeaders = 256;
@@ -152,9 +152,9 @@ uses
 {$ifdef KYLIX}
   Libc, 
 {$endif}  
-  Types, Dbf_Wtil,
+  Types, dbf_wtil,
 {$endif}
-  Dbf_Str;
+  dbf_str;
 
 //====================================================================
 // TPagedFile

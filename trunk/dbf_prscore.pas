@@ -8,14 +8,14 @@ unit dbf_prscore;
 
 interface
 
-{$I Dbf_Common.inc}
+{$I dbf_common.inc}
 
 uses
   SysUtils,
   Classes,
-  Dbf_Common,
-  Dbf_PrsSupp,
-  Dbf_PrsDef;
+  dbf_common,
+  dbf_prssupp,
+  dbf_prsdef;
 
 {$define ENG_NUMBERS}
 

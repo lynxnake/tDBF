@@ -8,13 +8,13 @@ unit tdbf_l;
 interface
 
 uses
-  Dbf, Dbf_Reg, LazarusPackageIntf; 
+  dbf, dbf_reg, LazarusPackageIntf; 
 
 implementation
 
 procedure Register; 
 begin
-  RegisterUnit('Dbf', @Dbf_Reg.Register); 
+  RegisterUnit('Dbf', @dbf_reg.Register); 
 end; 
 
 initialization

@@ -4,19 +4,19 @@ unit dbf;
 
 interface
 
-{$I Dbf_Common.inc}
+{$I dbf_common.inc}
 
 uses
   Classes,
   Db,
-  Dbf_Common,
-  Dbf_DbfFile,
-  Dbf_Parser,
-  Dbf_PrsDef,
-  Dbf_Cursor,
-  Dbf_Fields,
-  Dbf_PgFile,
-  Dbf_IdxFile;
+  dbf_common,
+  dbf_dbffile,
+  dbf_parser,
+  dbf_prsdef,
+  dbf_cursor,
+  dbf_fields,
+  dbf_pgfile,
+  dbf_idxfile;
 // If you got a compilation error here or asking for dsgnintf.pas, then just add
 // this file in your project:
 // dsgnintf.pas in 'C: \Program Files\Borland\Delphi5\Source\Toolsapi\dsgnintf.pas'
@@ -458,14 +458,14 @@ uses
   Libc,
 {$endif}  
   Types,
-  Dbf_Wtil,
+  dbf_wtil,
 {$endif}
 {$ifdef DELPHI_6}
   Variants,
 {$endif}
-  Dbf_IdxCur,
-  Dbf_Memo,
-  Dbf_Str;
+  dbf_idxcur,
+  dbf_memo,
+  dbf_str;
 
 {$ifdef FPC}
 const
