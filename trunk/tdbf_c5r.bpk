@@ -14,11 +14,8 @@
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES)"/>
     <LIBFILES value=""/>
-    <LIBRARIES value="dclocx50.lib nmfast50.lib tee50.lib teedb50.lib teeui50.lib vcldbx50.lib 
-      ibsmp50.lib vclbde50.lib qrpt50.lib bcbsmp50.lib vcljpg50.lib vclx50.lib"/>
-    <SPARELIBS value="vcl50.lib vclx50.lib vcljpg50.lib bcbsmp50.lib qrpt50.lib vcldb50.lib 
-      vclbde50.lib ibsmp50.lib vcldbx50.lib teeui50.lib teedb50.lib tee50.lib 
-      nmfast50.lib dclocx50.lib"/>
+    <LIBRARIES value="vcldbx50.lib vcljpg50.lib vclx50.lib"/>
+    <SPARELIBS value="vcl50.lib vclx50.lib vcljpg50.lib vcldb50.lib vcldbx50.lib"/>
     <PACKAGES value="vcl50.bpi vcldb50.bpi"/>
     <PATHCPP value=".;"/>
     <PATHPAS value=".;"/>
@@ -31,7 +28,7 @@
     <SYSDEFINES value="_RTLDLL;NO_STRICT;USEPACKAGES"/>
     <MAINSOURCE value="tdbf_c5r.cpp"/>
     <INCLUDEPATH value="$(BCB)\include;$(BCB)\include\vcl"/>
-    <LIBPATH value="$(BCB)\Projects\Lib;$(BCB)\lib\release;$(BCB)\lib\obj;$(BCB)\lib"/>
+    <LIBPATH value="\\10.0.3.1\micha\winprogs\borland\C6VQX1~Y\Lib\Release;$(BCB)\Lib\Release;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib"/>
     <WARNINGS value="-w-par -w-8027 -w-8026"/>
     <WARNOPTSTR value=""/>
   </MACROS>
@@ -81,10 +78,11 @@ Count=1
 Item0=$(BCB)\include;$(BCB)\include\vcl
 
 [HistoryLists\hlLibraryPath]
-Count=3
+Count=4
 Item0=$(BCB)\Projects\Lib;$(BCB)\lib\release;$(BCB)\lib\obj;$(BCB)\lib
-Item1=$(BCB)\lib\release;$(BCB)\lib\obj;$(BCB)\lib
-Item2=$(BCB)\lib\obj;$(BCB)\lib
+Item1=\\10.0.3.1\micha\winprogs\borland\C6VQX1~Y\lib\release;$(BCB)\Projects\Lib;$(BCB)\lib\release;$(BCB)\lib\obj;$(BCB)\lib
+Item2=$(BCB)\lib\release;$(BCB)\lib\obj;$(BCB)\lib
+Item3=$(BCB)\lib\obj;$(BCB)\lib
 
 [HistoryLists\hlDebugSourcePath]
 Count=1
@@ -110,11 +108,6 @@ RemoteDebug=0
 ShowInfoMsgs=0
 LinkDebugVcl=1
 LinkCGLIB=0
-
-[CORBA]
-AddServerUnit=1
-AddClientUnit=1
-PrecompiledHeaders=1
 
 [Language]
 ActiveLang=
