@@ -2735,6 +2735,9 @@ begin
   end else begin
     InsertKey(Buffer);
   end;
+
+  // check range, disabled by insert
+  ResyncRange(true);
 end;
 
 function TIndexFile.CheckKeyViolation(Buffer: PChar): Boolean;
@@ -2939,9 +2942,6 @@ begin
         InsertError;
       end;
     end;
-
-    // check range, disabled by insert
-    ResyncRange(true);
   end;
 end;
 
@@ -3000,6 +3000,8 @@ begin
   // modify = mmDeleteRecall /\ unique = distinct -> key needs to be deleted from index
   if (FModifyMode <> mmDeleteRecall) or (FUniqueMode = iuDistinct) then
   begin
+    // prevent "confined" view of index while deleting
+    ResetRange;
     // search correct entry to delete
     if FLeaf.PhysicalRecNo <> FUserRecNo then
     begin
@@ -3060,6 +3062,8 @@ begin
       // now set userkey to key to insert
       FUserKey := @TempBuffer[0];
       InsertCurrent;
+      // check range, disabled by delete/insert
+      ResyncRange(true);
     end;
   end;
 end;
