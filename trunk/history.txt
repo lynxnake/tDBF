@@ -50,6 +50,7 @@ V6.3.2
     - nativeformat handling is re-enabled due to much easier implementation
     - delphi 4 and higher only
 - fixed: close,open files reset indexnames,files list (rep by paez)
+- fixed: reselect index after repage, compact (rep by paez)
 
 
 ------------------------
