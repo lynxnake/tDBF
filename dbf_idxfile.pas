@@ -1936,7 +1936,6 @@ begin
       ClearIndex;
       FLeaves[I] := FRoots[I];
     end;
-    FIndexHeaderModified[I] := false;
   end;
   // reselect previously selected index
   SelectIndexVars(prevIndex);

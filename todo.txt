@@ -8,6 +8,7 @@ to be implemented:
 - required field checking
 - demo needs master/detail example
 - documentation needs expression index examples
+- val function for indexes
 
 needs fixing:
 - parser result string > 100 only for index
