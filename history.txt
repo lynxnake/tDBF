@@ -14,8 +14,6 @@ BUGS & WARNINGS
 
 - Multi-user support
   - not tested well...
-  - ranges are not fully multi-user 'aware' (yet) because range is cached
-    -> race conditions can occur
 - use FIXED LENGTH index expressions: an expression which will always return
   a string which is the same length. When returning a float you don't have to
   worry about this of course (always fixed #bytes). String fields also return
@@ -49,6 +47,7 @@ V6.3.8
 - fixed: crash when calling {un,}locktable on closed dataset (rep by sysklop)
 - fixed: use correct dbf version when creating table to decide field types
 - fixed: kylix compilation
+- added: multi-user and insert aware ranges (req by ralf)
 
 
 ------------------------
