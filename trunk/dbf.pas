@@ -65,6 +65,9 @@ type
     FMode: TBlobStreamMode;
     FDoWrite: Boolean;
     FMemoRecNo: Integer;
+        { -1 : invalid contents }
+        {  0 : clear, no contents }
+        { >0 : data from page x }
     FReadSize: Integer;
     FRefCount: Integer;
 
@@ -528,7 +531,7 @@ end;
 procedure TDbfBlobStream.Cancel;
 begin
   FDoWrite := false;
-  FMemoRecNo := 0;
+  FMemoRecNo := -1;
 end;
 
 procedure TDbfBlobStream.Commit;

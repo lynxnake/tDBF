@@ -44,6 +44,8 @@ V6.4.1
 - fixed: initialize binary field types '0' (nullflags) and 'Y' (currency)
     properly (thx to karelrys)
 - added: _nullflags field operation support (thx karelrys)
+- fixed: when editing a record, then moving to another record, memo is not
+    properly cleared if memo is null (rep by versus)
 
 
 ------------------------
