@@ -241,6 +241,7 @@ type
     procedure InternalOpen; override; {virtual abstract}
     procedure InternalEdit; override; {virtual}
     procedure InternalCancel; override; {virtual}
+    procedure InternalInsert; override; {virtual}
     procedure InternalPost; override; {virtual abstract}
     procedure InternalSetToRecord(Buffer: PChar); override; {virtual abstract}
     procedure InitFieldDefs; override;
@@ -843,13 +844,16 @@ procedure TDbf.InternalAddRecord(Buffer: Pointer; Append: Boolean); {override vi
   // goal: add record with Edit...Set Fields...Post all in one step
 var
   pRecord: pDbfRecord;
+  newRecord: integer;
 begin
   // if InternalAddRecord is called, we know we are active
   pRecord := Buffer;
 
   // we can not insert records in DBF files, only append
   // ignore Append parameter
-  FDbfFile.Insert(@pRecord.DeletedFlag);
+  newRecord := FDbfFile.Insert(@pRecord.DeletedFlag);
+  if newRecord > 0 then
+    FCursor.PhysicalRecNo := newRecord;
 
   // set flag that TDataSet is about to post...so we can disable resync
   FPosting := true;
@@ -1278,10 +1282,15 @@ begin
   // succeeded!
 end;
 
+procedure TDbf.InternalInsert; {override virtual from TDataset}
+begin
+  CursorPosChanged;
+end;
+
 procedure TDbf.InternalPost; {override virtual abstract from TDataset}
 var
   pRecord: pDbfRecord;
-  I: Integer;
+  I, newRecord: Integer;
 begin
   // if internalpost is called, we know we are active
   pRecord := pDbfRecord(ActiveBuffer);
@@ -1297,7 +1306,9 @@ begin
     FEditingRecNo := -1;
   end else begin
     // insert
-    FDbfFile.Insert(@pRecord.DeletedFlag);
+    newRecord := FDbfFile.Insert(@pRecord.DeletedFlag);
+    if newRecord > 0 then
+      FCursor.PhysicalRecNo := newRecord;
   end;
   // set flag that TDataSet is about to post...so we can disable resync
   FPosting := true;
