@@ -45,6 +45,7 @@ V6.3.7
 - added: smarter Dbf_Parser initialization (thx emled)
 - fixed: copy languageid and autoinc values upon restructure/pack
 - added: TDbf.LanguageID to set language id of new table; set before CreateTable
+- fixed: remember autoinc value after restructure
 
 
 ------------------------
