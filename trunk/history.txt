@@ -35,6 +35,24 @@ BUGS & WARNINGS
 
 
 ------------------------
+V6.2.9
+
+- fixed: checkkeyviolation bug; should solve locking problem
+- fixed: packed structures
+- fixed: delphi 3 compatibility tdbf.translate, compile prob (rep by ferdok)
+- fixed: numeric MDX compare, translate bugs (rep by rpoverdijk)
+- fixed: GetIndexNames returns open (available) indexes
+- added: TDbf.GetAllIndexFiles returns index files present in dbf directory
+- added: TDbf.PhysicalRecordCount returns physical number of records present
+- added: TDbf.IndexDefs ( = TDbf.Indexes) for VCL compatibility
+- added: TDbfIndexDef.(Name and Expression) for VCL compatibility where
+    Name = IndexFile and Expression = SortField
+- fixed: memory leak expression tree
+- fixed: index cache flush problem causing index corruption; triggered by,
+    for example, regenerateindexes (rep by smokexjc)
+
+
+------------------------
 V6.2.8
 
 - fixed: character fields support upto 65534 characters now
@@ -43,6 +61,7 @@ V6.2.8
 - fixed: tdbf version number in delphi 7 package
 - fixed: index update on record insert (thx kirill)
 - fixed: selecting index when cursor is bof,eof; cursor moves (thx kirill)
+- fixed: create first index in mdx file fails AV, file not deleted (rep by pyostrike)
 
 
 ------------------------
