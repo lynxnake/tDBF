@@ -621,7 +621,8 @@ begin
   FPosting := false;
   FReadOnly := false;
   FExclusive := false;
-  FUseFloatFields := {$ifdef SUPPORT_INT64} false {$else} true {$endif};
+  FUseFloatFields := true;
+  //FUseFloatFields := {$ifdef SUPPORT_INT64} false {$else} true {$endif};
   FDisableResyncOnPost := false;
   FTempExclusive := false;
   FCopyDateTimeAsString := false;

@@ -1121,6 +1121,10 @@ type
     Size: Integer;
   end;
 
+  { assume nobody has more than 8192 fields, otherwise possibly range check error }
+  PRestructFieldInfo = ^TRestructFieldInfoArray;
+  TRestructFieldInfoArray = array[0..8191] of TRestructFieldInfo;
+
 procedure TDbfFile.RestructureTable(DbfFieldDefs: TDbfFieldDefs; Pack: Boolean);
 var
   DestDbfFile: TDbfFile;
@@ -1133,7 +1137,7 @@ var
   I, lRecNo, lFieldNo, lFieldSize, lBlobRecNo, lWRecNo, srcOffset, dstOffset: Integer;
   pBuff, pDestBuff: PChar;
   pBlobRecNoBuff: array[1..11] of Char;
-  RestructFieldInfo: array of TRestructFieldInfo;
+  RestructFieldInfo: PRestructFieldInfo;
   BlobStream: TMemoryStream;
 begin
   // nothing to do?
@@ -1180,7 +1184,7 @@ begin
     DestDbfFile.FinishCreate(DestFieldDefs, 512);
 
   // adjust size and offsets of fields
-  SetLength(RestructFieldInfo, DestFieldDefs.Count);
+  GetMem(RestructFieldInfo, sizeof(TRestructFieldInfo)*DestFieldDefs.Count);
   for lFieldNo := 0 to DestFieldDefs.Count - 1 do
   begin
     TempDstDef := DestFieldDefs.Items[lFieldNo];
@@ -1351,6 +1355,7 @@ begin
     FreeAndNil(OldIndexFiles);
     FreeMem(pBuff);
     FreeAndNil(BlobStream);
+    FreeMem(RestructFieldInfo);
     if DbfFieldDefs <> nil then
       FreeMem(pDestBuff);
   end;

@@ -17,7 +17,7 @@ uses
 
 const
   TDBF_MAJOR_VERSION      = 6;
-  TDBF_MINOR_VERSION      = 42;
+  TDBF_MINOR_VERSION      = 43;
   TDBF_SUB_MINOR_VERSION  = 0;
 
   TDBF_TABLELEVEL_FOXPRO = 25;
@@ -107,6 +107,11 @@ function TranslateString(FromCP, ToCP: Cardinal; Src, Dest: PChar; Length: Integ
 // Returns a pointer to the first occurence of Chr in Str within the first Length characters
 // Does not stop at null (#0) terminator!
 function MemScan(const Buffer: Pointer; Chr: Byte; Length: Integer): Pointer;
+
+// Delphi 3 does not have a Min function
+{$ifdef DELPHI_3}
+function Min(x, y: integer): integer;
+{$endif}
 
 implementation
 
@@ -512,6 +517,18 @@ asm
         MOV     EAX,EDI
         DEC     EAX
 @@1:    POP     EDI
+end;
+
+{$endif}
+
+{$ifdef DELPHI_3}
+
+function Min(x, y: integer): integer;
+begin 
+  if x < y the 
+    result := x 
+  else 
+    result := y; 
 end;
 
 {$endif}
