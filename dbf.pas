@@ -398,8 +398,8 @@ type
     property StoreDefs: Boolean read FStoreDefs write FStoreDefs default False;
     property TableName: string read FTableName write SetTableName;
     property TableLevel: Integer read FTableLevel write SetTableLevel;
-    property UseFloatFields: Boolean read FUseFloatFields write FUseFloatFields default 
-      {$ifdef SUPPORT_INT64} false {$else} true {$endif};
+    property UseFloatFields: Boolean read FUseFloatFields write FUseFloatFields;
+      (* default {$ifdef SUPPORT_INT64} false {$else} true {$endif}; *)
     property Version: string read GetVersion write SetVersion stored false;
     property BeforeAutoCreate: TBeforeAutoCreateEvent read FBeforeAutoCreate write FBeforeAutoCreate;
     property OnCompareRecord: TNotifyEvent read FOnCompareRecord write FOnCompareRecord;
