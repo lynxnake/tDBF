@@ -1341,7 +1341,7 @@ var
     //  datetime = msecs == BDE timestamp as we implemented it
     if DataType = ftDateTime then
     begin
-      PDateTimeRec(Dst).DateTime := DateTimeToBDETimeStamp(date);
+      PDateTimeRec(Dst)^.DateTime := date;
     end else begin
       PLongInt(Dst)^ := DateTimeToTimeStamp(date).Date;
     end;
@@ -1390,11 +1390,16 @@ begin
         end;
       '@':
         begin
-{$ifdef SUPPORT_INT64}
-          Result := (PInt64(Src)^ <> 0);
+          Result := (PInteger(Src)^ <> 0) and (PInteger(PChar(Src)+4)^ <> 0);
           if Result then
+          begin
             SwapInt64(Src, Dst);
-{$endif}
+            if FDateTimeHandling = dtBDETimeStamp then
+              date := BDETimeStampToDateTime(PDouble(Dst)^)
+            else
+              date := PDateTime(Dst)^;
+            SaveDateToDst;
+          end;
         end;
       'T':
         begin
@@ -1535,7 +1540,7 @@ var
     //  datetime = msecs == BDETimeStampToDateTime as we implemented it
     if DataType = ftDateTime then
     begin
-      date := BDETimeStampToDateTime(PDouble(Src)^);
+      date := PDouble(Src)^;
     end else begin
       timeStamp.Time := 0;
       timeStamp.Date := PLongInt(Src)^;
@@ -1578,12 +1583,16 @@ begin
       end;
     '@':
       begin
-{$ifdef SUPPORT_INT64}
         if Src = nil then
-          PInteger(Dst)^ := 0
-        else
-          SwapInt64(Src, Dst);
-{$endif}
+        begin
+          PInteger(Dst)^ := 0;
+          PInteger(PChar(Dst)+4)^ := 0;
+        end else begin
+          LoadDateFromSrc;
+          if FDateTimeHandling = dtBDETimeStamp then
+            date := DateTimeToBDETimeStamp(date);
+          SwapInt64(@date, Dst);
+        end;
       end;
     'T':
       begin

@@ -381,11 +381,9 @@ begin
   case FFieldType of
     ftAutoInc  : FNativeFieldType  := '+';
     ftDateTime :
-{$ifdef SUPPORT_INT64}
       if DbfVersion = xBaseVII then
         FNativeFieldType := '@'
       else
-{$endif}
         FNativeFieldType := 'T';
 {$ifdef SUPPORT_FIELDTYPES_V4}
     ftFixedChar,
@@ -450,7 +448,7 @@ begin
 {$endif}
     ftDate, ftDateTime:
       begin
-        if FNativeFieldType = 'T' then
+        if (FNativeFieldType = 'T') and (DbfVersion <> xFoxPro) then
           FSize := 14
         else
           FSize := 8;
@@ -521,7 +519,10 @@ begin
       end;
     'T':
       begin
-        FSize := 14;
+        if DbfVersion = xFoxPro then
+          FSize := 8
+        else
+          FSize := 14;
         FPrecision := 0;
       end;
     'Y':

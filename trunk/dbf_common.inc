@@ -160,7 +160,7 @@
 {$endif}
 
 {$ifndef FPC_LITTLE_ENDIAN}
-  #ERROR TDbf is not compatible with non little-endian processors. Please contact the author.
+  {$message error TDbf is not compatible with non little-endian CPUs. Please contact the author.}
 {$endif}
 
 {$ifdef USE_ASSEMBLER_486_UP}
@@ -182,7 +182,7 @@
     {$undef SUPPORT_DEFAULT_PARAMS}
     {$undef SUPPORT_NEW_TRANSLATE}
 
-    #ERROR TDbf needs fpc 1.9 minimum.
+    {$message error TDbf needs fpc 1.9 minimum.}
 
   {$endif}
 
