@@ -3,15 +3,11 @@ TODO:
 to be implemented:
 - extend copyfrom functionality to copy between 2 active databases
 - better copyfrom; append to table, little different fields
-- investigate possibility fixing invalid field types to character field type
-- restructuretable - delete backup file / enter backup filename
 - global cache for dbfs, indexes
 - flush method to commit buffers to disk
 - required field checking
 - demo needs master/detail example
 - documentation needs expression index examples
-- documentation needs general database explanation
-- filter supports wildcards 'FIELD = "bla*"'
 
 needs fixing:
 - parser result string > 100 only for index
@@ -19,7 +15,6 @@ needs fixing:
 - adding records without doing CancelRange causes assertion violation
 - adding records while filter active causes autoinc fields not to be filled in
 - exception safe freeing of items in TOCollection.FreeItem
-- packtable in-memory table
 
 bug reports:
 - wimb\app0018

@@ -563,7 +563,7 @@ begin
   Result := True;
 end;
 
-function GetUserDefaultLCID: LCID; stdcall;
+function GetUserDefaultLCID: LCID;
 begin
   Result := LANG_ENGLISH or (SUBLANG_ENGLISH_UK shl 10);
 end;

@@ -403,12 +403,12 @@ end;
 
 {$ifdef USE_ASSEMBLER_486_UP}
 
-function SwapInt(const Value: Cardinal): Cardinal; register;
+function SwapInt(const Value: Cardinal): Cardinal; register; assembler;
 asm
   BSWAP EAX;
 end;
 
-procedure SwapInt64(Value {EAX}, Result {EDX}: Pointer); register;
+procedure SwapInt64(Value {EAX}, Result {EDX}: Pointer); register; assembler;
 asm
   MOV ECX, dword ptr [EAX] 
   MOV EAX, dword ptr [EAX + 4] 

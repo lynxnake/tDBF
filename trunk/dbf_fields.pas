@@ -49,7 +49,7 @@ type
 
     property DbfVersion: TXBaseVersion read GetDbfVersion;
   public
-    constructor Create(Collection: TCollection); override;
+    constructor Create(ACollection: TCollection); override;
     destructor Destroy; override;
 
     procedure Assign(Source: TPersistent); override;
@@ -185,7 +185,7 @@ end;
 //====================================================================
 // DbfFieldDef
 //====================================================================
-constructor TDbfFieldDef.Create(Collection: TCollection); {virtual}
+constructor TDbfFieldDef.Create(ACollection: TCollection); {virtual}
 begin
   inherited;
 

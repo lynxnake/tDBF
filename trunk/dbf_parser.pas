@@ -533,7 +533,7 @@ begin
       // convert to string
       width := GetStrFromInt(Val, Res.MemoryPos^);
       // advance pointer
-      Inc(Param.Res.MemoryPos^, width);
+      Inc(Param^.Res.MemoryPos^, width);
     end;
     // null-terminate
     Res.MemoryPos^^ := #0;
@@ -542,7 +542,7 @@ end;
 
 procedure FuncIntToStr(Param: PExpressionRec);
 begin
-  FuncIntToStr_Gen(Param, PInteger(Param.Args[0])^);
+  FuncIntToStr_Gen(Param, PInteger(Param^.Args[0])^);
 end;
 
 procedure FuncDateToStr(Param: PExpressionRec);
@@ -552,7 +552,7 @@ begin
   with Param^ do
   begin
     // create in temporary string
-    DateTimeToString(TempStr, 'yyyymmdd', PDateTimeRec(Args[0]).DateTime);
+    DateTimeToString(TempStr, 'yyyymmdd', PDateTimeRec(Args[0])^.DateTime);
     // copy to buffer
     Res.Append(PChar(TempStr), Length(TempStr));
   end;
@@ -1707,7 +1707,7 @@ initialization
     Add(TFunction.CreateOper('AND', 'BB', etBoolean, Func_AND, 90));
     Add(TFunction.CreateOper('OR',  'BB', etBoolean, Func_OR, 100));
 
-    // functions - name, description, param types, min params, result type, func addr
+    // Functions - name, description, param types, min params, result type, Func addr
     Add(TFunction.Create('STR',       '',      'FII', 1, etString, FuncFloatToStr, ''));
     Add(TFunction.Create('STR',       '',      'III', 1, etString, FuncIntToStr, ''));
     Add(TFunction.Create('DTOS',      '',      'D',   1, etString, FuncDateToStr, ''));
