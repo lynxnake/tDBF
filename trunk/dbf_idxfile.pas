@@ -1996,7 +1996,6 @@ begin
       InternalLocaleID := lcidBinary
     else
       InternalLocaleID := LangID_To_Locale[DbfLangId];
-    WriteFileHeader;
     // write index headers
     prevSelIndex := FSelectedIndex;
     for pos := 0 to PMdxHdr(Header)^.TagsUsed - 1 do
@@ -2007,6 +2006,8 @@ begin
     end;
     // reselect previously selected index
     SelectIndexVars(prevSelIndex);
+    // file header done (tags are included in file header)
+    WriteFileHeader;
     // clear roots
     ClearRoots;
     // init vars
