@@ -21,8 +21,9 @@ package tdbf_d5r;
 {$WRITEABLECONST ON}
 {$MINENUMSIZE 1}
 {$IMAGEBASE $400000}
-{$DESCRIPTION 'TDbf for Delphi 5'}
+{$DESCRIPTION 'TDbf for Delphi 5 -runtime-'}
 {$IMPLICITBUILD OFF}
+{$RUNONLY}
 
 requires
   vcl50,
