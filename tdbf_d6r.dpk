@@ -31,23 +31,23 @@ requires
   vcldb;
 
 contains
-  Dbf_Common in 'Dbf_Common.pas',
-  Dbf_Wtil in 'Dbf_Wtil.pas',
-  Dbf_Str in 'Dbf_Str.pas',
-  Dbf_Cursor in 'Dbf_Cursor.pas',
-  Dbf_Parser in 'Dbf_Parser.pas',
-  Dbf_PrsDef in 'Dbf_PrsDef.pas',
-  Dbf_PrsCore in 'Dbf_PrsCore.pas',
-  Dbf_PrsSupp in 'Dbf_PrsSupp.pas',
-  Dbf_PgFile in 'Dbf_PgFile.pas',
-  Dbf_Lang in 'Dbf_Lang.pas',
-  Dbf_Memo in 'Dbf_Memo.pas',
-  Dbf_Fields in 'Dbf_Fields.pas',
-  Dbf_IdxFile in 'Dbf_IdxFile.pas',
-  Dbf_IdxCur in 'Dbf_IdxCur.pas',
-  Dbf_DbfFile in 'Dbf_DbfFile.pas',
-  Dbf in 'Dbf.pas',
-  Dbf_Avl in 'Dbf_Avl.pas',
-  Dbf_PgcFile in 'Dbf_PgcFile.pas';
+  dbf_common in 'dbf_common.pas',
+  dbf_wtil in 'dbf_wtil.pas',
+  dbf_str in 'dbf_str.pas',
+  dbf_cursor in 'dbf_cursor.pas',
+  dbf_parser in 'dbf_parser.pas',
+  dbf_prsdef in 'dbf_prsdef.pas',
+  dbf_prscore in 'dbf_prscore.pas',
+  dbf_prssupp in 'dbf_prssupp.pas',
+  dbf_pgfile in 'dbf_pgfile.pas',
+  dbf_lang in 'dbf_lang.pas',
+  dbf_memo in 'dbf_memo.pas',
+  dbf_fields in 'dbf_fields.pas',
+  dbf_idxfile in 'dbf_idxfile.pas',
+  dbf_idxcur in 'dbf_idxcur.pas',
+  dbf_dbffile in 'dbf_dbffile.pas',
+  dbf in 'dbf.pas',
+  dbf_avl in 'dbf_avl.pas',
+  dbf_pgcfile in 'dbf_pgcfile.pas';
 
 end.
