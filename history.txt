@@ -56,6 +56,8 @@ V6.3.8
 - fixed: getting recno in oncalcfields event (rep by lutz)
 - fixed: AV when checking empty binary fields
 - fixed: better foxpro header writing, fieldoffset, tabletype and headersize
+**Version .1:
+- fixed: recursive loop in setrange
 
 
 ------------------------

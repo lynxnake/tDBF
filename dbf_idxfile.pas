@@ -348,6 +348,8 @@ type
 
     procedure First;
     procedure Last;
+    function  WalkPrev: boolean;
+    function  WalkNext: boolean;
     function  Next: Boolean;
     function  Prev: Boolean;
 
@@ -3156,7 +3158,7 @@ begin
           // NOTE: MatchKey assumes key to search for is already specified
           //   in FUserKey, it is because we have called Find
           repeat
-            Result := Next;
+            Result := WalkNext;
           until not Result or (MatchKey(Key) <> 0);
         end else
           Result := findres < 0;
@@ -3397,7 +3399,7 @@ begin
   //    last of equal/lower than key
   if Result then
   begin
-    Result := Prev;
+    Result := WalkPrev;
     if not Result then
     begin
       // cannot go prev -> empty range
@@ -3406,7 +3408,7 @@ begin
   end else begin
     // not found -> EOF found, go EOF, then to last record
     Last;
-    Prev;
+    WalkPrev;
   end;
   // set upper bound
   SetBracketHigh;
@@ -3451,12 +3453,10 @@ begin
   end;
 end;
 
-function TIndexFile.Prev: Boolean;
+function TIndexFile.WalkPrev: boolean;
 var
   curRecNo: Integer;
 begin
-  // resync in-mem tree with tree on disk
-  Resync(true);
   // save current recno, find different next!
   curRecNo := FLeaf.PhysicalRecNo;
   repeat
@@ -3465,18 +3465,30 @@ begin
   until not Result or (curRecNo <> FLeaf.PhysicalRecNo);
 end;
 
-function TIndexFile.Next: Boolean;
+function TIndexFile.WalkNext: boolean;
 var
   curRecNo: Integer;
 begin
-  // resync in-mem tree with tree on disk
-  Resync(true);
   // save current recno, find different prev!
   curRecNo := FLeaf.PhysicalRecNo;
   repeat
     // return false if we are at last entry
     Result := FLeaf.RecurNext;
   until not Result or (curRecNo <> FLeaf.PhysicalRecNo);
+end;
+
+function TIndexFile.Prev: Boolean;
+begin
+  // resync in-mem tree with tree on disk
+  Resync(true);
+  Result := WalkPrev;
+end;
+
+function TIndexFile.Next: Boolean;
+begin
+  // resync in-mem tree with tree on disk
+  Resync(true);
+  Result := WalkNext;
 end;
 
 function TIndexFile.GetKeyLen: Integer;
