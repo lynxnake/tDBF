@@ -33,6 +33,16 @@ BUGS & WARNINGS
 
 
 ------------------------
+V6.3.9
+
+- fixed: recursive loop in index first/last
+- fixed: index resync current record
+- fixed: resync range at eof
+- fixed: index findkey finds last, deleted key in index page
+- fixed: opening dbf file with numeric integer field misreads numbers
+
+
+------------------------
 V6.3.8
 
 - fixed: outdated buffer in checking found key
@@ -58,11 +68,6 @@ V6.3.8
 - fixed: better foxpro header writing, fieldoffset, tabletype and headersize
 **Version .1:
 - fixed: recursive loop in setrange
-**Version .2:
-- fixed: recursive loop in index first/last
-- fixed: index resync current record
-- fixed: resync range at eof
-- fixed: index findkey finds last, deleted key in index page
 
 
 ------------------------
