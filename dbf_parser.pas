@@ -584,7 +584,7 @@ begin
     dest := (Res.MemoryPos)^;
     Res.Append(Args[0], StrLen(Args[0]));
     // make uppercase
-    StrUpper(dest);
+    AnsiStrUpper(dest);
   end;
 end;
 
@@ -598,7 +598,7 @@ begin
     dest := (Res.MemoryPos)^;
     Res.Append(Args[0], StrLen(Args[0]));
     // make lowercase
-    StrLower(dest);
+    AnsiStrLower(dest);
   end;
 end;
 
@@ -853,8 +853,8 @@ begin
     begin
       if Args[1][arg1len-1] = '*' then
       begin
-        str0 := StrUpper(Args[0]);
-        str1 := StrUpper(Args[1]+1);
+        str0 := AnsiStrUpper(Args[0]);
+        str1 := AnsiStrUpper(Args[1]+1);
         setlength(str1, arg1len-2);
         match := AnsiPos(str0, str1) = 0;
       end else begin
