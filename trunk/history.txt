@@ -35,11 +35,14 @@ BUGS & WARNINGS
 ------------------------
 V6.2.2
 
+- added: IndexFieldNames property to set current index by fieldname
+- added: foxpro memo files (.fpt) support
 - fixed: indexing bug, when inserting same key at end
 - chngd: FinishCreate does not need memo extension anymore
 - chngd: PackTable uses different filename now abc_1.dbf etc
 - chngd: Dbf_PgFile.pas: renamed LockFile to LockAllPages;
     -> Kylix users should be able to compile with LockFile from Dbf_Wtil.pas
+- chngd: default locale now retrieved from GetUserDefaultLCID
 - fixed: when closing/opening dbf file, reopens indexes too (thx oleg)
     -> fixed an AV when packtable is done and you try access an index
 - fixed: (caused by above index bug) does not find last record in index
@@ -50,6 +53,14 @@ V6.2.2
     -> findnearest function rewritten
 - fixed: foxpro table level less than dBase7 table level, now reads fields
     correctly in dBaseIII alike format
+- fixed: when reading memo, negative blockno return empty memo instead of crash
+- fixed: using AnsiUppercase instead of Uppercase, better internalization
+- fixed: ignore addindex calls with empty index names / fields
+- fixed: Get/SetFieldData NativeFormat issue with DB7:datetime fields (thx tophet)
+- fixed: tdbfindexdef; name and field now stored uppercase to prevent
+    differences in case (thx arioch)
+- chngd: tablename property editor starts in project directory not delphi/bin
+    directory when no filepath given
 
 
 ------------------------
