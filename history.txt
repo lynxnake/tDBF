@@ -50,6 +50,7 @@ V6.3.7
 - speed: when reading v4 memo field, set size of stream in advance
 - fixed: empty field really returns empty string in parser
 - fixed: rewritten token parser, tree construction to be much simpler
+- speed: reduce number of getrecordcount calls, cache recordcount if possible
 
 
 ------------------------
