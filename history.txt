@@ -47,6 +47,7 @@ V6.3.8
 - fixed: set physicalrecno to non-existing recno corrupts table (rep by luchop)
 - fixed: tryexclusive/packtable/endexclusive fail because of memo (rep by sysklop)
 - fixed: crash when calling {un,}locktable on closed dataset (rep by sysklop)
+- fixed: use correct dbf version when creating table to decide field types
 
 
 ------------------------
