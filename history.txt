@@ -49,6 +49,7 @@ V6.3.2
 - added: support for currency field type, type 'Y' in foxpro tables
     - nativeformat handling is re-enabled due to much easier implementation
     - delphi 4 and higher only
+- fixed: close,open files reset indexnames,files list (rep by paez)
 
 
 ------------------------
