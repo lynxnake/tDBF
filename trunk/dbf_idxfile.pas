@@ -281,7 +281,7 @@ type
     procedure Resync(Relative: boolean);
     procedure ResyncRoot;
     procedure ResyncTree;
-    procedure ResyncRange;
+    procedure ResyncRange(KeepPosition: boolean);
     procedure ResetRange;
     procedure SetBracketLow;
     procedure SetBracketHigh;
@@ -2906,6 +2906,7 @@ procedure TIndexFile.InsertCurrent;
 var
   SearchKey: array[0..100] of Char;
   OemKey: PChar;
+  currRecNo: integer;
 begin
   // only insert if not recalling or mode = distinct
   // modify = mmDeleteRecall /\ unique <> distinct -> key already present
@@ -2942,7 +2943,7 @@ begin
     end;
 
     // check range, disabled by insert
-    ResyncRange;
+    ResyncRange(true);
   end;
 end;
 
@@ -3014,7 +3015,7 @@ begin
     // delete selected entry
     FLeaf.Delete;
     // range may be changed
-    ResyncRange;
+    ResyncRange(true);
   end;
 end;
 
@@ -3278,7 +3279,7 @@ begin
   Move(LowRange^, FLowBuffer[0], KeyLen);
   Move(HighRange^, FHighBuffer[0], KeyLen);
   FRangeActive := true;
-  ResyncRange;
+  ResyncRange(true);
 end;
 
 procedure TIndexFile.RecordDeleted(RecNo: Integer; Buffer: PChar);
@@ -3377,14 +3378,16 @@ begin
   WalkLast;
 end;
 
-procedure TIndexFile.ResyncRange;
+procedure TIndexFile.ResyncRange(KeepPosition: boolean);
 var
   Result: Boolean;
+  currRecNo: integer;
 begin
   if not FRangeActive then
     exit;
 
   // disable current range if any
+  currRecNo := SequentialRecNo;
   ResetRange;
   // search lower bound
   Result := SearchKey(FLowBuffer, stGreaterEqual);
@@ -3414,6 +3417,7 @@ begin
   end;
   // set upper bound
   SetBracketHigh;
+  SequentialRecNo := currRecNo;
 end;
 
 procedure TIndexFile.Resync(Relative: boolean);
@@ -3423,7 +3427,7 @@ begin
     if not Relative then
     begin
       ResyncRoot;
-      ResyncRange;
+      ResyncRange(false);
     end else begin
       // resyncing tree implies resyncing range
       ResyncTree;
@@ -3453,7 +3457,7 @@ begin
   end;
 
   // we now know cursor position, resync possible range
-  ResyncRange;
+  ResyncRange(false);
   
   // go to cursor position
   case action of
