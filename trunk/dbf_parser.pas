@@ -83,6 +83,39 @@ procedure FuncAdd_F_LL(Param: PExpressionRec);
 procedure FuncAdd_F_LF(Param: PExpressionRec);
 procedure FuncAdd_F_LI(Param: PExpressionRec);
 {$endif}
+procedure FuncSub_F_FF(Param: PExpressionRec);
+procedure FuncSub_F_FI(Param: PExpressionRec);
+procedure FuncSub_F_II(Param: PExpressionRec);
+procedure FuncSub_F_IF(Param: PExpressionRec);
+{$ifdef SUPPORT_INT64}
+procedure FuncSub_F_FL(Param: PExpressionRec);
+procedure FuncSub_F_IL(Param: PExpressionRec);
+procedure FuncSub_F_LL(Param: PExpressionRec);
+procedure FuncSub_F_LF(Param: PExpressionRec);
+procedure FuncSub_F_LI(Param: PExpressionRec);
+{$endif}
+procedure FuncMul_F_FF(Param: PExpressionRec);
+procedure FuncMul_F_FI(Param: PExpressionRec);
+procedure FuncMul_F_II(Param: PExpressionRec);
+procedure FuncMul_F_IF(Param: PExpressionRec);
+{$ifdef SUPPORT_INT64}
+procedure FuncMul_F_FL(Param: PExpressionRec);
+procedure FuncMul_F_IL(Param: PExpressionRec);
+procedure FuncMul_F_LL(Param: PExpressionRec);
+procedure FuncMul_F_LF(Param: PExpressionRec);
+procedure FuncMul_F_LI(Param: PExpressionRec);
+{$endif}
+procedure FuncDiv_F_FF(Param: PExpressionRec);
+procedure FuncDiv_F_FI(Param: PExpressionRec);
+procedure FuncDiv_F_II(Param: PExpressionRec);
+procedure FuncDiv_F_IF(Param: PExpressionRec);
+{$ifdef SUPPORT_INT64}
+procedure FuncDiv_F_FL(Param: PExpressionRec);
+procedure FuncDiv_F_IL(Param: PExpressionRec);
+procedure FuncDiv_F_LL(Param: PExpressionRec);
+procedure FuncDiv_F_LF(Param: PExpressionRec);
+procedure FuncDiv_F_LI(Param: PExpressionRec);
+{$endif}
 procedure FuncStrI_EQ(Param: PExpressionRec);
 procedure FuncStrI_NEQ(Param: PExpressionRec);
 procedure FuncStrI_LT(Param: PExpressionRec);
@@ -623,6 +656,180 @@ procedure FuncAdd_F_LI(Param: PExpressionRec);
 begin
   with Param^ do
     PInt64(Res.MemoryPos^)^ := PInt64(Args[0])^ + PInteger(Args[1])^;
+end;
+
+{$endif}
+
+procedure FuncSub_F_FF(Param: PExpressionRec);
+begin
+  with Param^ do
+    PDouble(Res.MemoryPos^)^ := PDouble(Args[0])^ - PDouble(Args[1])^;
+end;
+
+procedure FuncSub_F_FI(Param: PExpressionRec);
+begin
+  with Param^ do
+    PDouble(Res.MemoryPos^)^ := PDouble(Args[0])^ - PInteger(Args[1])^;
+end;
+
+procedure FuncSub_F_II(Param: PExpressionRec);
+begin
+  with Param^ do
+    PInteger(Res.MemoryPos^)^ := PInteger(Args[0])^ - PInteger(Args[1])^;
+end;
+
+procedure FuncSub_F_IF(Param: PExpressionRec);
+begin
+  with Param^ do
+    PDouble(Res.MemoryPos^)^ := PInteger(Args[0])^ - PDouble(Args[1])^;
+end;
+
+{$ifdef SUPPORT_INT64}
+
+procedure FuncSub_F_FL(Param: PExpressionRec);
+begin
+  with Param^ do
+    PDouble(Res.MemoryPos^)^ := PDouble(Args[0])^ - PInt64(Args[1])^;
+end;
+
+procedure FuncSub_F_IL(Param: PExpressionRec);
+begin
+  with Param^ do
+    PInt64(Res.MemoryPos^)^ := PInteger(Args[0])^ - PInt64(Args[1])^;
+end;
+
+procedure FuncSub_F_LL(Param: PExpressionRec);
+begin
+  with Param^ do
+    PInt64(Res.MemoryPos^)^ := PInt64(Args[0])^ - PInt64(Args[1])^;
+end;
+
+procedure FuncSub_F_LF(Param: PExpressionRec);
+begin
+  with Param^ do
+    PDouble(Res.MemoryPos^)^ := PInt64(Args[0])^ - PDouble(Args[1])^;
+end;
+
+procedure FuncSub_F_LI(Param: PExpressionRec);
+begin
+  with Param^ do
+    PInt64(Res.MemoryPos^)^ := PInt64(Args[0])^ - PInteger(Args[1])^;
+end;
+
+{$endif}
+
+procedure FuncMul_F_FF(Param: PExpressionRec);
+begin
+  with Param^ do
+    PDouble(Res.MemoryPos^)^ := PDouble(Args[0])^ * PDouble(Args[1])^;
+end;
+
+procedure FuncMul_F_FI(Param: PExpressionRec);
+begin
+  with Param^ do
+    PDouble(Res.MemoryPos^)^ := PDouble(Args[0])^ * PInteger(Args[1])^;
+end;
+
+procedure FuncMul_F_II(Param: PExpressionRec);
+begin
+  with Param^ do
+    PInteger(Res.MemoryPos^)^ := PInteger(Args[0])^ * PInteger(Args[1])^;
+end;
+
+procedure FuncMul_F_IF(Param: PExpressionRec);
+begin
+  with Param^ do
+    PDouble(Res.MemoryPos^)^ := PInteger(Args[0])^ * PDouble(Args[1])^;
+end;
+
+{$ifdef SUPPORT_INT64}
+
+procedure FuncMul_F_FL(Param: PExpressionRec);
+begin
+  with Param^ do
+    PDouble(Res.MemoryPos^)^ := PDouble(Args[0])^ * PInt64(Args[1])^;
+end;
+
+procedure FuncMul_F_IL(Param: PExpressionRec);
+begin
+  with Param^ do
+    PInt64(Res.MemoryPos^)^ := PInteger(Args[0])^ * PInt64(Args[1])^;
+end;
+
+procedure FuncMul_F_LL(Param: PExpressionRec);
+begin
+  with Param^ do
+    PInt64(Res.MemoryPos^)^ := PInt64(Args[0])^ * PInt64(Args[1])^;
+end;
+
+procedure FuncMul_F_LF(Param: PExpressionRec);
+begin
+  with Param^ do
+    PDouble(Res.MemoryPos^)^ := PInt64(Args[0])^ * PDouble(Args[1])^;
+end;
+
+procedure FuncMul_F_LI(Param: PExpressionRec);
+begin
+  with Param^ do
+    PInt64(Res.MemoryPos^)^ := PInt64(Args[0])^ * PInteger(Args[1])^;
+end;
+
+{$endif}
+
+procedure FuncDiv_F_FF(Param: PExpressionRec);
+begin
+  with Param^ do
+    PDouble(Res.MemoryPos^)^ := PDouble(Args[0])^ / PDouble(Args[1])^;
+end;
+
+procedure FuncDiv_F_FI(Param: PExpressionRec);
+begin
+  with Param^ do
+    PDouble(Res.MemoryPos^)^ := PDouble(Args[0])^ / PInteger(Args[1])^;
+end;
+
+procedure FuncDiv_F_II(Param: PExpressionRec);
+begin
+  with Param^ do
+    PInteger(Res.MemoryPos^)^ := PInteger(Args[0])^ div PInteger(Args[1])^;
+end;
+
+procedure FuncDiv_F_IF(Param: PExpressionRec);
+begin
+  with Param^ do
+    PDouble(Res.MemoryPos^)^ := PInteger(Args[0])^ / PDouble(Args[1])^;
+end;
+
+{$ifdef SUPPORT_INT64}
+
+procedure FuncDiv_F_FL(Param: PExpressionRec);
+begin
+  with Param^ do
+    PDouble(Res.MemoryPos^)^ := PDouble(Args[0])^ / PInt64(Args[1])^;
+end;
+
+procedure FuncDiv_F_IL(Param: PExpressionRec);
+begin
+  with Param^ do
+    PInt64(Res.MemoryPos^)^ := PInteger(Args[0])^ div PInt64(Args[1])^;
+end;
+
+procedure FuncDiv_F_LL(Param: PExpressionRec);
+begin
+  with Param^ do
+    PInt64(Res.MemoryPos^)^ := PInt64(Args[0])^ div PInt64(Args[1])^;
+end;
+
+procedure FuncDiv_F_LF(Param: PExpressionRec);
+begin
+  with Param^ do
+    PDouble(Res.MemoryPos^)^ := PInt64(Args[0])^ / PDouble(Args[1])^;
+end;
+
+procedure FuncDiv_F_LI(Param: PExpressionRec);
+begin
+  with Param^ do
+    PInt64(Res.MemoryPos^)^ := PInt64(Args[0])^ div PInteger(Args[1])^;
 end;
 
 {$endif}
@@ -1404,6 +1611,39 @@ initialization
     Add(TFunction.CreateOper('+', 'LF', etFloat,    FuncAdd_F_LF, 40));
     Add(TFunction.CreateOper('+', 'LL', etLargeInt, FuncAdd_F_LI, 40));
     Add(TFunction.CreateOper('+', 'LI', etLargeInt, FuncAdd_F_LL, 40));
+{$endif}
+    Add(TFunction.CreateOper('-', 'FF', etFloat,    FuncSub_F_FF, 40));
+    Add(TFunction.CreateOper('-', 'FI', etFloat,    FuncSub_F_FI, 40));
+    Add(TFunction.CreateOper('-', 'IF', etFloat,    FuncSub_F_IF, 40));
+    Add(TFunction.CreateOper('-', 'II', etInteger,  FuncSub_F_II, 40));
+{$ifdef SUPPORT_INT64}
+    Add(TFunction.CreateOper('-', 'FL', etFloat,    FuncSub_F_FL, 40));
+    Add(TFunction.CreateOper('-', 'IL', etLargeInt, FuncSub_F_IL, 40));
+    Add(TFunction.CreateOper('-', 'LF', etFloat,    FuncSub_F_LF, 40));
+    Add(TFunction.CreateOper('-', 'LL', etLargeInt, FuncSub_F_LI, 40));
+    Add(TFunction.CreateOper('-', 'LI', etLargeInt, FuncSub_F_LL, 40));
+{$endif}
+    Add(TFunction.CreateOper('*', 'FF', etFloat,    FuncMul_F_FF, 40));
+    Add(TFunction.CreateOper('*', 'FI', etFloat,    FuncMul_F_FI, 40));
+    Add(TFunction.CreateOper('*', 'IF', etFloat,    FuncMul_F_IF, 40));
+    Add(TFunction.CreateOper('*', 'II', etInteger,  FuncMul_F_II, 40));
+{$ifdef SUPPORT_INT64}
+    Add(TFunction.CreateOper('*', 'FL', etFloat,    FuncMul_F_FL, 40));
+    Add(TFunction.CreateOper('*', 'IL', etLargeInt, FuncMul_F_IL, 40));
+    Add(TFunction.CreateOper('*', 'LF', etFloat,    FuncMul_F_LF, 40));
+    Add(TFunction.CreateOper('*', 'LL', etLargeInt, FuncMul_F_LI, 40));
+    Add(TFunction.CreateOper('*', 'LI', etLargeInt, FuncMul_F_LL, 40));
+{$endif}
+    Add(TFunction.CreateOper('/', 'FF', etFloat,    FuncDiv_F_FF, 40));
+    Add(TFunction.CreateOper('/', 'FI', etFloat,    FuncDiv_F_FI, 40));
+    Add(TFunction.CreateOper('/', 'IF', etFloat,    FuncDiv_F_IF, 40));
+    Add(TFunction.CreateOper('/', 'II', etInteger,  FuncDiv_F_II, 40));
+{$ifdef SUPPORT_INT64}
+    Add(TFunction.CreateOper('/', 'FL', etFloat,    FuncDiv_F_FL, 40));
+    Add(TFunction.CreateOper('/', 'IL', etLargeInt, FuncDiv_F_IL, 40));
+    Add(TFunction.CreateOper('/', 'LF', etFloat,    FuncDiv_F_LF, 40));
+    Add(TFunction.CreateOper('/', 'LL', etLargeInt, FuncDiv_F_LI, 40));
+    Add(TFunction.CreateOper('/', 'LI', etLargeInt, FuncDiv_F_LL, 40));
 {$endif}
 
     Add(TFunction.CreateOper('=', 'FF', etBoolean, Func_FF_EQ , 80));
