@@ -48,6 +48,7 @@ V6.3.8
 - fixed: tryexclusive/packtable/endexclusive fail because of memo (rep by sysklop)
 - fixed: crash when calling {un,}locktable on closed dataset (rep by sysklop)
 - fixed: use correct dbf version when creating table to decide field types
+- fixed: kylix compilation
 
 
 ------------------------
