@@ -53,6 +53,10 @@ V6.3.2
 - fixed: reselect index after repage, compact (rep by paez)
 - added: support for foxpro datetime fields
 - fixed: support for foxpro integer fields
+- fixed: tdbf doesn't use default codepage when opening file with langid #0
+- added: OnLanguageWarning can now specify to use default codepage (see above)
+- fixed: MDX float index with decimals (rep by emled)
+- fixed: removal of mdx flag in foxpro file; means cdx index
 
 
 ------------------------
