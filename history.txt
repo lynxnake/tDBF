@@ -40,6 +40,7 @@ V6.3.9
 - fixed: resync range at eof
 - fixed: index findkey finds last, deleted key in index page
 - fixed: opening dbf file with numeric integer field misreads numbers
+- fixed: storage of foxpro binary integer field
 
 
 ------------------------

@@ -1582,11 +1582,19 @@ begin
   case TempFieldDef.NativeFieldType of
     '+', 'I':
       begin
-        if Src = nil then
-          IntValue := 0
-        else
-          IntValue := Integer(PDWord(Src)^ + $80000000);
-        PInteger(Dst)^ := SwapInt(IntValue);
+        if FDbfVersion <> xFoxPro then
+        begin
+          if Src = nil then
+            IntValue := 0
+          else
+            IntValue := Integer(PDWord(Src)^ + $80000000);
+          PInteger(Dst)^ := SwapInt(IntValue);
+        end else begin
+          if Src = nil then
+            PInteger(Dst)^ := 0
+          else
+            PInteger(Dst)^ := PInteger(Src)^;
+        end;
       end;
     'O':
       begin
