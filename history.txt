@@ -33,6 +33,24 @@ BUGS & WARNINGS
     - storedefs is not updated automatically when fielddefs are changed
 
 
+
+------------------------
+V6.2.5
+
+- fixed: foxpro memo data size is w/o record header size
+- fixed: index search on extended ASCII values
+- added: filter options; caseinsensitive works; partialmatch does not
+    filter expressions never have partial matching
+- fixed: filter field strings compare with extended ASCII values
+- added: TDbf.GetFileNames, retrieves file names in use with current dbf
+- fixed: open exclusive, close, open exclusive triggers 'can not open'
+    happens ie. when calling PackTable (rep by tekkan)
+- added: getfilenamesstring function to retrieve filenames in a string
+- fixed: Blank memo returns data (thx aerceg)
+- fixed: no inherited call on indexdef assign (thx kirill)
+- fixed: international issue with locate (thx kirill)
+
+
 ------------------------
 V6.2.4
 
