@@ -4,7 +4,7 @@
   <MACROS>
     <VERSION value="BCB.05.03"/>
     <PROJECT value="tdbf_c5d.bpl"/>
-    <OBJFILES value="Dbf_reg.obj tdbf_c5d.obj"/>
+    <OBJFILES value="Dbf_Reg.obj tdbf_c5d.obj"/>
     <RESFILES value=""/>
     <IDLFILES value=""/>
     <IDLGENFILES value=""/>

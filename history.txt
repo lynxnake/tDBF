@@ -35,6 +35,12 @@ BUGS & WARNINGS
 
 
 ------------------------
+V6.3.3
+
+- fixed: compiles with freepascal, usable in lazarus
+- fixed: index delete record bug (deleting not-last entry in full page)
+
+------------------------
 V6.3.2
 
 - fixed: use default codepage if file codepage not installed

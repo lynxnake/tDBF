@@ -4,7 +4,7 @@
   <MACROS>
     <VERSION value="BCB.06.00"/>
     <PROJECT value="tdbf_c6d.bpl"/>
-    <OBJFILES value="tdbf_c6d.obj Dbf_reg.obj"/>
+    <OBJFILES value="tdbf_c6d.obj Dbf_Reg.obj"/>
     <RESFILES value="Dbf.dcr"/>
     <IDLFILES value=""/>
     <IDLGENFILES value=""/>
@@ -55,7 +55,7 @@
   </LINKER>
   <FILELIST>
       <FILE FILENAME="tdbf_c6d.cpp" FORMNAME="" UNITNAME="tdbf_c6d" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="Dbf_reg.pas" FORMNAME="" UNITNAME="Dbf_reg" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="Dbf_Reg.pas" FORMNAME="" UNITNAME="Dbf_Reg" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="Dbf.dcr" FORMNAME="" UNITNAME="Dbf" CONTAINERID="DcrTool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\Projects\Lib\rtl.bpi" FORMNAME="" UNITNAME="rtl" CONTAINERID="BPITool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\Projects\Lib\vcl.bpi" FORMNAME="" UNITNAME="vcl" CONTAINERID="BPITool" DESIGNCLASS="" LOCALCOMMAND=""/>
