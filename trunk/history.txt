@@ -43,6 +43,7 @@ V6.3.9
 - fixed: storage of foxpro binary integer field
 - fixed: only support 65535 length character fields for foxpro
     (otherwise ms excel generated files can not be read)
+- fixed: call CursorPosChanged whenever cursor position possibly changed
 
 
 ------------------------
