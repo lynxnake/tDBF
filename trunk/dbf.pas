@@ -1801,7 +1801,11 @@ begin
   // check if in editing mode if user wants to write
   if (Mode = bmWrite) or (Mode = bmReadWrite) then
     if not (State in [dsEdit, dsInsert]) then
+{$ifdef DELPHI_3}    
+      DatabaseError(SNotEditing);
+{$else}    
       DatabaseError(SNotEditing, Self);
+{$endif}      
   // already created a `placeholder' blob for this field?
   MemoFieldNo := Field.FieldNo - 1;
   if FBlobStreams[MemoFieldNo] = nil then
