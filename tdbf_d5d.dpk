@@ -23,6 +23,7 @@ package tdbf_d5d;
 {$IMAGEBASE $400000}
 {$DESCRIPTION 'TDbf for Delphi 5'}
 {$IMPLICITBUILD OFF}
+{$DESIGNONLY}
 
 requires
   vcl50,
