@@ -35,6 +35,15 @@ BUGS & WARNINGS
 
 
 ------------------------
+V6.2.6
+
+- fixed: fcanedit is false causing indexes not to update (rep dvdneg)
+- fixed: autoinc when packing/restructuring table (rep aerceg)
+- fixed: allow creation of tablelevel 25 tables (rep cherednichenko)
+- fixed: delete last entry from index page caused overflowerror (rep by tekkan)
+
+
+------------------------
 V6.2.5
 
 - fixed: foxpro memo data size is w/o record header size
