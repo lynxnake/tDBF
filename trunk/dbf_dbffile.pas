@@ -1484,7 +1484,7 @@ begin
           Result := true;
           if Dst <> nil then
           begin
-            SwapInt64(Src, Dst);
+            // TODO: data is little endian;
             case DataType of
               ftCurrency:
               begin
@@ -1698,7 +1698,7 @@ begin
               PCurrency(Dst)^ := PCurrency(Src)^;
           end;
         end;
-        SwapInt64(Dst, Dst);
+        // TODO: data is little endian
 {$endif}
       end;
   else
