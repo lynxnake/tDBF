@@ -408,23 +408,14 @@ asm
   BSWAP EAX;
 end;
 
-{ SwapInt64 NOTE: do not call with same value for Value and Result ! }
-
 procedure SwapInt64(Value {EAX}, Result {EDX}: Pointer); register;
 asm
-  XCHG EAX, ECX
-{ 
-        single byte, on Pentium+ is not to be data move, but just renaming
-        registers, so i expect even faster than MOV  :-) 
-}
-
-  MOV EAX, dword ptr [ECX]
-  BSWAP EAX
-  MOV dword ptr [EDX+4], EAX
-
-  MOV EAX, dword ptr [ECX+4]
-  BSWAP EAX
-  MOV dword ptr [EDX], EAX
+  MOV ECX, dword ptr [EAX] 
+  MOV EAX, dword ptr [EAX + 4] 
+  BSWAP ECX 
+  BSWAP EAX 
+  MOV dword ptr [EDX+4], ECX 
+  MOV dword ptr [EDX], EAX 
 end;
 
 {$else}

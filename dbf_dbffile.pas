@@ -1706,8 +1706,8 @@ begin
             PLargeInt(Dst)^ := not PLargeInt(Src)^
           else
             PDouble(Dst)^ := (PDouble(Src)^) * -1;
+          SwapInt64(Dst, Dst);
         end;
-        SwapInt64(Dst, Dst);
 {$endif}
       end;
     '@':
