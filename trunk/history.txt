@@ -60,6 +60,8 @@ V6.3.8
 - fixed: recursive loop in setrange
 **Version .2:
 - fixed: recursive loop in index first/last
+- fixed: index resync current record
+- fixed: resync range at eof
 
 
 ------------------------

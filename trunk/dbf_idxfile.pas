@@ -3407,7 +3407,7 @@ begin
   // set lower bound
   SetBracketLow;
   // search upper bound
-  SearchKey(FHighBuffer, stGreater);
+  Result := SearchKey(FHighBuffer, stGreater);
   // if result true, then need to get previous item <=>
   //    last of equal/lower than key
   if Result then
@@ -3432,36 +3432,54 @@ begin
   if NeedLocks then
   begin
     if not Relative then
+    begin
       ResyncRoot;
-    ResyncRange;
-    if Relative then
+      ResyncRange;
+    end else begin
+      // resyncing tree implies resyncing range
       ResyncTree;
+    end;
   end;
 end;
 
 procedure TIndexFile.ResyncTree;
+var
+  action, recno: integer;
 begin
   // if at BOF or EOF, then we need to resync by first or last
+  // remember where the cursor was
   if FLeaf.Entry = FEntryBof then
   begin
-    WalkFirst;
+    action := 0;
   end else if FLeaf.Entry = FEntryEof then begin
-    WalkLast;
+    action := 1;
   end else begin
     // read current key into buffer
     Move(FLeaf.Key^, FKeyBuffer, PIndexHdr(FIndexHeader).KeyLen);
-    // search current in-mem key on disk
-    FUserKey := FKeyBuffer;
-    FUserRecNo := FLeaf.PhysicalRecNo;
     // translate to searchable key
     if KeyType = 'C' then
-      TranslateToANSI(FUserKey, FUserKey);
-    if (FindKey(false) <> 0) then
+      TranslateToANSI(FKeyBuffer, FKeyBuffer);
+    recno := FLeaf.PhysicalRecNo;
+    action := 2;
+  end;
+
+  // we now know cursor position, resync possible range
+  ResyncRange;
+  
+  // go to cursor position
+  case action of
+    0: WalkFirst;
+    1: WalkLast;
+    2:
     begin
-      // houston, we've got a problem!
-      // our `current' record has gone. we need to find it
-      // find it by using physical recno
-      PhysicalRecNo := FUserRecNo;
+      // search current in-mem key on disk
+      if (Find(recno, FKeyBuffer) <> 0) then
+      begin
+        // houston, we've got a problem!
+        // our `current' record has gone. we need to find it
+        // find it by using physical recno
+        PhysicalRecNo := recno;
+      end;
     end;
   end;
 end;
