@@ -474,7 +474,7 @@ begin
     'N','F':
       begin
         // floating point
-        if FSize < 2   then FSize := 2;
+        if FSize < 1   then FSize := 1;
         if FSize >= 20 then FSize := 20;
         if FPrecision > FSize-2 then FPrecision := FSize-2;
         if FPrecision < 0       then FPrecision := 0;
