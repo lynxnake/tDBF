@@ -1,6 +1,4 @@
-unit Dbf_PrsCore;
-
-{force CR/LF fix}
+unit dbf_prscore;
 
 {--------------------------------------------------------------
 | TCustomExpressionParser

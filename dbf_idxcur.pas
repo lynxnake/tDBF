@@ -1,6 +1,4 @@
-unit Dbf_IdxCur;
-
-{force CR/LF fix}
+unit dbf_idxcur;
 
 interface
 

@@ -1,4 +1,4 @@
-unit Dbf_Wtil;
+unit dbf_wtil;
 
 {$i Dbf_Common.inc}
 

@@ -1,4 +1,4 @@
-unit Dbf_IdxFile;
+unit dbf_idxfile;
 
 interface
 

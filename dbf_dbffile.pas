@@ -1,4 +1,4 @@
-unit Dbf_DbfFile;
+unit dbf_dbffile;
 
 interface
 

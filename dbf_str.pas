@@ -1,6 +1,4 @@
-unit Dbf_Str;
-
-{fix CR/LF}
+unit dbf_str;
 
 interface
 
