@@ -39,6 +39,7 @@ V6.3.3
 
 - fixed: compiles with freepascal, usable in lazarus
 - fixed: index delete record bug (deleting not-last entry in full page)
+- fixed: index delete record bug (deleting the only entry on a page)
 
 ------------------------
 V6.3.2
