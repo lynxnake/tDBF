@@ -44,6 +44,7 @@ V6.3.8
 - fixed: underflow buffer in GetStrFromInt when Width=0
 - fixed: IndexFile.PrepareKey numeric index: encode value zero to have no digits
 - added: TDbf.PrepareKey for conversion of key to numeric index key format
+- fixed: set physicalrecno to non-existing recno corrupts table (rep by luchop)
 
 
 ------------------------
