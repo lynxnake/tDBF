@@ -35,6 +35,8 @@ BUGS & WARNINGS
 ------------------------
 V6.4.4
 
+- fixed: exception in opening causes double free (thx arioch)
+
 
 ------------------------
 V6.4.3
