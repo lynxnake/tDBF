@@ -38,6 +38,7 @@ BUGS & WARNINGS
 V6.3.8
 
 - fixed: outdated buffer in checking found key
+- fixed: createtable with memorystream; tdbf.userstream (thx andrew)
 
 
 ------------------------
