@@ -35,6 +35,17 @@ BUGS & WARNINGS
 
 
 ------------------------
+V6.3.1
+
+- added: freepascal support, needs 1.9 (or higher)
+- fixed: strange bugs due to fparser not initialized correctly, for example
+    with expression of different index (rep by sysklop)
+- added: findrecord implemented -> find{first,next,prior,last} should now work
+- fixed: index deletion bug corner case, no records left (rep by sysklop)
+- fixed: repagefile creating empty index file (rep by paez)
+
+
+------------------------
 V6.3.0
 
 - fixed: tdbf.physicalrecno not in sync with tdataset
