@@ -35,6 +35,23 @@ BUGS & WARNINGS
 
 
 ------------------------
+V6.3.2
+
+- fixed: use default codepage if file codepage not installed
+- fixed: range check error using swapint
+- fixed: flush index header when index flushed, ie. when creating index
+- fixed: update TDbf.IndexDefs when index added or deleted
+- fixed: update internal index names and files list when mdx index deleted
+- fixed: remove max 4000 character record length requirement
+    TDbf.GetExactRecordCount (rep by dpproj)
+- fixed: accept russian 'C' too as string field (rep by dpproj)
+- fixed: datetime native fieldtype 'T' handling, size (rep by kjteng)
+- added: support for currency field type, type 'Y' in foxpro tables
+    - nativeformat handling is re-enabled due to much easier implementation
+    - delphi 4 and higher only
+
+
+------------------------
 V6.3.1
 
 - added: freepascal support, needs 1.9 (or higher)
