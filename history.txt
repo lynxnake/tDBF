@@ -42,6 +42,7 @@ V6.3.6
     fields
 - added: support for opening (memory) streams as file
 - fixed: numeric mdx compatibility bug; bytes instead of decimals (rep by rpoverdijk)
+- fixed: integer fields store numerics padded with zeroes; now it uses spaces
 
 
 ------------------------
