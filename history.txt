@@ -36,6 +36,7 @@ BUGS & WARNINGS
 V6.4.1
 
 - fixed: restructure numeric fields correctly, try to preserve data
+- fixed: read and write foxpro currency fieldtype (thx karelr)
 
 
 ------------------------
