@@ -331,6 +331,7 @@ var
   I: Integer;
   deleteLink: Boolean;
   LangStr: PChar;
+  version: byte;
 begin
   // check if not already opened
   if not Active then
@@ -354,7 +355,8 @@ begin
       //  $03,$8B dBaseIV/V       Header Byte $1d=$00, Float -> N($14.$05) DateTime D($08)
       //  $03,$F5 FoxPro Level 25 Header Byte $1d=$09, Float -> N($14.$05) DateTime D($08)
 
-      case (PDbfHdr(Header).VerDBF and $07) of
+      version := PDbfHdr(Header).VerDBF;
+      case (version and $07) of
         $03:
           if LanguageID = 0 then
             FDbfVersion := xBaseIII
@@ -366,7 +368,7 @@ begin
           FDbfVersion := xFoxPro;
       else
         // check visual foxpro
-        if (PDbfHdr(Header).VerDBF and $70) = $30 then
+        if ((version and $FE) = $30) or (version = $F5) or (version = $FB) then
         begin
           FDbfVersion := xFoxPro;
         end else begin
@@ -593,8 +595,9 @@ begin
       RecordSize := SizeOf(rFieldDescIII);
       FillChar(Header^, HeaderSize, #0);
       if FDbfVersion = xFoxPro then
-        PDbfHdr(Header).VerDBF := $05
-      else
+      begin
+        PDbfHdr(Header).VerDBF := $02
+      end else
         PDbfHdr(Header).VerDBF := $03;
       // standard language WE, dBase III no language support
       if FDbfVersion = xBaseIII then
@@ -652,6 +655,13 @@ begin
         lFieldDescIII.FieldType := lFieldDef.NativeFieldType;
         lFieldDescIII.FieldSize := lSize;
         lFieldDescIII.FieldPrecision := lPrec;
+        // TODO: bug-endianness
+        if FDbfVersion = xFoxPro then
+          lFieldDescIII.FieldOffset := lFieldOffset;
+        if (PDbfHdr(Header).VerDBF = $02) and (lFieldDef.NativeFieldType in ['0', 'Y', 'T', 'O', '+']) then
+          PDbfHdr(Header).VerDBF := $30;
+        if (PDbfHdr(Header).VerDBF = $30) and (lFieldDef.NativeFieldType = '+') then
+          PDbfHdr(Header).VerDBF := $31;
       end;
 
       // update our field list
@@ -671,17 +681,28 @@ begin
 
     // write memo bit
     if lHasBlob then
+    begin
       if FDbfVersion = xBaseIII then
         PDbfHdr(Header).VerDBF := PDbfHdr(Header).VerDBF or $80
       else
       if FDbfVersion = xFoxPro then
-        PDbfHdr(Header).VerDBF := PDbfHdr(Header).VerDBF or $F0
-      else
+      begin
+        if PDbfHdr(Header).VerDBF = $02 then
+          PDbfHdr(Header).VerDBF := $F5;
+      end else
         PDbfHdr(Header).VerDBF := PDbfHdr(Header).VerDBF or $88;
+    end;
 
     // update header
     PDbfHdr(Header).RecordSize := lFieldOffset;
     PDbfHdr(Header).FullHdrSize := HeaderSize + RecordSize * FieldDefs.Count + 1;
+    // add empty "back-link" info, whatever it is: 
+    { A 263-byte range that contains the backlink, which is the relative path of 
+      an associated database (.dbc) file, information. If the first byte is 0x00, 
+      the file is not associated with a database. Therefore, database files always 
+      contain 0x00. }
+    if FDbfVersion = xFoxPro then
+      Inc(PDbfHdr(Header).FullHdrSize, 263);
 
     // write dbf header to disk
     inherited WriteHeader;
