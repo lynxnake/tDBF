@@ -14,7 +14,7 @@ implementation
 
 procedure Register; 
 begin
-  RegisterUnit('Dbf_Reg', @Dbf_Reg.Register); 
+  RegisterUnit('Dbf', @Dbf_Reg.Register); 
 end; 
 
 initialization
