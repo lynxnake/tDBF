@@ -22,7 +22,7 @@ package tdbf_d7r;
 {$WRITEABLECONST OFF}
 {$MINENUMSIZE 1}
 {$IMAGEBASE $400000}
-{$DESCRIPTION 'TDbf V 5 for Delphi 7 RunTime'}
+{$DESCRIPTION 'TDbf for Delphi 7 RunTime'}
 {$IMPLICITBUILD OFF}
 
 requires
