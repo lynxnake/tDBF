@@ -30,6 +30,47 @@ BUGS & WARNINGS
       - double fields 'O'
       - maybe more...look in source where Int64 is used
     - no codepage conversion available other than oem<->ansi
+    - storedefs is not updated automatically when fielddefs are changed
+
+
+------------------------
+V6.2.3
+
+- added: new assembler implementation for swapint, swapint64 (thx arioch)
+    - NOTE: 486+ if you need old, remove USE_ASSEMBLER_486_UP define
+- fixed: datetime handling in index, eg. DTOS(DATE_FIELD)
+- added: FilePathFull, this is path where the dbf is going to be opened (arioch)
+    - is not stored, only relative path is stored
+    - when set, overwrites relative path too, and relative path sets full path
+- fixed: possible AV when executing (get|set)fielddata with nil buffer
+- fixed: reading dbase 7 index tags, new structure, long index names supported
+- fixed: bug storedefs = true after .open; indirect fielddefs.update
+- fixed: index version bug causing AV; caused by new DB7 support (rep by arioch)
+- fixed: SearchKey in Edit without Post -> record twice (thx ralf)
+- fixed: TDataSet.(InsertRecord | AppendRecord) now really work instead of doing
+   nothing. NOTE: they do the same thing, as you cannot insert a record in DBF,
+   only append.
+- fixed: index bug; insert in wrong page sometimes causing various assert fails
+- added: a bunch of freeandnil instead of [x.Free; x := nil;]; should be safer
+- added: more language / locale combinations; now combinations using windows
+    codepages (1250,1251,1253,...) and (russian, greek, etc) should be possible
+- fixed: delphi 3 compatibility
+- fixed: cancel memo bug; when memo modified, release focus, cancel record then
+    memo has already written contents to file
+- chngd: absolute/relativepath properties use same handler (thx arioch)
+- fixed: AV when SearchKey called with NULL variant
+- fixed: when creating dbf, tablelevel = 25 indicates foxpro
+    NOTE: dbfglobals.defaultcreatefoxpro removed
+- added: SetIndexName throws exception when try to select non-existing index
+- fixed: index needs to convert strings OEM->ANSI before comparing; I think
+    the sorting works very nicely now, eg.: e, E, e-accent-grave, etc all same
+    NOTE: you need to rebuild all indexes because of this change
+- fixed: when creating dbf: also foxpro langids will be used and the
+    other way around...increases number of combinations
+- fixed: index bugs; first record insert in distinct index, EOF insert caused
+    AV on closing app (report thx germain)
+- fixed: memo bug; memo files with large pages (>512) had incorrect calculation
+    of position, reading false data (rep by kjteng)
 
 
 ------------------------
