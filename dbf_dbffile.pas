@@ -1768,7 +1768,7 @@ begin
   for I := 0 to FFieldDefs.Count-1 do
   begin
     TempFieldDef := FFieldDefs.Items[I];
-    if TempFieldDef.NativeFieldType in ['I', 'O', '@', '+'] then
+    if TempFieldDef.NativeFieldType in ['I', 'O', '@', '+', '0', 'Y'] then
     begin
       // integer
       FillChar(PChar(DestBuf+TempFieldDef.Offset)^, TempFieldDef.Size, 0);
