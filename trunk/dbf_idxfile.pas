@@ -2906,7 +2906,6 @@ procedure TIndexFile.InsertCurrent;
 var
   SearchKey: array[0..100] of Char;
   OemKey: PChar;
-  currRecNo: integer;
 begin
   // only insert if not recalling or mode = distinct
   // modify = mmDeleteRecall /\ unique <> distinct -> key already present
