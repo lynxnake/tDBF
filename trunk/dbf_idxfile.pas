@@ -870,6 +870,7 @@ begin
   // high will contain first greater-or-equal key
   // ARecNo <> -3 -> Entry(high).Key will contain first key that matches    -> go to high
   // ARecNo =  -3 -> Entry(high).Key will contain first key that is greater -> go to high
+  FEntryNo := -1;
   EntryNo := high;
   // calc end result: can't inspect high if lowerpage <> nil
   // if this is a leaf, we need to find specific recno
