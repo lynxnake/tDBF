@@ -447,15 +447,8 @@ end;
 
 procedure TDateTimeFieldVar.Refresh(Buffer: PChar);
 begin
-  if FDbfFile.GetFieldDataFromDef(FieldDef, ftDateTime, Buffer, @FFieldVal) then
-  begin
-{$ifndef SUPPORT_NEW_FIELDDATA}
-    // convert BDE timestamp to normal datetime
-    FFieldVal.DateTime := BDETimeStampToDateTime(FFieldVal.DateTime);
-{$endif}
-  end else begin
+  if not FDbfFile.GetFieldDataFromDef(FieldDef, ftDateTime, Buffer, @FFieldVal) then
     FFieldVal.DateTime := 0.0;
-  end;
 end;
 
 //--Expression functions-----------------------------------------------------
