@@ -35,9 +35,6 @@ type
     procedure First; virtual; abstract;
     procedure Last; virtual; abstract;
 
-    function  GetBookMark: rBookmarkData; virtual; abstract;
-    procedure GotoBookmark(Bookmark: rBookmarkData); virtual; abstract;
-
     property PagedFile: TPagedFile read FFile;
     property PhysicalRecNo: Integer read GetPhysicalRecNo write SetPhysicalRecNo;
     property SequentialRecNo: Integer read GetSequentialRecNo write SetSequentialRecNo;

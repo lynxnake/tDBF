@@ -36,9 +36,6 @@ type
     procedure First; override;
     procedure Last; override;
 
-    procedure GotoBookmark(Bookmark: rBookmarkData); override;
-    function  GetBookMark: rBookmarkData; override;
-
     procedure Insert(RecNo: Integer; Buffer: PChar);
     procedure Update(RecNo: Integer; PrevBuffer, NewBuffer: PChar);
 
@@ -127,16 +124,6 @@ end;
 procedure TIndexCursor.SetSequentialRecNo(RecNo: Integer);
 begin
   TIndexFile(PagedFile).SequentialRecNo := RecNo;
-end;
-
-procedure TIndexCursor.GotoBookmark(Bookmark: rBookmarkData);
-begin
-  TIndexFile(PagedFile).GotoBookMark(Bookmark);
-end;
-
-function TIndexCursor.GetBookMark: rBookmarkData;
-begin
-  Result := TIndexFile(PagedFile).GetBookmark;
 end;
 
 {$ifdef SUPPORT_VARIANTS}

@@ -53,6 +53,8 @@ V6.3.8
 - added: -, *, / operators in expressions
 - fixed: datetime issues with fieldtype '@' and delphi 4 and lower (nobody uses 
     those fieldtypes? they have been horribly broken, and maybe still are)
+- fixed: getting recno in oncalcfields event (rep by lutz)
+- fixed: AV when checking empty binary fields
 
 
 ------------------------

@@ -27,8 +27,6 @@ type
   EDbfWriteError = class (EDbfError);
 
   TDbfFieldType = char;
-  PBookMarkData = ^rBookMarkData;
-  rBookmarkData = Integer;
 
   TXBaseVersion   = (xUnknown, xClipper, xBaseIII, xBaseIV, xBaseV, xFoxPro, xBaseVII);
   TSearchKeyType = (stEqual, stGreaterEqual, stGreater);

@@ -24,10 +24,16 @@ uses
 type
 
 //====================================================================
-  pDbfRecord = ^rDbfRecordHeader;
-  rDbfRecordHeader = record
-    BookmarkData: rBookmarkData;
+  pBookmarkData = ^TBookmarkData;
+  TBookmarkData = record
+    PhysicalRecNo: Integer;
+  end;
+
+  pDbfRecord = ^TDbfRecordHeader;
+  TDbfRecordHeader = record
+    BookmarkData: TBookmarkData;
     BookmarkFlag: TBookmarkFlag;
+    SequentialRecNo: Integer;
     DeletedFlag: Char;
   end;
 //====================================================================
@@ -592,7 +598,7 @@ begin
   if DbfGlobals = nil then
     DbfGlobals := TDbfGlobals.Create;
 
-  BookmarkSize := sizeof(rBookmarkData);
+  BookmarkSize := sizeof(TBookmarkData);
   FIndexDefs := TDbfIndexDefs.Create(Self);
   FMasterLink := TDbfMasterLink.Create(Self);
   FMasterLink.OnMasterChange := MasterChanged;
@@ -638,7 +644,7 @@ end;
 
 function TDbf.AllocRecordBuffer: PChar; {override virtual abstract from TDataset}
 begin
-  GetMem(Result, SizeOf(rDbfRecordHeader)+FDbfFile.RecordSize+CalcFieldsSize+1);
+  GetMem(Result, SizeOf(TDbfRecordHeader)+FDbfFile.RecordSize+CalcFieldsSize+1);
 end;
 
 procedure TDbf.FreeRecordBuffer(var Buffer: PChar); {override virtual abstract from TDataset}
@@ -647,19 +653,13 @@ begin
 end;
 
 procedure TDbf.GetBookmarkData(Buffer: PChar; Data: Pointer); {override virtual abstract from TDataset}
-var
-  pRecord: pDbfRecord;
 begin
-  pRecord := pDbfRecord(Buffer);
-  pBookMarkData(Data)^ := pRecord.BookMarkData;
+  pBookmarkData(Data)^ := pDbfRecord(Buffer)^.BookmarkData;
 end;
 
 function TDbf.GetBookmarkFlag(Buffer: PChar): TBookmarkFlag; {override virtual abstract from TDataset}
-var
-  pRecord: pDbfRecord;
 begin
-  pRecord := pDbfRecord(Buffer);
-  Result := pRecord.BookMarkFlag;
+  Result := pDbfRecord(Buffer)^.BookmarkFlag;
 end;
 
 function TDbf.GetCurrentBuffer: PChar;
@@ -774,12 +774,6 @@ begin
   repeat
     Result := grOK;
     case GetMode of
-      gmCurrent :
-        begin
-          //if pRecord.BookmarkData.RecNo=FPhysicalRecNo then begin
-          //  exit;    // try to fasten a bit...
-          //end;
-        end;
       gmNext :
         begin
           Acceptable := FCursor.Next;
@@ -829,17 +823,12 @@ begin
 
   if (Result = grOK) and not FFindRecordFilter then
   begin
-    ClearCalcFields(Buffer); //run automatically
-    try
-      GetCalcFields(Buffer);
-    finally
-       pRecord.BookmarkData := FCursor.GetBookMark;
-       pRecord.BookmarkFlag := bfCurrent;
-    end;
-    if (pRecord.BookMarkData <= 0) then
-       pRecord.BookmarkData := FCursor.GetBookMark;
+    pRecord.BookmarkData.PhysicalRecNo := FCursor.PhysicalRecNo;
+    pRecord.BookmarkFlag := bfCurrent;
+    pRecord.SequentialRecNo := FCursor.SequentialRecNo;
+    GetCalcFields(Buffer);
   end else begin
-    pRecord.BookmarkData := -1;
+    pRecord.BookmarkData.PhysicalRecNo := -1;
   end;
 end;
 
@@ -954,11 +943,19 @@ begin
 end;
 
 procedure TDbf.InternalGotoBookmark(Bookmark: Pointer); {override virtual abstract from TDataset}
-var
-  RecInfo: rBookmarkData;
 begin
-  RecInfo := rBookmarkData(Bookmark^);
-  FCursor.GotoBookmark(RecInfo);
+  with PBookmarkData(Bookmark)^ do
+  begin
+    if (PhysicalRecNo = 0) then begin
+      First;
+    end else
+    if (PhysicalRecNo = MaxInt) then begin
+      Last;
+    end else begin
+      if FCursor.PhysicalRecNo <> PhysicalRecNo then
+        FCursor.PhysicalRecNo := PhysicalRecNo;
+    end;
+  end;
 end;
 
 procedure TDbf.InternalHandleException; {override virtual abstract from TDataset}
@@ -1068,8 +1065,9 @@ var
   pRecord: pDbfRecord;
 begin
   pRecord := pDbfRecord(Buffer);
-  pRecord.BookmarkData{.IndexBookmark} := 0;
+  pRecord.BookmarkData.PhysicalRecNo := 0;
   pRecord.BookmarkFlag := bfCurrent;
+  pRecord.SequentialRecNo := 0;
 // Init Record with zero and set autoinc field with next value
   FDbfFile.InitRecord(@pRecord.DeletedFlag);
 end;
@@ -1915,11 +1913,11 @@ begin
   if Buffer <> nil then
   begin
     pRecord := pDbfRecord(Buffer);
-    if pRecord.BookMarkFlag = bfInserted then
+    if pRecord.BookmarkFlag = bfInserted then
     begin
       // do what ???
     end else begin
-      FCursor.GotoBookmark(pRecord.BookmarkData);
+      FCursor.SequentialRecNo := pRecord.SequentialRecNo;
     end;
   end;
 end;
@@ -1935,19 +1933,13 @@ begin
 end;
 
 procedure TDbf.SetBookmarkFlag(Buffer: PChar; Value: TBookmarkFlag); {override virtual abstract from TDataset}
-var
-  pRecord: pDbfRecord;
 begin
-  pRecord := pDbfRecord(Buffer);
-  pRecord.BookMarkFlag := Value;
+  pDbfRecord(Buffer)^.BookmarkFlag := Value;
 end;
 
 procedure TDbf.SetBookmarkData(Buffer: PChar; Data: Pointer); {override virtual abstract from TDataset}
-var
-  pRecord: pDbfRecord;
 begin
-  pRecord := pDbfRecord(Buffer);
-  pRecord.BookMarkData := pBookMarkData(Data)^;
+  pDbfRecord(Buffer)^.BookmarkData := pBookmarkData(Data)^;
 end;
 
 procedure TDbf.SetFieldData(Field: TField; Buffer: Pointer); {override virtual abstract from TDataset}
@@ -2027,15 +2019,26 @@ end;
 // this function is just for the grid scrollbars
 // it doesn't have to be perfectly accurate, but fast.
 function TDbf.GetRecNo: Integer; {override virtual}
+var
+  pBuffer: pointer;
 begin
-  UpdateCursorPos;
-  Result := FCursor.SequentialRecNo;
+  if State = dsCalcFields then
+    pBuffer := CalcBuffer
+  else
+    pBuffer := ActiveBuffer;
+  Result := pDbfRecord(pBuffer)^.SequentialRecNo;
 end;
 
-procedure TDbf.SetRecNo(Value: Integer); {override virual}
+procedure TDbf.SetRecNo(Value: Integer); {override virtual}
 begin
+  CheckBrowseMode;
+  if Value = RecNo then
+    exit;
+
+  DoBeforeScroll;
   FCursor.SequentialRecNo := Value;
   Resync([]);
+  DoAfterScroll;
 end;
 
 function TDbf.GetCanModify: Boolean; {override;}
@@ -2396,28 +2399,29 @@ begin
 end;
 
 function TDbf.GetPhysicalRecNo: Integer;
+var
+  pBuffer: pointer;
 begin
   // check if active, test state: if inserting, then -1
   if (FCursor <> nil) and (State <> dsInsert) then
   begin
-    UpdateCursorPos;
-    Result := FCursor.PhysicalRecNo;
+    if State = dsCalcFields then
+      pBuffer := CalcBuffer
+    else
+      pBuffer := ActiveBuffer;
+    Result := pDbfRecord(pBuffer)^.BookmarkData.PhysicalRecNo;
   end else
     Result := -1;
 end;
 
 procedure TDbf.SetPhysicalRecNo(const NewRecNo: Integer);
 begin
-  // active?
-  if FCursor <> nil then
-  begin
-    // editing?
-    CheckBrowseMode;
-    // set recno
-    FCursor.PhysicalRecNo := NewRecNo;
-    // refresh data controls
-    Resync([]);
-  end;
+  // editing?
+  CheckBrowseMode;
+  DoBeforeScroll;
+  FCursor.PhysicalRecNo := NewRecNo;
+  Resync([]);
+  DoAfterScroll;
 end;
 
 function TDbf.GetDbfFieldDefs: TDbfFieldDefs;
