@@ -35,6 +35,12 @@ BUGS & WARNINGS
 
 
 ------------------------
+V6.3.4
+
+- fixed: improved exception handling in expression parser
+- fixed: remove temporary indexdefs at close, fixes CreateTable index creation
+
+------------------------
 V6.3.3
 
 - fixed: compiles with freepascal, usable in lazarus
