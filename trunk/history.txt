@@ -46,6 +46,8 @@ V6.4.1
 - added: _nullflags field operation support (thx karelrys)
 - fixed: when editing a record, then moving to another record, memo is not
     properly cleared if memo is null (rep by versus)
+- fixed: writing to a memo that also has a connected dbcontrol does not work;
+    quite some semantical changes, may have introduced new bugs (rep by mafro)
 
 
 ------------------------
