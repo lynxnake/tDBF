@@ -47,6 +47,7 @@ V6.3.7
 - added: TDbf.LanguageID to set language id of new table; set before CreateTable
 - fixed: remember autoinc value after restructure
 - fixed: do not try to create foxpro currency fields if creating dbase table
+- speed: when reading v4 memo field, set size of stream in advance
 
 
 ------------------------
