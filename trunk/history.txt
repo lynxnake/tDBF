@@ -43,6 +43,7 @@ V6.3.8
 - fixed: fields settings size for integer fields
 - fixed: underflow buffer in GetStrFromInt when Width=0
 - fixed: IndexFile.PrepareKey numeric index: encode value zero to have no digits
+- added: TDbf.PrepareKey for conversion of key to numeric index key format
 
 
 ------------------------
