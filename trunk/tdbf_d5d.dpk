@@ -1,5 +1,6 @@
 package tdbf_d5d;
 
+{$R *.RES}
 {$ALIGN ON}
 {$ASSERTIONS ON}
 {$BOOLEVAL OFF}
