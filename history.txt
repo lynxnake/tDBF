@@ -39,6 +39,7 @@ V6.4.3
 - fixed: datetime index creation using delphi 4 (rep by agam)
 - fixed: storage of negative numbers in integer fields (rep by agam)
 - fixed: index corruption when opening, with emptytable (rep by arioch)
+- fixed: index corruption on regenerateindexes (rep by piotr)
 
 
 ------------------------
