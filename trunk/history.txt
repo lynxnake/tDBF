@@ -44,6 +44,7 @@ V6.3.7
 - fixed: querying ExactRecordCount on open table causes AV (rep by sikorsky)
 - added: smarter Dbf_Parser initialization (thx emled)
 - fixed: copy languageid and autoinc values upon restructure/pack
+- added: TDbf.LanguageID to set language id of new table; set before CreateTable
 
 
 ------------------------
