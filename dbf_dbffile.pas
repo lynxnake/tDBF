@@ -102,6 +102,7 @@ type
     procedure ApplyAutoIncToBuffer(DestBuf: PChar);     // dBase7 support. Writeback last next-autoinc value
     procedure FastPackTable;
     procedure RestructureTable(DbfFieldDefs: TDbfFieldDefs; Pack: Boolean);
+    procedure Rename(DestFileName: string; NewIndexFileNames: TStrings; DeleteFiles: boolean);
     function  GetFieldInfo(FieldName: string): TDbfFieldDef;
     function  GetFieldData(Column: Integer; DataType: TFieldType; Src,Dst: Pointer): Boolean;
     function  GetFieldDataFromDef(AFieldDef: TDbfFieldDef; DataType: TFieldType; Src, Dst: Pointer): Boolean;
@@ -361,7 +362,7 @@ begin
       //  $03,$8B dBaseIV/V       Header Byte $1d=$00, Float -> N($14.$05) DateTime D($08)
       //  $03,$F5 FoxPro Level 25 Header Byte $1d=$09, Float -> N($14.$05) DateTime D($08)
 
-      version := PDbfHdr(Header).VerDBF;
+      version := PDbfHdr(Header)^.VerDBF;
       case (version and $07) of
         $03:
           if LanguageID = 0 then
@@ -383,8 +384,8 @@ begin
         end;
       end;
       FFieldDefs.DbfVersion := FDbfVersion;
-      RecordSize := PDbfHdr(Header).RecordSize;
-      HeaderSize := PDbfHdr(Header).FullHdrSize;
+      RecordSize := PDbfHdr(Header)^.RecordSize;
+      HeaderSize := PDbfHdr(Header)^.FullHdrSize;
       if (HeaderSize = 0) or (RecordSize = 0) then
       begin
         HeaderSize := 0;
@@ -394,21 +395,21 @@ begin
         exit;
       end;
       // check if specified recordcount correct
-      if PDbfHdr(Header).RecordCount <> RecordCount then
+      if PDbfHdr(Header)^.RecordCount <> RecordCount then
       begin
         // This message was annoying
         // and was not understood by most people
         // ShowMessage('Invalid Record Count,'+^M+
         //             'RecordCount in Hdr : '+IntToStr(PDbfHdr(Header).RecordCount)+^M+
         //             'expected : '+IntToStr(RecordCount));
-        PDbfHdr(Header).RecordCount := RecordCount;
+        PDbfHdr(Header)^.RecordCount := RecordCount;
         WriteHeader;        // Correct it
       end;
       // determine codepage
       if FDbfVersion >= xBaseVII then
       begin
         // cache language str
-        LangStr := @PAfterHdrVII(PChar(Header) + SizeOf(rDbfHdr)).LanguageDriverName;
+        LangStr := @PAfterHdrVII(PChar(Header) + SizeOf(rDbfHdr))^.LanguageDriverName;
         // VdBase 7 Language strings
         //  'DBWIN...' -> Charset 1252 (ansi)
         //  'DB999...' -> Code page 999, 9 any digit
@@ -441,7 +442,7 @@ begin
         FFileLangId := GetLangId_From_LangName(LanguageStr);
       end else begin
         // FDbfVersion <= xBaseV
-        FFileLangId := PDbfHdr(Header).Language;
+        FFileLangId := PDbfHdr(Header)^.Language;
         FFileCodePage := LangId_To_CodePage[FFileLangId];
       end;
       // determine used codepage, if no codepage, then use default codepage
@@ -470,12 +471,12 @@ begin
         FMemoFile.Open;
         // set header blob flag corresponding to field list
         if FDbfVersion <> xFoxPro then
-          PDbfHdr(Header).VerDBF := PDbfHdr(Header).VerDBF or $80;
+          PDbfHdr(Header)^.VerDBF := PDbfHdr(Header)^.VerDBF or $80;
       end else
         if FDbfVersion <> xFoxPro then
-          PDbfHdr(Header).VerDBF := PDbfHdr(Header).VerDBF and $7F;
+          PDbfHdr(Header)^.VerDBF := PDbfHdr(Header)^.VerDBF and $7F;
       // check if mdx flagged
-      if (FDbfVersion <> xFoxPro) and (PDbfHdr(Header).MDXFlag <> 0) then
+      if (FDbfVersion <> xFoxPro) and (PDbfHdr(Header)^.MDXFlag <> 0) then
       begin
         // open mdx file if present
         lMdxFileName := ChangeFileExt(FileName, '.mdx');
@@ -506,7 +507,7 @@ begin
             FOnIndexMissing(deleteLink);
           // correct flag
           if deleteLink then
-            PDbfHdr(Header).MDXFlag := 0
+            PDbfHdr(Header)^.MDXFlag := 0
           else
             FForceClose := true;
         end;
@@ -530,7 +531,7 @@ begin
     for I := 0 to FIndexFiles.Count - 1 do
     begin
       TIndexFile(FIndexFiles.Items[I]).Close;
-      if FIndexFiles.Items[I] = FMdxFile then
+      if TIndexFile(FIndexFiles.Items[I]) = FMdxFile then
         MdxIndex := I;
     end;
     // free memo file if any
@@ -590,10 +591,10 @@ begin
       HeaderSize := SizeOf(rDbfHdr) + SizeOf(rAfterHdrVII);
       RecordSize := SizeOf(rFieldDescVII);
       FillChar(Header^, HeaderSize, #0);
-      PDbfHdr(Header).VerDBF := $04;
+      PDbfHdr(Header)^.VerDBF := $04;
       // write language string
       StrPLCopy(
-        @PAfterHdrVII(PChar(Header)+SizeOf(rDbfHdr)).LanguageDriverName[32],
+        @PAfterHdrVII(PChar(Header)+SizeOf(rDbfHdr))^.LanguageDriverName[32],
         ConstructLangName(FFileCodePage, lLocaleID, false), 
         63-32);
       lFieldDescPtr := @lFieldDescVII;
@@ -604,14 +605,14 @@ begin
       FillChar(Header^, HeaderSize, #0);
       if FDbfVersion = xFoxPro then
       begin
-        PDbfHdr(Header).VerDBF := $02
+        PDbfHdr(Header)^.VerDBF := $02
       end else
-        PDbfHdr(Header).VerDBF := $03;
+        PDbfHdr(Header)^.VerDBF := $03;
       // standard language WE, dBase III no language support
       if FDbfVersion = xBaseIII then
-        PDbfHdr(Header).Language := 0
+        PDbfHdr(Header)^.Language := 0
       else
-        PDbfHdr(Header).Language := FFileLangId;
+        PDbfHdr(Header)^.Language := FFileLangId;
       // init field ptr
       lFieldDescPtr := @lFieldDescIII;
     end;
@@ -666,10 +667,10 @@ begin
         // TODO: bug-endianness
         if FDbfVersion = xFoxPro then
           lFieldDescIII.FieldOffset := lFieldOffset;
-        if (PDbfHdr(Header).VerDBF = $02) and (lFieldDef.NativeFieldType in ['0', 'Y', 'T', 'O', '+']) then
-          PDbfHdr(Header).VerDBF := $30;
-        if (PDbfHdr(Header).VerDBF = $30) and (lFieldDef.NativeFieldType = '+') then
-          PDbfHdr(Header).VerDBF := $31;
+        if (PDbfHdr(Header)^.VerDBF = $02) and (lFieldDef.NativeFieldType in ['0', 'Y', 'T', 'O', '+']) then
+          PDbfHdr(Header)^.VerDBF := $30;
+        if (PDbfHdr(Header)^.VerDBF = $30) and (lFieldDef.NativeFieldType = '+') then
+          PDbfHdr(Header)^.VerDBF := $31;
       end;
 
       // update our field list
@@ -691,32 +692,32 @@ begin
     if lHasBlob then
     begin
       if FDbfVersion = xBaseIII then
-        PDbfHdr(Header).VerDBF := PDbfHdr(Header).VerDBF or $80
+        PDbfHdr(Header)^.VerDBF := PDbfHdr(Header)^.VerDBF or $80
       else
       if FDbfVersion = xFoxPro then
       begin
-        if PDbfHdr(Header).VerDBF = $02 then
-          PDbfHdr(Header).VerDBF := $F5;
+        if PDbfHdr(Header)^.VerDBF = $02 then
+          PDbfHdr(Header)^.VerDBF := $F5;
       end else
-        PDbfHdr(Header).VerDBF := PDbfHdr(Header).VerDBF or $88;
+        PDbfHdr(Header)^.VerDBF := PDbfHdr(Header)^.VerDBF or $88;
     end;
 
     // update header
-    PDbfHdr(Header).RecordSize := lFieldOffset;
-    PDbfHdr(Header).FullHdrSize := HeaderSize + RecordSize * FieldDefs.Count + 1;
+    PDbfHdr(Header)^.RecordSize := lFieldOffset;
+    PDbfHdr(Header)^.FullHdrSize := HeaderSize + RecordSize * FieldDefs.Count + 1;
     // add empty "back-link" info, whatever it is: 
     { A 263-byte range that contains the backlink, which is the relative path of 
       an associated database (.dbc) file, information. If the first byte is 0x00, 
       the file is not associated with a database. Therefore, database files always 
       contain 0x00. }
     if FDbfVersion = xFoxPro then
-      Inc(PDbfHdr(Header).FullHdrSize, 263);
+      Inc(PDbfHdr(Header)^.FullHdrSize, 263);
 
     // write dbf header to disk
     inherited WriteHeader;
   finally
-    RecordSize := PDbfHdr(Header).RecordSize;
-    HeaderSize := PDbfHdr(Header).FullHdrSize;
+    RecordSize := PDbfHdr(Header)^.RecordSize;
+    HeaderSize := PDbfHdr(Header)^.FullHdrSize;
 
     // write full header to disk (dbf+fields)
     WriteHeader;
@@ -741,14 +742,11 @@ end;
 function TDbfFile.HasBlob: Boolean;
 var
   I: Integer;
-  HasBlob: Boolean;
 begin
-  HasBlob := false;
+  Result := false;
   for I := 0 to FFieldDefs.Count-1 do
-  begin
-    if FFieldDefs.Items[I].IsBlob then HasBlob := true;
-  end;
-  Result := HasBlob;
+    if FFieldDefs.Items[I].IsBlob then 
+      Result := true;
 end;
 
 function TDbfFile.GetMemoExt: string;
@@ -764,7 +762,7 @@ begin
   // make recordcount zero
   RecordCount := 0;
   // update recordcount
-  PDbfHdr(Header).RecordCount := RecordCount;
+  PDbfHdr(Header)^.RecordCount := RecordCount;
   // update disk header
   WriteHeader;
   // update indexes
@@ -783,9 +781,9 @@ begin
   //FillHeader(0);
   lDataHdr := PDbfHdr(Header);
   GetLocalTime(SystemTime);
-  lDataHdr.Year := SystemTime.wYear - 1900;
-  lDataHdr.Month := SystemTime.wMonth;
-  lDataHdr.Day := SystemTime.wDay;
+  lDataHdr^.Year := SystemTime.wYear - 1900;
+  lDataHdr^.Month := SystemTime.wMonth;
+  lDataHdr^.Day := SystemTime.wDay;
 //  lDataHdr.RecordCount := RecordCount;
   inherited WriteHeader;
 
@@ -825,7 +823,7 @@ begin
   FLockField := nil;
   FNullField := nil;
   FAutoIncPresent := false;
-  lColumnCount := (PDbfHdr(Header).FullHdrSize - lHeaderSize) div lFieldSize;
+  lColumnCount := (PDbfHdr(Header)^.FullHdrSize - lHeaderSize) div lFieldSize;
   lFieldOffset := 1;
   lAutoInc := 0;
   I := 1;
@@ -929,7 +927,7 @@ begin
 
     // dBase 7 -> read field properties, test if enough space, maybe no header
     if (FDbfVersion = xBaseVII) and (lPropHdrOffset + Sizeof(lFieldPropsHdr) <
-            PDbfHdr(Header).FullHdrSize) then
+            PDbfHdr(Header)^.FullHdrSize) then
     begin
       // read in field properties header
       ReadBlock(@lFieldPropsHdr, SizeOf(lFieldPropsHdr), lPropHdrOffset);
@@ -979,20 +977,20 @@ begin
     end;
 
   finally
-    HeaderSize := PDbfHdr(Header).FullHdrSize;
-    RecordSize := PDbfHdr(Header).RecordSize;
+    HeaderSize := PDbfHdr(Header)^.FullHdrSize;
+    RecordSize := PDbfHdr(Header)^.RecordSize;
   end;
 end;
 
 function TDbfFile.GetLanguageId: Integer;
 begin
-  Result := PDbfHdr(Header).Language;
+  Result := PDbfHdr(Header)^.Language;
 end;
 
 function TDbfFile.GetLanguageStr: String;
 begin
   if FDbfVersion >= xBaseVII then
-    Result := PAfterHdrVII(PChar(Header) + SizeOf(rDbfHdr)).LanguageDriverName;
+    Result := PAfterHdrVII(PChar(Header) + SizeOf(rDbfHdr))^.LanguageDriverName;
 end;
 
 {
@@ -1068,6 +1066,54 @@ begin
   end;
 end;
 
+procedure TDbfFile.Rename(DestFileName: string; NewIndexFileNames: TStrings; DeleteFiles: boolean);
+var
+  lIndexFileNames: TStrings;
+  lIndexFile: TIndexFile;
+  NewBaseName: string;
+  I: integer;
+begin
+  // get memory for index file list
+  lIndexFileNames := TStringList.Create;
+  try 
+    // save index filenames
+    for I := 0 to FIndexFiles.Count - 1 do
+    begin
+      lIndexFile := TIndexFile(IndexFiles[I]);
+      lIndexFileNames.Add(lIndexFile.FileName);
+      // prepare changing the dbf file name, needs changes in index files
+      lIndexFile.PrepareRename(NewIndexFileNames[I]);
+    end;
+
+    // close file
+    Close;
+
+    if DeleteFiles then
+    begin
+      SysUtils.DeleteFile(DestFileName);
+      SysUtils.DeleteFile(ChangeFileExt(DestFileName, GetMemoExt));
+    end else begin
+      I := 0;
+      FindNextName(DestFileName, NewBaseName, I);
+      SysUtils.RenameFile(DestFileName, NewBaseName);
+      SysUtils.RenameFile(ChangeFileExt(DestFileName, GetMemoExt), 
+        ChangeFileExt(NewBaseName, GetMemoExt));
+    end;
+    // delete old index files
+    for I := 0 to NewIndexFileNames.Count - 1 do
+      SysUtils.DeleteFile(NewIndexFileNames.Strings[I]);
+    // rename the new dbf files
+    SysUtils.RenameFile(FileName, DestFileName);
+    SysUtils.RenameFile(ChangeFileExt(FileName, GetMemoExt), 
+      ChangeFileExt(DestFileName, GetMemoExt));
+    // rename new index files
+    for I := 0 to NewIndexFileNames.Count - 1 do
+      SysUtils.RenameFile(lIndexFileNames.Strings[I], NewIndexFileNames.Strings[I]);
+  finally
+    lIndexFileNames.Free;
+  end;  
+end;
+
 type
   TRestructFieldInfo = record
     SourceOffset: Integer;
@@ -1082,8 +1128,8 @@ var
   TempIndexFile: TIndexFile;
   DestFieldDefs: TDbfFieldDefs;
   TempDstDef, TempSrcDef: TDbfFieldDef;
-  OldIndexFiles, NewIndexFiles: TStrings;
-  IndexName, NewBaseName, OldBaseName: string;
+  OldIndexFiles: TStrings;
+  IndexName, NewBaseName: string;
   I, lRecNo, lFieldNo, lFieldSize, lBlobRecNo, lWRecNo, srcOffset, dstOffset: Integer;
   pBuff, pDestBuff: PChar;
   pBlobRecNoBuff: array[1..11] of Char;
@@ -1100,7 +1146,6 @@ begin
   // make up some temporary filenames
   lRecNo := 0;
   FindNextName(FileName, NewBaseName, lRecNo);
-  FindNextName(FileName, OldBaseName, lRecNo);
 
   // select final field definition list
   if DbfFieldDefs = nil then
@@ -1197,12 +1242,10 @@ begin
   end;
   TempIndexDef.Free;
 
-  // get memory for index file list
-  OldIndexFiles := TStringList.Create;
-  NewIndexFiles := TStringList.Create;
   // get memory for record buffers
   GetMem(pBuff, RecordSize);
   BlobStream := TMemoryStream.Create;
+  OldIndexFiles := TStringList.Create;
   // if restructure, we need memory for dest buffer, otherwise use source
   if DbfFieldDefs = nil then
     pDestBuff := pBuff
@@ -1280,50 +1323,28 @@ begin
 
     // save index filenames
     for I := 0 to FIndexFiles.Count - 1 do
-    begin
-      OldIndexFiles.Add(TIndexFile(FIndexFiles.Items[I]).FileName);
-      NewIndexFiles.Add(TIndexFile(DestDbfFile.IndexFiles[I]).FileName);
-    end;
+      OldIndexFiles.Add(TIndexFile(IndexFiles[I]).FileName);
 
-    // close temp file
-    DestDbfFile.Close;
     // close dbf
     Close;
 
     // if restructure -> rename the old dbf files
     // if pack only -> delete the old dbf files
-    if Pack and (DbfFieldDefs = nil) then
-    begin
-      SysUtils.DeleteFile(FileName);
-      SysUtils.DeleteFile(ChangeFileExt(FileName, GetMemoExt));
-    end else begin
-      SysUtils.RenameFile(FileName,                        OldBaseName);
-      SysUtils.RenameFile(ChangeFileExt(FileName, GetMemoExt), ChangeFileExt(OldBaseName, GetMemoExt));
-    end;
-    // delete old index files
-    for I := 0 to OldIndexFiles.Count - 1 do
-      SysUtils.DeleteFile(OldIndexFiles.Strings[I]);
-    // rename the new dbf files
-    SysUtils.RenameFile(NewBaseName,                        FileName);
-    SysUtils.RenameFile(ChangeFileExt(NewBaseName, GetMemoExt), ChangeFileExt(FileName, GetMemoExt));
-    // rename new index files
-    for I := 0 to OldIndexFiles.Count - 1 do
-      SysUtils.RenameFile(NewIndexFiles.Strings[I], OldIndexFiles.Strings[I]);
-
+    DestDbfFile.Rename(FileName, OldIndexFiles, DbfFieldDefs = nil);
+    
     // we have to reinit fielddefs if restructured
     Open;
 
     // crop deleted records
     RecordCount := lWRecNo - 1;
     // update date/time stamp, recordcount
-    PDbfHdr(Header).RecordCount := RecordCount;
+    PDbfHdr(Header)^.RecordCount := RecordCount;
     WriteHeader;
   finally
     // close temporary file
     FreeAndNil(DestDbfFile);
     // free mem
-    OldIndexFiles.Free;
-    NewIndexFiles.Free;
+    FreeAndNil(OldIndexFiles);
     FreeMem(pBuff);
     FreeAndNil(BlobStream);
     if DbfFieldDefs <> nil then
@@ -2039,7 +2060,7 @@ begin
         end;
         // if mdx file just created, write changes to dbf header
         // set MDX flag to true
-        PDbfHdr(Header).MDXFlag := 1;
+        PDbfHdr(Header)^.MDXFlag := 1;
         WriteHeader;
       except
         // :-( need to undo 'damage'....
@@ -2223,7 +2244,7 @@ begin
         // erase file
         Sysutils.DeleteFile(lFileName);
         // clear mdx flag
-        PDbfHdr(Header).MDXFlag := 0;
+        PDbfHdr(Header)^.MDXFlag := 0;
         WriteHeader;
       end;
     end else begin
@@ -2318,7 +2339,7 @@ begin
   // read current header
   ReadHeader;
   // increase current record count
-  Inc(PDbfHdr(Header).RecordCount);
+  Inc(PDbfHdr(Header)^.RecordCount);
   // write header to disk
   WriteHeader;
   // done with header
@@ -2352,7 +2373,7 @@ begin
     // rolled back
     LockPage(0, true);
     ReadHeader;
-    Dec(PDbfHdr(Header).RecordCount);
+    Dec(PDbfHdr(Header)^.RecordCount);
     WriteHeader;
     UnlockPage(0);
     // roll back indexes too

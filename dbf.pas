@@ -232,11 +232,11 @@ type
     function  GetBookmarkFlag(Buffer: PChar): TBookmarkFlag; override; {virtual abstract}
     function  GetRecord(Buffer: PChar; GetMode: TGetMode; DoCheck: Boolean): TGetResult; override; {virtual abstract}
     function  GetRecordSize: Word; override; {virtual abstract}
-    procedure InternalAddRecord(Buffer: Pointer; Append: Boolean); override; {virtual abstract}
+    procedure InternalAddRecord(Buffer: Pointer; AAppend: Boolean); override; {virtual abstract}
     procedure InternalClose; override; {virtual abstract}
     procedure InternalDelete; override; {virtual abstract}
     procedure InternalFirst; override; {virtual abstract}
-    procedure InternalGotoBookmark(Bookmark: Pointer); override; {virtual abstract}
+    procedure InternalGotoBookmark(ABookmark: Pointer); override; {virtual abstract}
     procedure InternalHandleException; override; {virtual abstract}
     procedure InternalInitFieldDefs; override; {virtual abstract}
     procedure InternalInitRecord(Buffer: PChar); override; {virtual abstract}
@@ -309,9 +309,9 @@ type
 
     // index support (use same syntax as ttable but is not related)
 {$ifdef SUPPORT_DEFAULT_PARAMS}
-    procedure AddIndex(const AIndexName, Fields: String; Options: TIndexOptions; const DescFields: String='');
+    procedure AddIndex(const AIndexName, AFields: String; Options: TIndexOptions; const DescFields: String='');
 {$else}
-    procedure AddIndex(const AIndexName, Fields: String; Options: TIndexOptions);
+    procedure AddIndex(const AIndexName, AFields: String; Options: TIndexOptions);
 {$endif}
     procedure RegenerateIndexes;
 
@@ -548,7 +548,7 @@ begin
     Translate(true);
     Dbf.FDbfFile.MemoFile.WriteMemo(FMemoRecNo, FReadSize, Self);
     Dbf.FDbfFile.SetFieldData(FBlobField.FieldNo-1, ftInteger, @FMemoRecNo,
-      @pDbfRecord(TDbf(FBlobField.DataSet).ActiveBuffer).DeletedFlag);
+      @pDbfRecord(TDbf(FBlobField.DataSet).ActiveBuffer)^.DeletedFlag);
     FDirty := false;
   end;
 end;
@@ -676,14 +676,14 @@ function TDbf.GetCurrentBuffer: PChar;
 begin
   case State of
     dsFilter:     Result := FFilterBuffer;
-    dsCalcFields: Result := @(pDbfRecord(CalcBuffer).DeletedFlag);
+    dsCalcFields: Result := @(pDbfRecord(CalcBuffer)^.DeletedFlag);
 //    dsSetKey:     Result := FKeyBuffer;     // TO BE Implemented
   else
     if IsEmpty then
     begin
       Result := nil;
     end else begin
-      Result := @(pDbfRecord(ActiveBuffer).DeletedFlag);
+      Result := @(pDbfRecord(ActiveBuffer)^.DeletedFlag);
     end;
   end;
 end;
@@ -811,8 +811,8 @@ begin
       begin
         Result := grError;
       end else begin
-        FDbfFile.ReadRecord(lPhysicalRecNo, @pRecord.DeletedFlag);
-        acceptable := (FShowDeleted or (pRecord.DeletedFlag <> '*'))
+        FDbfFile.ReadRecord(lPhysicalRecNo, @pRecord^.DeletedFlag);
+        acceptable := (FShowDeleted or (pRecord^.DeletedFlag <> '*'))
       end;
     end;
 
@@ -820,7 +820,7 @@ begin
     begin
       if Filtered or FFindRecordFilter then
       begin
-        FFilterBuffer := @pRecord.DeletedFlag;
+        FFilterBuffer := @pRecord^.DeletedFlag;
         SaveState := SetTempState(dsFilter);
         DoFilterRecord(acceptable);
         RestoreState(SaveState);
@@ -833,12 +833,12 @@ begin
 
   if (Result = grOK) and not FFindRecordFilter then
   begin
-    pRecord.BookmarkData.PhysicalRecNo := FCursor.PhysicalRecNo;
-    pRecord.BookmarkFlag := bfCurrent;
-    pRecord.SequentialRecNo := FCursor.SequentialRecNo;
+    pRecord^.BookmarkData.PhysicalRecNo := FCursor.PhysicalRecNo;
+    pRecord^.BookmarkFlag := bfCurrent;
+    pRecord^.SequentialRecNo := FCursor.SequentialRecNo;
     GetCalcFields(Buffer);
   end else begin
-    pRecord.BookmarkData.PhysicalRecNo := -1;
+    pRecord^.BookmarkData.PhysicalRecNo := -1;
   end;
 end;
 
@@ -847,7 +847,7 @@ begin
   Result := FDbfFile.RecordSize;
 end;
 
-procedure TDbf.InternalAddRecord(Buffer: Pointer; Append: Boolean); {override virtual abstract from TDataset}
+procedure TDbf.InternalAddRecord(Buffer: Pointer; AAppend: Boolean); {override virtual abstract from TDataset}
   // this function is called from TDataSet.InsertRecord and TDataSet.AppendRecord
   // goal: add record with Edit...Set Fields...Post all in one step
 var
@@ -859,7 +859,7 @@ begin
 
   // we can not insert records in DBF files, only append
   // ignore Append parameter
-  newRecord := FDbfFile.Insert(@pRecord.DeletedFlag);
+  newRecord := FDbfFile.Insert(@pRecord^.DeletedFlag);
   if newRecord > 0 then
     FCursor.PhysicalRecNo := newRecord;
 
@@ -898,8 +898,8 @@ begin
   if FBlobStreams <> nil then
   begin
     for I := 0 to Pred(FieldCount) do
-      if FBlobStreams[I] <> nil then
-        FBlobStreams[I].Free;
+      if FBlobStreams^[I] <> nil then
+        FBlobStreams^[I].Free;
     FreeMemAndNil(Pointer(FBlobStreams));
   end;
   FreeRecordBuffer(FTempBuffer);
@@ -924,8 +924,8 @@ var
 begin
   // cancel blobs
   for I := 0 to Pred(FieldCount) do
-    if Assigned(FBlobStreams[I]) then
-      FBlobStreams[I].Cancel;
+    if Assigned(FBlobStreams^[I]) then
+      FBlobStreams^[I].Cancel;
   // if we have locked a record, unlock it
   if FEditingRecNo >= 0 then
   begin
@@ -943,9 +943,9 @@ begin
   // get record pointer
   lRecord := pDbfRecord(ActiveBuffer);
   // flag we deleted this record
-  lRecord.DeletedFlag := '*';
+  lRecord^.DeletedFlag := '*';
   // notify indexes this record is deleted
-  FDbfFile.RecordDeleted(FEditingRecNo, @lRecord.DeletedFlag);
+  FDbfFile.RecordDeleted(FEditingRecNo, @lRecord^.DeletedFlag);
   // done!
   Post;
 end;
@@ -955,9 +955,9 @@ begin
   FCursor.First;
 end;
 
-procedure TDbf.InternalGotoBookmark(Bookmark: Pointer); {override virtual abstract from TDataset}
+procedure TDbf.InternalGotoBookmark(ABookmark: Pointer); {override virtual abstract from TDataset}
 begin
-  with PBookmarkData(Bookmark)^ do
+  with PBookmarkData(ABookmark)^ do
   begin
     if (PhysicalRecNo = 0) then begin
       First;
@@ -1078,11 +1078,11 @@ var
   pRecord: pDbfRecord;
 begin
   pRecord := pDbfRecord(Buffer);
-  pRecord.BookmarkData.PhysicalRecNo := 0;
-  pRecord.BookmarkFlag := bfCurrent;
-  pRecord.SequentialRecNo := 0;
+  pRecord^.BookmarkData.PhysicalRecNo := 0;
+  pRecord^.BookmarkFlag := bfCurrent;
+  pRecord^.SequentialRecNo := 0;
 // Init Record with zero and set autoinc field with next value
-  FDbfFile.InitRecord(@pRecord.DeletedFlag);
+  FDbfFile.InitRecord(@pRecord^.DeletedFlag);
 end;
 
 procedure TDbf.InternalLast; {override virtual abstract from TDataset}
@@ -1092,17 +1092,17 @@ end;
 
 procedure TDbf.DetermineTranslationMode;
 var
-  codePage: Cardinal;
+  lCodePage: Cardinal;
 begin
-  codePage := FDbfFile.UseCodePage;
-  if codePage = GetACP then
+  lCodePage := FDbfFile.UseCodePage;
+  if lCodePage = GetACP then
     FTranslationMode := tmNoneNeeded
   else
-  if codePage = GetOEMCP then
+  if lCodePage = GetOEMCP then
     FTranslationMode := tmSimple
   // check if this code page, although non default, is installed
   else
-  if DbfGlobals.CodePageInstalled(codePage) then
+  if DbfGlobals.CodePageInstalled(lCodePage) then
     FTranslationMode := tmAdvanced
   else
     FTranslationMode := tmNoneAvailable;
@@ -1187,7 +1187,7 @@ begin
   // create array of blobstreams to store memo's in. each field is a possible blob
   GetMem(FBlobStreams, FieldCount * SizeOf(TDbfBlobStream));
   for I := 0 to Pred(FieldCount) do
-    FBlobStreams[I] := nil;
+    FBlobStreams^[I] := nil;
 
   // check codepage settings
   DetermineTranslationMode;
@@ -1283,10 +1283,10 @@ begin
   // reread blobs, execute cancel -> clears remembered memo pageno,
   // causing it to reread the memo contents
   for I := 0 to Pred(FieldCount) do
-    if Assigned(FBlobStreams[I]) then
-      FBlobStreams[I].Cancel;
+    if Assigned(FBlobStreams^[I]) then
+      FBlobStreams^[I].Cancel;
   // try to lock this record
-  FDbfFile.LockRecord(FEditingRecNo, @pDbfRecord(ActiveBuffer).DeletedFlag);
+  FDbfFile.LockRecord(FEditingRecNo, @pDbfRecord(ActiveBuffer)^.DeletedFlag);
   // succeeded!
 end;
 
@@ -1308,17 +1308,17 @@ begin
   pRecord := pDbfRecord(ActiveBuffer);
   // commit blobs
   for I := 0 to Pred(FieldCount) do
-    if Assigned(FBlobStreams[I]) then
-      FBlobStreams[I].Commit;
+    if Assigned(FBlobStreams^[I]) then
+      FBlobStreams^[I].Commit;
   if State = dsEdit then
   begin
     // write changes
-    FDbfFile.UnlockRecord(FEditingRecNo, @pRecord.DeletedFlag);
+    FDbfFile.UnlockRecord(FEditingRecNo, @pRecord^.DeletedFlag);
     // not editing anymore
     FEditingRecNo := -1;
   end else begin
     // insert
-    newRecord := FDbfFile.Insert(@pRecord.DeletedFlag);
+    newRecord := FDbfFile.Insert(@pRecord^.DeletedFlag);
     if newRecord > 0 then
       FCursor.PhysicalRecNo := newRecord;
   end;
@@ -1395,7 +1395,7 @@ procedure TDbf.CreateTableEx(DbfFieldDefs: TDbfFieldDefs);
 var
   I: Integer;
   lIndex: TDbfIndexDef;
-  IndexName: string;
+  lIndexName: string;
   tempFieldDefs: Boolean;
 begin
   CheckInactive;
@@ -1447,8 +1447,8 @@ begin
       for I := 0 to FIndexDefs.Count-1 do
       begin
         lIndex := FIndexDefs.Items[I];
-        IndexName := ParseIndexName(lIndex.IndexFile);
-        FDbfFile.OpenIndex(IndexName, lIndex.SortField, true, lIndex.Options);
+        lIndexName := ParseIndexName(lIndex.IndexFile);
+        FDbfFile.OpenIndex(lIndexName, lIndex.SortField, true, lIndex.Options);
       end;
     except
       // dbf file created?
@@ -1826,9 +1826,9 @@ begin
 {$endif}      
   // already created a `placeholder' blob for this field?
   MemoFieldNo := Field.FieldNo - 1;
-  if FBlobStreams[MemoFieldNo] = nil then
-    FBlobStreams[MemoFieldNo] := TDbfBlobStream.Create(Field);
-  lBlob := FBlobStreams[MemoFieldNo].AddReference;
+  if FBlobStreams^[MemoFieldNo] = nil then
+    FBlobStreams^[MemoFieldNo] := TDbfBlobStream.Create(Field);
+  lBlob := FBlobStreams^[MemoFieldNo].AddReference;
   // update pageno of blob <-> location where to read/write in memofile
   if FDbfFile.GetFieldData(Field.FieldNo-1, ftInteger, GetCurrentBuffer, @MemoPageNo) then
   begin
@@ -1855,7 +1855,7 @@ begin
     lBlob.MemoRecNo := 0;
   end;
   { this is a hack, we actually need to know per user who's modifying, and who is not }
-  { Mode is more like: the mode of the last "creation" 
+  { Mode is more like: the mode of the last "creation" }
   { if create/free is nested, then everything will be alright, i think ;-) }
   lBlob.Mode := Mode;
   { this is a hack: we actually need to know per user what it's position is }
@@ -1929,11 +1929,11 @@ end;
 
 procedure TDbf.ClearCalcFields(Buffer: PChar);
 var
-  RealBuffer, CalcBuffer: PChar;
+  lRealBuffer, lCalcBuffer: PChar;
 begin
-  RealBuffer := @pDbfRecord(Buffer).DeletedFlag;
-  CalcBuffer := RealBuffer + FDbfFile.RecordSize;
-  FillChar(CalcBuffer^, CalcFieldsSize, 0);
+  lRealBuffer := @pDbfRecord(Buffer)^.DeletedFlag;
+  lCalcBuffer := lRealBuffer + FDbfFile.RecordSize;
+  FillChar(lCalcBuffer^, CalcFieldsSize, 0);
 end;
 
 procedure TDbf.InternalSetToRecord(Buffer: PChar); {override virtual abstract from TDataset}
@@ -1943,11 +1943,11 @@ begin
   if Buffer <> nil then
   begin
     pRecord := pDbfRecord(Buffer);
-    if pRecord.BookmarkFlag = bfInserted then
+    if pRecord^.BookmarkFlag = bfInserted then
     begin
       // do what ???
     end else begin
-      FCursor.SequentialRecNo := pRecord.SequentialRecNo;
+      FCursor.SequentialRecNo := pRecord^.SequentialRecNo;
     end;
   end;
 end;
@@ -1980,11 +1980,11 @@ begin
   if (Field.FieldNo >= 0) then
   begin
     pRecord := pDbfRecord(ActiveBuffer);
-    dst := @pRecord.DeletedFlag;
+    dst := @pRecord^.DeletedFlag;
     FDbfFile.SetFieldData(Field.FieldNo - 1,Field.DataType,Buffer,Dst);
   end else begin    { ***** fkCalculated, fkLookup ***** }
     pRecord := pDbfRecord(CalcBuffer);
-    Dst := @pRecord.DeletedFlag;
+    Dst := @pRecord^.DeletedFlag;
     Inc(PChar(Dst), RecordSize + Field.Offset);
 //    Boolean(dst^) := LongBool(Buffer);
 //    if Boolean(dst^) then begin
@@ -2156,7 +2156,7 @@ begin
   begin
     FAbsolutePath := IncludeTrailingPathDelimiter(Value);
   end else begin
-    FAbsolutePath := GetCompletePath(DbfBasePath, FRelativePath);
+    FAbsolutePath := GetCompletePath(DbfBasePath(), FRelativePath);
   end;
 end;
 
@@ -2252,16 +2252,16 @@ begin
 end;
 
 {$ifdef SUPPORT_DEFAULT_PARAMS}
-procedure TDbf.AddIndex(const AIndexName, Fields: String; Options: TIndexOptions; const DescFields: String='');
+procedure TDbf.AddIndex(const AIndexName, AFields: String; Options: TIndexOptions; const DescFields: String='');
 {$else}
-procedure TDbf.AddIndex(const AIndexName, Fields: String; Options: TIndexOptions);
+procedure TDbf.AddIndex(const AIndexName, AFields: String; Options: TIndexOptions);
 {$endif}
 var
   lIndexFileName: string;
 begin
   CheckActive;
   lIndexFileName := ParseIndexName(AIndexName);
-  FDbfFile.OpenIndex(lIndexFileName, Fields, true, Options);
+  FDbfFile.OpenIndex(lIndexFileName, AFields, true, Options);
 
   // refresh our indexdefs
   InternalInitFieldDefs;
@@ -2269,7 +2269,7 @@ end;
 
 procedure TDbf.SetIndexName(AIndexName: string);
 var
-  RecNo: Integer;
+  lRecNo: Integer;
 begin
   FIndexName := AIndexName;
   if FDbfFile = nil then
@@ -2278,13 +2278,13 @@ begin
   // get accompanying index file
   AIndexName := ParseIndexName(Trim(AIndexName));
   FIndexFile := FDbfFile.GetIndexByName(AIndexName);
-  // store current recno
+  // store current lRecNo
   if FCursor = nil then
   begin
-    RecNo := 1;
+    lRecNo := 1;
   end else begin
     UpdateCursorPos;
-    RecNo := FCursor.PhysicalRecNo;
+    lRecNo := FCursor.PhysicalRecNo;
   end;
   // select new cursor
   FreeAndNil(FCursor);
@@ -2299,8 +2299,8 @@ begin
     FCursor := TDbfCursor.Create(FDbfFile);
     FIndexName := EmptyStr;
   end;
-  // reset previous recno
-  FCursor.PhysicalRecNo := RecNo;
+  // reset previous lRecNo
+  FCursor.PhysicalRecNo := lRecNo;
   // refresh records
   if State = dsBrowse then
     Resync([]);
@@ -2876,7 +2876,7 @@ end;
 
 function TDbfMasterLink.GetFieldsVal: PChar;
 begin
-  Result := FParser.ExtractFromBuffer(@pDbfRecord(TDbf(DataSet).ActiveBuffer).DeletedFlag);
+  Result := FParser.ExtractFromBuffer(@pDbfRecord(TDbf(DataSet).ActiveBuffer)^.DeletedFlag);
 end;
 
 ////////////////////////////////////////////////////////////////////////////

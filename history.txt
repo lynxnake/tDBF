@@ -36,6 +36,9 @@ BUGS & WARNINGS
 V6.4.2
 
 - fixed: overflow in storing float field data (large negative number) (thx madruga)
+- fixed: restructure/pack create MDX database desktop compatible;
+    write db filename in mdx header (rep by rusmonk)
+- fixed: freepascal objfpc mode compatibility fixes (still needs some @-ies)
 
 
 ------------------------
