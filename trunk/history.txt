@@ -41,6 +41,8 @@ V6.3.9
 - fixed: index findkey finds last, deleted key in index page
 - fixed: opening dbf file with numeric integer field misreads numbers
 - fixed: storage of foxpro binary integer field
+- fixed: only support 65535 length character fields for foxpro
+    (otherwise ms excel generated files can not be read)
 
 
 ------------------------

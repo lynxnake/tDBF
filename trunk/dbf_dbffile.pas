@@ -632,10 +632,10 @@ begin
       // apply field transformation tricks
       lSize := lFieldDef.Size;
       lPrec := lFieldDef.Precision;
-      if lFieldDef.NativeFieldType = 'C' then
+      if (FDbfVersion = xFoxPro) and (lFieldDef.NativeFieldType = 'C') then
       begin
-        lPrec := lSize div 256;
-        lSize := lSize mod 256;
+        lPrec := lSize shr 8;
+        lSize := lSize and $FF;
       end;
 
       // update temp field props
@@ -842,7 +842,7 @@ begin
       end;
 
       // apply field transformation tricks
-      if lNativeFieldType = 'C' then
+      if (lNativeFieldType = 'C') and (FDbfVersion = xFoxPro) then
       begin
         lSize := lSize + lPrec shl 8;
         lPrec := 0;
