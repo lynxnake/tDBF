@@ -38,6 +38,8 @@ BUGS & WARNINGS
 V6.3.6
 
 - fixed: crash when optimizing expression with constants
+- fixed: expression parser to use variable-length string variables for non-raw
+    fields
 
 
 ------------------------
