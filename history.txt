@@ -41,6 +41,7 @@ V6.3.6
 - fixed: expression parser to use variable-length string variables for non-raw
     fields
 - added: support for opening (memory) streams as file
+- fixed: numeric mdx compatibility bug; bytes instead of decimals (rep by rpoverdijk)
 
 
 ------------------------
