@@ -149,9 +149,6 @@ type
     function GetSequentialRecordCount: Integer; override;
     function GetSequentialRecNo: Integer; override;
     procedure SetSequentialRecNo(RecNo: Integer); override;
-
-    procedure GotoBookmark(Bookmark: rBookmarkData); override;
-    function GetBookMark: rBookmarkData; override;
   end;
 
 //====================================================================
@@ -1363,7 +1360,7 @@ begin
           if FDbfVersion <> xFoxPro then
           begin
             Result := PDWord(Src)^ <> 0;
-            if Result then
+            if Result and (Dst <> nil) then
             begin
               PInteger(Dst)^ := SwapInt(PInteger(Src)^);
               if Result then
@@ -1371,14 +1368,15 @@ begin
             end;
           end else begin
             Result := true;
-            PInteger(Dst)^ := PInteger(Src)^;
+            if Dst <> nil then
+              PInteger(Dst)^ := PInteger(Src)^;
           end;
         end;
       'O':
         begin
 {$ifdef SUPPORT_INT64}
           Result := (PInt64(Src)^ <> 0);
-          if Result then
+          if Result and (Dst <> nil) then
           begin
             SwapInt64(Src, Dst);
             if PInt64(Dst)^ > 0 then
@@ -1391,7 +1389,7 @@ begin
       '@':
         begin
           Result := (PInteger(Src)^ <> 0) and (PInteger(PChar(Src)+4)^ <> 0);
-          if Result then
+          if Result and (Dst <> nil) then
           begin
             SwapInt64(Src, Dst);
             if FDateTimeHandling = dtBDETimeStamp then
@@ -1405,7 +1403,7 @@ begin
         begin
           // all binary zeroes -> empty datetime
           Result := (PInteger(Src)^ <> 0) or (PInteger(PChar(Src)+4)^ <> 0);
-          if Result then
+          if Result and (Dst <> nil) then
           begin
             timeStamp.Date := PInteger(Src)^ - 1721425;
             timeStamp.Time := PInteger(PChar(Src)+4)^;
@@ -1417,15 +1415,18 @@ begin
         begin
 {$ifdef SUPPORT_INT64}
           Result := true;
-          SwapInt64(Src, Dst);
-          case DataType of
-            ftCurrency:
-            begin
-              PDouble(Dst)^ := PInt64(Src)^ / 10000.0;
-            end;
-            ftBCD:
-            begin
-              PCurrency(Dst)^ := PCurrency(Src)^;
+          if Dst <> nil then
+          begin
+            SwapInt64(Src, Dst);
+            case DataType of
+              ftCurrency:
+              begin
+                PDouble(Dst)^ := PInt64(Src)^ / 10000.0;
+              end;
+              ftBCD:
+              begin
+                PCurrency(Dst)^ := PCurrency(Src)^;
+              end;
             end;
           end;
 {$endif}
@@ -2398,11 +2399,6 @@ begin
   FPhysicalRecNo := RecNo;
 end;
 
-procedure TDbfCursor.GotoBookmark(Bookmark: rBookmarkData);
-begin
-  FPhysicalRecNo := Bookmark{.RecNo};
-end;
-
 // codepage enumeration procedure
 var
   TempCodePageList: TList;
@@ -2416,12 +2412,6 @@ begin
 
   // continue enumeration
   Result := 1;
-end;
-
-function TDbfCursor.GetBookMark: rBookmarkData; {override;}
-begin
-//  Result.IndexBookmark := -1;
-  Result{.RecNo} := FPhysicalRecNo;
 end;
 
 //====================================================================

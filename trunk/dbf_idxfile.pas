@@ -156,7 +156,6 @@ type
     procedure RecalcWeight;
     procedure UpdateWeight;
     procedure Flush;
-    procedure DisableRange;
 
     property Key: PChar read GetKeyData;
     property Entry: Pointer read FEntry;
@@ -272,13 +271,14 @@ type
     procedure ClearRoots;
     function  CalcTagOffset(AIndex: Integer): Pointer;
 
-    function  FindKey(const Insert: Boolean): Integer;
+    function  FindKey(Insert: boolean): Integer;
     procedure InsertKey(Buffer: PChar);
     procedure DeleteKey(Buffer: PChar);
     procedure InsertCurrent;
     procedure DeleteCurrent;
     procedure UpdateCurrent(PrevBuffer, NewBuffer: PChar);
     procedure ReadIndexes;
+    procedure Resync(Relative: boolean);
     procedure ResyncRoot;
     procedure ResyncTree;
     procedure ResyncRange;
@@ -350,9 +350,6 @@ type
     procedure Last;
     function  Next: Boolean;
     function  Prev: Boolean;
-
-    function  GetBookMark: rBookmarkData;
-    function  GotoBookmark(IndexBookmark: rBookmarkData): Boolean;
 
     procedure SetRange(LowRange, HighRange: PChar);
     procedure CancelRange;
@@ -1227,15 +1224,6 @@ begin
     if not IsInnerNode then
       dec(FHighIndex);
   end;
-end;
-
-procedure TIndexPage.DisableRange;
-begin
-  // update low / high index range
-  FLowIndex := 0;
-  FHighIndex := GetNumEntries;
-  if FLowerPage = nil then
-    dec(FHighIndex);
 end;
 
 function TMdxPage.GetIsInnerNode: Boolean;
@@ -2922,7 +2910,6 @@ procedure TIndexFile.InsertCurrent;
   // insert in current index
   // assumes: FUserKey is an OEM key
 var
-  TempPage: TIndexPage;
   SearchKey: array[0..100] of Char;
   OemKey: PChar;
 begin
@@ -2937,6 +2924,8 @@ begin
       FUserKey := @SearchKey[0];
       TranslateToANSI(OemKey, FUserKey);
     end;
+    // temporarily remove range to find correct location of key
+    ResetRange;
     // find this record as closely as possible
     // if result = 0 then key already exists
     // if unique index, then don't insert key if already present
@@ -2959,11 +2948,7 @@ begin
     end;
 
     // check range, disabled by insert
-    TempPage := FRoot;
-    repeat
-      TempPage.UpdateBounds(TempPage.LowerPage <> nil);
-      TempPage := TempPage.LowerPage;
-    until TempPage = nil;
+    ResyncRange;
   end;
 end;
 
@@ -3034,6 +3019,8 @@ begin
     end;
     // delete selected entry
     FLeaf.Delete;
+    // range may be changed
+    ResyncRange;
   end;
 end;
 
@@ -3190,7 +3177,7 @@ begin
   Result := FindKey(false);
 end;
 
-function TIndexFile.FindKey(const Insert: Boolean): Integer;
+function TIndexFile.FindKey(Insert: boolean): Integer;
 //
 // if you set Insert = true, you need to re-enable range after insert!!
 //
@@ -3213,16 +3200,6 @@ begin
       searchRecNo := FUserRecNo
   end else begin
     searchRecNo := -2;
-  end;
-  // disable range to prepare for insert
-  if Insert then
-  begin
-    // start from root
-    TempPage := FRoot;
-    repeat
-      TempPage.DisableRange;
-      TempPage := TempPage.LowerPage;
-    until TempPage = nil;
   end;
   // start from root
   TempPage := FRoot;
@@ -3326,20 +3303,6 @@ begin
   FModifyMode := mmNormal;
 end;
 
-function TIndexFile.GotoBookmark(IndexBookmark: rBookmarkData): Boolean;
-begin
-  if (IndexBookmark{.RecNo} = 0) then begin
-    First;
-  end else if (IndexBookmark{.RecNo} = MAXINT) then begin
-    Last;
-  end else begin
-    if (FLeaf.GetRecNo <> IndexBookmark{.RecNo}) then
-      PhysicalRecNo := IndexBookmark{.RecNo};
-  end;
-
-  Result := true;
-end;
-
 procedure TIndexFile.SetLocaleID(const NewID: LCID);
 {$ifdef WIN32}
 var
@@ -3389,17 +3352,10 @@ begin
     FUpdateMode := NewMode;
 end;
 
-function TIndexFile.GetBookMark: rBookmarkData;
-begin
-  // get physical recno
-  Result := FLeaf.GetRecNo;
-end;
-
 procedure TIndexFile.First;
 begin
   // resync tree
-  if NeedLocks then
-    ResyncRoot;
+  Resync(false);
   // search first node
   FRoot.RecurFirst;
   // out of index - BOF
@@ -3409,8 +3365,7 @@ end;
 procedure TIndexFile.Last;
 begin
   // resync tree
-  if NeedLocks then
-    ResyncRoot;
+  Resync(false);
   // search last node
   FRoot.RecurLast;
   // out of index - EOF
@@ -3426,7 +3381,7 @@ begin
     exit;
 
   // disable current range if any
-  CancelRange;
+  ResetRange;
   // search lower bound
   Result := SearchKey(FLowBuffer, stGreaterEqual);
   if not Result then
@@ -3457,6 +3412,18 @@ begin
   SetBracketHigh;
 end;
 
+procedure TIndexFile.Resync(Relative: boolean);
+begin
+  if NeedLocks then
+  begin
+    if not Relative then
+      ResyncRoot;
+    ResyncRange;
+    if Relative then
+      ResyncTree;
+  end;
+end;
+
 procedure TIndexFile.ResyncTree;
 begin
   // if at BOF or EOF, then we need to resync by first or last
@@ -3482,7 +3449,6 @@ begin
       PhysicalRecNo := FUserRecNo;
     end;
   end;
-  ResyncRange;
 end;
 
 function TIndexFile.Prev: Boolean;
@@ -3490,8 +3456,7 @@ var
   curRecNo: Integer;
 begin
   // resync in-mem tree with tree on disk
-  if NeedLocks then
-    ResyncTree;
+  Resync(true);
   // save current recno, find different next!
   curRecNo := FLeaf.PhysicalRecNo;
   repeat
@@ -3505,8 +3470,7 @@ var
   curRecNo: Integer;
 begin
   // resync in-mem tree with tree on disk
-  if NeedLocks then
-    ResyncTree;
+  Resync(true);
   // save current recno, find different prev!
   curRecNo := FLeaf.PhysicalRecNo;
   repeat
