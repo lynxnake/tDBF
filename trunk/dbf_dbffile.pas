@@ -93,7 +93,7 @@ type
     procedure CloseIndex(AIndexName: string);
     procedure RepageIndex(AIndexFile: string);
     procedure CompactIndex(AIndexFile: string);
-    procedure Insert(Buffer: PChar);
+    function  Insert(Buffer: PChar): integer;
     procedure WriteHeader; override;
     procedure ApplyAutoIncToBuffer(DestBuf: PChar);     // dBase7 support. Writeback last next-autoinc value
     procedure FastPackTable;
@@ -2169,7 +2169,7 @@ begin
   end;
 end;
 
-procedure TDbfFile.Insert(Buffer: PChar);
+function TDbfFile.Insert(Buffer: PChar): integer;
 var
   newRecord: Integer;
   lIndex: TIndexFile;
@@ -2209,6 +2209,7 @@ var
   I: Integer;
 begin
   // get new record index
+  Result := 0;
   newRecord := RecordCount+1;
   // lock record so we can write data
   while not LockPage(newRecord, false) do
@@ -2290,7 +2291,8 @@ begin
     UnlockPage(0);
     // roll back indexes too
     RollbackIndexesAndRaise(FIndexFiles.Count-1, False);
-  end;
+  end else
+    Result := newRecord;
 end;
 
 procedure TDbfFile.WriteLockInfo(Buffer: PChar);
