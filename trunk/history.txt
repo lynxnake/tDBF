@@ -43,6 +43,8 @@ V6.4.2
     and other events are not fired; also fixes cursor position bug upon
     deletion (rep by bura)
 - fixed: only use float fields (UseFloatFields) if int64 not supported
+- fixed: deleted records undeleted when using RestructureTable with
+    Pack=false (rep by scenes)
 
 
 ------------------------
