@@ -241,7 +241,9 @@ type
     procedure InternalOpen; override; {virtual abstract}
     procedure InternalEdit; override; {virtual}
     procedure InternalCancel; override; {virtual}
+{$ifndef FPC}
     procedure InternalInsert; override; {virtual}
+{$endif}
     procedure InternalPost; override; {virtual abstract}
     procedure InternalSetToRecord(Buffer: PChar); override; {virtual abstract}
     procedure InitFieldDefs; override;
@@ -1282,10 +1284,14 @@ begin
   // succeeded!
 end;
 
+{$ifndef FPC}
+
 procedure TDbf.InternalInsert; {override virtual from TDataset}
 begin
   CursorPosChanged;
 end;
+
+{$endif}
 
 procedure TDbf.InternalPost; {override virtual abstract from TDataset}
 var
