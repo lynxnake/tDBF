@@ -1008,6 +1008,9 @@ begin
     else
       FieldDefs.Add(TempFieldDef.FieldName, TempFieldDef.FieldType, 0, false);
 
+    if TempFieldDef.FieldType = ftFloat then
+      FieldDefs[I].Precision := TempFieldDef.Precision;
+
 {$ifdef SUPPORT_FIELDDEF_ATTRIBUTES}
     // AutoInc fields are readonly
     if TempFieldDef.FieldType = ftAutoInc then
