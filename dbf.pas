@@ -1423,6 +1423,10 @@ begin
       FDbfFile.Open;
       FDbfFile.FinishCreate(DbfFieldDefs, 512);
 
+      // if creating memory table, copy stream pointer
+      if FStorage = stoMemory then
+        FUserStream := FDbfFile.Stream;
+
       // create all indexes
       for I := 0 to FIndexDefs.Count-1 do
       begin
@@ -1432,7 +1436,7 @@ begin
       end;
     except
       // dbf file created?
-      if FDbfFile <> nil then
+      if (FDbfFile <> nil) and (FStorage = stoFile) then
       begin
         FreeAndNil(FDbfFile);
         SysUtils.DeleteFile(FAbsolutePath+FTableName);
