@@ -35,8 +35,8 @@ type
 
 //-------------------------------------
 
-{$ifdef FPC_VERSION}
   PDateTime = ^TDateTime;
+{$ifdef FPC_VERSION}
   TDateTimeAlias = type TDateTime;
   TDateTimeRec = record
     case TFieldType of

@@ -446,7 +446,7 @@ begin
         FPrecision := 0;
       end;
 {$endif}
-    ftString, ftFixedChar, ftWideString:
+    ftString {$ifdef SUPPORT_FIELDTYPES_V4}, ftFixedChar, ftWideString{$endif}:
       begin
         FSize := 30;
         FPrecision := 0;
