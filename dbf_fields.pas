@@ -296,7 +296,7 @@ procedure TDbfFieldDef.SetFieldType(lFieldType: tFieldType);
 begin
   FFieldType := lFieldType;
   VCLToNative;
-  CheckSizePrecision;
+  SetDefaultSize;
 end;
 
 procedure TDbfFieldDef.SetNativeFieldType(lFieldType: tDbfFieldType);
@@ -413,6 +413,7 @@ end;
 
 procedure TDbfFieldDef.SetDefaultSize;
 begin
+  // choose default values for variable size fields
   case FFieldType of
     ftFloat:
       begin
@@ -429,7 +430,7 @@ begin
         FSize := DIGITS_SMALLINT;
         FPrecision := 0;
       end;
-    ftInteger:
+    ftInteger, ftAutoInc:
       begin
         if DbfVersion = xBaseVII then
           FSize := 4
@@ -444,15 +445,15 @@ begin
         FPrecision := 0;
       end;
 {$endif}
-    ftDate, ftDateTime:
+    ftString, ftFixedChar, ftWideString:
       begin
-        if (FNativeFieldType = 'T') and (DbfVersion <> xFoxPro) then
-          FSize := 14
-        else
-          FSize := 8;
+        FSize := 30;
         FPrecision := 0;
       end;
   end; // case fieldtype
+
+  // set sizes for fields that are restricted to single size/precision
+  CheckSizePrecision;
 end;
 
 procedure TDbfFieldDef.CheckSizePrecision;
