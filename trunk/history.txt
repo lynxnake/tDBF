@@ -53,6 +53,8 @@ V6.3.4
 - added: "<>", not equal, expression functions
 - added: reference counting for TExprWord
 - added: shortname functionality for each function, function can be referenced by name and shortname
+- fixed: memory leak in parser upon encountering unknown variable
+- fixed: when adding record write new autoinc value to header, to file
 
 
 ------------------------
@@ -63,6 +65,7 @@ V6.3.3
 - fixed: index delete record bug (deleting the only entry on a page)
 - fixed: lazarus registration issues
 - fixed: scan for $1A, not RecordSize (rep by avink)
+
 
 ------------------------
 V6.3.2
