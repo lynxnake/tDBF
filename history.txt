@@ -51,6 +51,8 @@ V6.3.8
 - chngd: made all filenames lowercase to ease usage on *nix
 - added: partial matching in expressions for filters
 - added: -, *, / operators in expressions
+- fixed: datetime issues with fieldtype '@' and delphi 4 and lower (nobody uses 
+    those fieldtypes? they have been horribly broken, and maybe still are)
 
 
 ------------------------

@@ -86,10 +86,8 @@ function IncludeTrailingPathDelimiter(const Path: string): string;
 function GetCompletePath(const Base, Path: string): string;
 function GetCompleteFileName(const Base, FileName: string): string;
 function IsFullFilePath(const Path: string): Boolean; // full means not relative
-{$ifndef SUPPORT_NEW_FIELDDATA}
 function DateTimeToBDETimeStamp(aDT: TDateTime): double;
 function BDETimeStampToDateTime(aBT: double): TDateTime;
-{$endif}
 function  GetStrFromInt(Val: Integer; const Dst: PChar): Integer;
 procedure GetStrFromInt_Width(Val: Integer; const Width: Integer; const Dst: PChar; const PadChar: Char);
 {$ifdef SUPPORT_INT64}
@@ -316,8 +314,6 @@ end;
 
 {$endif}
 
-{$ifndef SUPPORT_NEW_FIELDDATA}
-
 function DateTimeToBDETimeStamp(aDT: TDateTime): double;
 var
   aTS: TTimeStamp;
@@ -333,8 +329,6 @@ begin
   aTS := MSecsToTimeStamp(aBT);
   Result := TimeStampToDateTime(aTS);
 end;
-
-{$endif}
 
 //====================================================================
 
