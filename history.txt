@@ -40,6 +40,7 @@ V6.3.7
 - fixed: numeric index data exponent (rep by rpoverdijk)
 - fixed: big-endian issues in dbf_idxfile
 - added: spanish (thx mauricio) and brazilian portuguese translation (thx adilson)
+- fixed: opening memory streams; more generic implementation
 
 
 ------------------------
