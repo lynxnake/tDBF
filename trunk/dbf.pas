@@ -2118,7 +2118,11 @@ begin
 
   // only refresh if active
   if FCursor <> nil then
+  begin
+    UpdateCursorPos;
+    CursorPosChanged;
     Resync([]);
+  end;
 end;
 
 procedure TDbf.SetFilePath(const Value: string);
