@@ -35,6 +35,12 @@ BUGS & WARNINGS
 
 
 ------------------------
+V6.3.6
+
+- fixed: crash when optimizing expression with constants
+
+
+------------------------
 V6.3.5
 
 - fixed: crash when finalizing Dbf_Parser unit
