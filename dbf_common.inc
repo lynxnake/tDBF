@@ -107,6 +107,26 @@
   {$define DELPHI_3}
 {$endif}
 
+{$ifdef VER160} // Delphi 8
+  {$define DELPHI_2005}
+  {$define DELPHI_8}
+  {$define DELPHI_7}
+  {$define DELPHI_6}
+  {$define DELPHI_5}
+  {$define DELPHI_4}
+  {$define DELPHI_3}
+{$endif}
+
+{$ifdef VER170} // Delphi 2005
+  {$define DELPHI_2005}
+  {$define DELPHI_8}
+  {$define DELPHI_7}
+  {$define DELPHI_6}
+  {$define DELPHI_5}
+  {$define DELPHI_4}
+  {$define DELPHI_3}
+{$endif}
+
 //-------------------------------------------------------
 //--- Conclude supported features from delphi version ---
 //-------------------------------------------------------
