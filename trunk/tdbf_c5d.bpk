@@ -73,6 +73,9 @@ ProductName=
 ProductVersion=1.0.0.0
 Comments=
 
+[Excluded Packages]
+$(BCB)\Projects\Bpl\LibX_D5.bpl=Library X
+
 [HistoryLists\hlIncludePath]
 Count=1
 Item0=$(BCB)\include;$(BCB)\include\vcl
