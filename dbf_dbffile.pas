@@ -1960,9 +1960,11 @@ procedure TDbfFile.OpenIndex(IndexName, IndexField: string; CreateIndex: Boolean
   //
 const
   // memcr, memop, excr, exopen, rwcr, rwopen, rdonly
-  IndexOpenMode: array[pfMemoryCreate..pfReadOnly] of TPagedFileMode =
-    (pfMemoryCreate, pfMemoryCreate, pfExclusiveOpen, pfExclusiveOpen, pfReadWriteOpen, pfReadWriteOpen,
-     pfReadOnly);
+  IndexOpenMode: array[boolean, pfMemoryCreate..pfReadOnly] of TPagedFileMode =
+   ((pfMemoryCreate, pfMemoryCreate, pfExclusiveOpen, pfExclusiveOpen, pfReadWriteOpen, pfReadWriteOpen,
+     pfReadOnly),
+    (pfMemoryCreate, pfMemoryCreate, pfExclusiveCreate, pfExclusiveCreate, pfReadWriteCreate, pfReadWriteCreate,
+     pfReadOnly));
 var
   lIndexFile: TIndexFile;
   lIndexFileName: string;
@@ -2007,7 +2009,7 @@ begin
       // try to open / create the file
       lIndexFile := TIndexFile.Create(Self);
       lIndexFile.FileName := lIndexFileName;
-      lIndexFile.Mode := IndexOpenMode[Mode];
+      lIndexFile.Mode := IndexOpenMode[CreateIndex, Mode];
       lIndexFile.AutoCreate := CreateIndex or (Length(IndexField) > 0);
       lIndexFile.CodePage := UseCodePage;
       lIndexFile.OnLocaleError := FOnLocaleError;
