@@ -36,6 +36,20 @@ BUGS & WARNINGS
 V6.2.2
 
 - fixed: indexing bug, when inserting same key at end
+- chngd: FinishCreate does not need memo extension anymore
+- chngd: PackTable uses different filename now abc_1.dbf etc
+- chngd: Dbf_PgFile.pas: renamed LockFile to LockAllPages;
+    -> Kylix users should be able to compile with LockFile from Dbf_Wtil.pas
+- fixed: when closing/opening dbf file, reopens indexes too (thx oleg)
+    -> fixed an AV when packtable is done and you try access an index
+- fixed: (caused by above index bug) does not find last record in index
+    -> caused dbgrid to display records twice or not at all
+- fixed: packindex now properly selects single index, so that it can be edited
+    -> previously no expression was parsed creating empty indexes (thx oleg)
+- fixed: insert/modify/delete/find records while index range active (thx paul)
+    -> findnearest function rewritten
+- fixed: foxpro table level less than dBase7 table level, now reads fields
+    correctly in dBaseIII alike format
 
 
 ------------------------
