@@ -38,6 +38,11 @@ V6.2.2
 - added: IndexFieldNames property to set current index by fieldname
 - added: foxpro memo files (.fpt) support
 - fixed: indexing bug, when inserting same key at end
+- fixed: more indexing bugs...
+    - NOTE: non-leaf keys assume searchkey < nodekey
+        - this is default B+ tree
+        - previously tdbf assumed searchkey <= nodekey
+        - you may have to recreate indexes
 - chngd: FinishCreate does not need memo extension anymore
 - chngd: PackTable uses different filename now abc_1.dbf etc
 - chngd: Dbf_PgFile.pas: renamed LockFile to LockAllPages;
@@ -60,7 +65,11 @@ V6.2.2
 - fixed: tdbfindexdef; name and field now stored uppercase to prevent
     differences in case (thx arioch)
 - chngd: tablename property editor starts in project directory not delphi/bin
-    directory when no filepath given
+    directory when no filepath given; if you want filepath to be current path
+    at startup of app: use '.' or '.\' as filepath (current dir)
+- chngd: dbf_globals.defaultopencode changed to getacp, seems to be more
+    compatible, especially when your codepage is not supported by dbase
+- fixed: fix for empty path in IncludeTrailingPathDelim
 
 
 ------------------------
