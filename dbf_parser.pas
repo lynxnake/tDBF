@@ -31,6 +31,7 @@ type
     FFieldType: TExpressionType;
     FCaseInsensitive: Boolean;
     FRawStringFields: Boolean;
+    FPartialMatch: boolean;
 
   protected
     FCurrentExpression: string;
@@ -43,6 +44,7 @@ type
 
     procedure SetCaseInsensitive(NewInsensitive: Boolean);
     procedure SetRawStringFields(NewRawFields: Boolean);
+    procedure SetPartialMatch(NewPartialMatch: boolean);
   public
     constructor Create(ADbfFile: Pointer);
     destructor Destroy; override;
@@ -58,6 +60,7 @@ type
 
     property CaseInsensitive: Boolean read FCaseInsensitive write SetCaseInsensitive;
     property RawStringFields: Boolean read FRawStringFields write SetRawStringFields;
+    property PartialMatch: boolean read FPartialMatch write SetPartialMatch;
   end;
 
 //--Expression functions-----------------------------------------------------
@@ -630,6 +633,44 @@ begin
     Res.MemoryPos^^ := Char(AnsiStrIComp(Args[0], Args[1]) = 0);
 end;
 
+procedure FuncStrIP_EQ(Param: PExpressionRec);
+var
+  arg0len, arg1len: integer;
+  match: boolean;
+  str0, str1: string;
+begin
+  with Param^ do
+  begin
+    arg1len := StrLen(Args[1]);
+    if Args[1][0] = '*' then
+    begin
+      if Args[1][arg1len-1] = '*' then
+      begin
+        str0 := StrUpper(Args[0]);
+        str1 := StrUpper(Args[1]+1);
+        setlength(str1, arg1len-2);
+        match := AnsiPos(str0, str1) = 0;
+      end else begin
+        arg0len := StrLen(Args[0]);
+        // at least length without asterisk
+        match := arg0len >= arg1len - 1;
+        if match then
+          match := AnsiStrLIComp(Args[0]+(arg0len-arg1len+1), Args[1]+1, arg1len-1) = 0;
+      end;
+    end else
+    if Args[1][arg1len-1] = '*' then
+    begin
+      arg0len := StrLen(Args[0]);
+      match := arg1len >= arg0len - 1;
+      if match then
+        match := AnsiStrLIComp(Args[0], Args[1], arg1len-1) = 0;
+    end else begin
+      match := AnsiStrIComp(Args[0], Args[1]) = 0;
+    end;
+    Res.MemoryPos^^ := Char(match);
+  end;
+end;
+
 procedure FuncStrI_NEQ(Param: PExpressionRec);
 begin
   with Param^ do
@@ -658,6 +699,42 @@ procedure FuncStrI_GTE(Param: PExpressionRec);
 begin
   with Param^ do
     Res.MemoryPos^^ := Char(AnsiStrIComp(Args[0], Args[1]) >= 0);
+end;
+
+procedure FuncStrP_EQ(Param: PExpressionRec);
+var
+  arg0len, arg1len: integer;
+  match: boolean;
+begin
+  with Param^ do
+  begin
+    arg1len := StrLen(Args[1]);
+    if Args[1][0] = '*' then
+    begin
+      if Args[1][arg1len-1] = '*' then
+      begin
+        Args[1][arg1len-1] := #0;
+        match := AnsiStrPos(Args[0], Args[1]+1) <> nil;
+        Args[1][arg1len-1] := '*';
+      end else begin
+        arg0len := StrLen(Args[0]);
+        // at least length without asterisk
+        match := arg0len >= arg1len - 1;
+        if match then
+          match := AnsiStrLComp(Args[0]+(arg0len-arg1len+1), Args[1]+1, arg1len-1) = 0;
+      end;
+    end else
+    if Args[1][arg1len-1] = '*' then
+    begin
+      arg0len := StrLen(Args[0]);
+      match := arg1len >= arg0len - 1;
+      if match then
+        match := AnsiStrLComp(Args[0], Args[1], arg1len-1) = 0;
+    end else begin
+      match := AnsiStrComp(Args[0], Args[1]) = 0;
+    end;
+    Res.MemoryPos^^ := Char(match);
+  end;
 end;
 
 procedure FuncStr_EQ(Param: PExpressionRec);
@@ -1045,8 +1122,10 @@ end;
 //--TDbfParser---------------------------------------------------------------
 
 var
-  DbfWordsSensList, DbfWordsInsensList: TExpressList;
-  DbfWordsAllList: TExpressList;
+  DbfWordsSensGeneralList, DbfWordsInsensGeneralList: TExpressList;
+  DbfWordsSensPartialList, DbfWordsInsensPartialList: TExpressList;
+  DbfWordsSensNoPartialList, DbfWordsInsensNoPartialList: TExpressList;
+  DbfWordsGeneralList: TExpressList;
 
 constructor TDbfParser.Create(ADbfFile: Pointer);
 begin
@@ -1085,6 +1164,18 @@ begin
   end;
 end;
 
+procedure TDbfParser.SetPartialMatch(NewPartialMatch: boolean);
+begin
+  if FPartialMatch <> NewPartialMatch then
+  begin
+    // refill function list
+    FPartialMatch := NewPartialMatch;
+    FillExpressList;
+    if Length(Expression) > 0 then
+      ParseExpression(Expression);
+  end;
+end;
+
 procedure TDbfParser.SetRawStringFields(NewRawFields: Boolean);
 begin
   if FRawStringFields <> NewRawFields then
@@ -1099,11 +1190,24 @@ end;
 procedure TDbfParser.FillExpressList;
 begin
   FWordsList.FreeAll;
+  FWordsList.AddList(DbfWordsGeneralList, 0, DbfWordsGeneralList.Count - 1);
   if FCaseInsensitive then
   begin
-    FWordsList.AddList(DbfWordsInsensList, 0, DbfWordsInsensList.Count - 1);
+    FWordsList.AddList(DbfWordsInsensGeneralList, 0, DbfWordsInsensGeneralList.Count - 1);
+    if FPartialMatch then
+    begin
+      FWordsList.AddList(DbfWordsInsensPartialList, 0, DbfWordsInsensPartialList.Count - 1);
+    end else begin
+      FWordsList.AddList(DbfWordsInsensNoPartialList, 0, DbfWordsInsensNoPartialList.Count - 1);
+    end;
   end else begin
-    FWordsList.AddList(DbfWordsSensList, 0, DbfWordsSensList.Count - 1);
+    FWordsList.AddList(DbfWordsSensGeneralList, 0, DbfWordsSensGeneralList.Count - 1);
+    if FPartialMatch then
+    begin
+      FWordsList.AddList(DbfWordsSensPartialList, 0, DbfWordsSensPartialList.Count - 1);
+    end else begin
+      FWordsList.AddList(DbfWordsSensNoPartialList, 0, DbfWordsSensNoPartialList.Count - 1);
+    end;
   end;
 end;
 
@@ -1273,11 +1377,15 @@ end;
 
 initialization
 
-  DbfWordsSensList := TExpressList.Create;
-  DbfWordsInsensList := TExpressList.Create;
-  DbfWordsAllList := TExpressList.Create;
+  DbfWordsGeneralList := TExpressList.Create;
+  DbfWordsInsensGeneralList := TExpressList.Create;
+  DbfWordsInsensNoPartialList := TExpressList.Create;
+  DbfWordsInsensPartialList := TExpressList.Create;
+  DbfWordsSensGeneralList := TExpressList.Create;
+  DbfWordsSensNoPartialList := TExpressList.Create;
+  DbfWordsSensPartialList := TExpressList.Create;
 
-  with DbfWordsAllList do
+  with DbfWordsGeneralList do
   begin
     // basic function functionality
     Add(TLeftBracket.Create('(', nil));
@@ -1368,10 +1476,8 @@ initialization
     Add(TFunction.Create('LOWERCASE', 'LOWER', 'S',   1, etString, FuncLowercase, ''));
   end;
 
-  with DbfWordsInsensList do
+  with DbfWordsInsensGeneralList do
   begin
-    AddList(DbfWordsAllList, 0, DbfWordsAllList.Count - 1);
-    Add(TFunction.CreateOper('=', 'SS', etBoolean, FuncStrI_EQ , 80));
     Add(TFunction.CreateOper('<', 'SS', etBoolean, FuncStrI_LT , 80));
     Add(TFunction.CreateOper('>', 'SS', etBoolean, FuncStrI_GT , 80));
     Add(TFunction.CreateOper('<=','SS', etBoolean, FuncStrI_LTE, 80));
@@ -1379,22 +1485,36 @@ initialization
     Add(TFunction.CreateOper('<>','SS', etBoolean, FuncStrI_NEQ, 80));
   end;
 
-  with DbfWordsSensList do
+  with DbfWordsInsensNoPartialList do
+    Add(TFunction.CreateOper('=', 'SS', etBoolean, FuncStrI_EQ , 80));
+
+  with DbfWordsInsensPartialList do
+    Add(TFunction.CreateOper('=', 'SS', etBoolean, FuncStrIP_EQ, 80));
+
+  with DbfWordsSensGeneralList do
   begin
-    AddList(DbfWordsAllList, 0, DbfWordsAllList.Count - 1);
-    Add(TFunction.CreateOper('=', 'SS', etBoolean, FuncStr_EQ , 80));
     Add(TFunction.CreateOper('<', 'SS', etBoolean, FuncStr_LT , 80));
     Add(TFunction.CreateOper('>', 'SS', etBoolean, FuncStr_GT , 80));
     Add(TFunction.CreateOper('<=','SS', etBoolean, FuncStr_LTE, 80));
     Add(TFunction.CreateOper('>=','SS', etBoolean, FuncStr_GTE, 80));
     Add(TFunction.CreateOper('<>','SS', etBoolean, FuncStr_NEQ, 80));
   end;
+    
+  with DbfWordsSensNoPartialList do
+    Add(TFunction.CreateOper('=', 'SS', etBoolean, FuncStr_EQ , 80));
+
+  with DbfWordsSensPartialList do
+    Add(TFunction.CreateOper('=', 'SS', etBoolean, FuncStrP_EQ , 80));
 
 finalization
 
-  DbfWordsAllList.Free;
-  DbfWordsInsensList.Free;
-  DbfWordsSensList.Free;
+  DbfWordsGeneralList.Free;
+  DbfWordsInsensGeneralList.Free;
+  DbfWordsInsensNoPartialList.Free;
+  DbfWordsInsensPartialList.Free;
+  DbfWordsSensGeneralList.Free;
+  DbfWordsSensNoPartialList.Free;
+  DbfWordsSensPartialList.Free;
 
 end.
 

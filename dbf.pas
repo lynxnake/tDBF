@@ -2066,6 +2066,7 @@ begin
     if FParser <> nil then
     begin
       // set options
+      FParser.PartialMatch := not (foNoPartialCompare in FilterOptions);
       FParser.CaseInsensitive := foCaseInsensitive in FilterOptions;
       // parse expression
       FParser.ParseExpression(Value);
