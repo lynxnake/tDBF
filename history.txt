@@ -58,6 +58,8 @@ V6.3.8
 - fixed: better foxpro header writing, fieldoffset, tabletype and headersize
 **Version .1:
 - fixed: recursive loop in setrange
+**Version .2:
+- fixed: recursive loop in index first/last
 
 
 ------------------------

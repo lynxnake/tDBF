@@ -286,6 +286,11 @@ type
     procedure SetBracketLow;
     procedure SetBracketHigh;
 
+    procedure WalkFirst;
+    procedure WalkLast;
+    function  WalkPrev: boolean;
+    function  WalkNext: boolean;
+    
     procedure TranslateToANSI(Src, Dest: PChar);
     function  CompareKeyNumericNDX(Key: PChar): Integer;
     function  CompareKeyNumericMDX(Key: PChar): Integer;
@@ -348,8 +353,6 @@ type
 
     procedure First;
     procedure Last;
-    function  WalkPrev: boolean;
-    function  WalkNext: boolean;
     function  Next: Boolean;
     function  Prev: Boolean;
 
@@ -3354,25 +3357,35 @@ begin
     FUpdateMode := NewMode;
 end;
 
-procedure TIndexFile.First;
+procedure TIndexFile.WalkFirst;
 begin
-  // resync tree
-  Resync(false);
   // search first node
   FRoot.RecurFirst;
   // out of index - BOF
   FLeaf.EntryNo := FLeaf.EntryNo - 1;
 end;
 
-procedure TIndexFile.Last;
+procedure TIndexFile.WalkLast;
 begin
-  // resync tree
-  Resync(false);
   // search last node
   FRoot.RecurLast;
   // out of index - EOF
   // we need to skip two entries to go out-of-bound
   FLeaf.EntryNo := FLeaf.EntryNo + 2;
+end;
+
+procedure TIndexFile.First;
+begin
+  // resync tree
+  Resync(false);
+  WalkFirst;
+end;
+
+procedure TIndexFile.Last;
+begin
+  // resync tree
+  Resync(false);
+  WalkLast;
 end;
 
 procedure TIndexFile.ResyncRange;
@@ -3389,7 +3402,7 @@ begin
   if not Result then
   begin
     // not found? -> make empty range
-    Last;
+    WalkLast;
   end;
   // set lower bound
   SetBracketLow;
@@ -3403,11 +3416,11 @@ begin
     if not Result then
     begin
       // cannot go prev -> empty range
-      First;
+      WalkFirst;
     end;
   end else begin
     // not found -> EOF found, go EOF, then to last record
-    Last;
+    WalkLast;
     WalkPrev;
   end;
   // set upper bound
@@ -3431,9 +3444,9 @@ begin
   // if at BOF or EOF, then we need to resync by first or last
   if FLeaf.Entry = FEntryBof then
   begin
-    First;
+    WalkFirst;
   end else if FLeaf.Entry = FEntryEof then begin
-    Last;
+    WalkLast;
   end else begin
     // read current key into buffer
     Move(FLeaf.Key^, FKeyBuffer, PIndexHdr(FIndexHeader).KeyLen);
