@@ -42,6 +42,9 @@ V6.3.4
 - added: NULLFLAGS field recognition (foxpro field)
 - fixed: date field retrieval parser (rep by luchop)
 - fixed: BCB5 installation needs Pascal switch to link dsgnintf unit
+- fixed: avoid dependency on libc unit for freepascal target
+- fixed: index open after packtable forgot tempmode; so endexclusive did not
+    work properly (rep by sysklop)
 
 ------------------------
 V6.3.3
