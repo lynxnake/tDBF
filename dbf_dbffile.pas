@@ -1268,7 +1268,11 @@ begin
       begin
         // if restructure, initialize dest
         if DbfFieldDefs <> nil then
+        begin
           DestDbfFile.InitRecord(pDestBuff);
+          // copy deleted mark (the first byte)
+          pDestBuff^ := pBuff^;
+        end;
 
         if (DbfFieldDefs <> nil) or (FMemoFile <> nil) then
         begin
