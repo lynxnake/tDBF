@@ -110,7 +110,9 @@ function MemScan(const Buffer: Pointer; Chr: Byte; Length: Integer): Pointer;
 
 // Delphi 3 does not have a Min function
 {$ifdef DELPHI_3}
+{$ifndef DELPHI_4}
 function Min(x, y: integer): integer;
+{$endif}
 {$endif}
 
 implementation
@@ -522,15 +524,17 @@ end;
 {$endif}
 
 {$ifdef DELPHI_3}
+{$ifndef DELPHI_4}
 
 function Min(x, y: integer): integer;
-begin 
-  if x < y the 
-    result := x 
-  else 
-    result := y; 
+begin
+  if x < y then
+    result := x
+  else
+    result := y;
 end;
 
+{$endif}
 {$endif}
 
 end.
