@@ -99,6 +99,7 @@ function GetFreeMemory: Integer;
 
 // OH 2000-11-15 dBase7 support. Swap Byte order for 4 and 8 Byte Integer
 function SwapInt(const Value: Cardinal): Cardinal;
+{ SwapInt64 NOTE: do not call with same value for Value and Result ! }
 procedure SwapInt64(Value, Result: Pointer); register;
 
 function TranslateString(FromCP, ToCP: Cardinal; Src, Dest: PChar; Length: Integer): Integer;
@@ -406,6 +407,8 @@ function SwapInt(const Value: Cardinal): Cardinal; register;
 asm
   BSWAP EAX;
 end;
+
+{ SwapInt64 NOTE: do not call with same value for Value and Result ! }
 
 procedure SwapInt64(Value {EAX}, Result {EDX}: Pointer); register;
 asm
