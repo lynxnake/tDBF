@@ -45,6 +45,15 @@ V6.3.4
 - fixed: avoid dependency on libc unit for freepascal target
 - fixed: index open after packtable forgot tempmode; so endexclusive did not
     work properly (rep by sysklop)
+- chang: make TDbf.GetCurrentBuffer public
+- chang: rename TVarType to TExpressionType
+- chang: remove all SmallInt constructs from parser
+- added: export expression functions from Dbf_Parser
+- added: FFieldName to TFieldVar, to prevent need for TFieldDef to exist to get name for deletion from expression words list
+- added: "<>", not equal, expression functions
+- added: reference counting for TExprWord
+- added: shortname functionality for each function, function can be referenced by name and shortname
+
 
 ------------------------
 V6.3.3
