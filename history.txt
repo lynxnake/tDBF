@@ -36,6 +36,7 @@ BUGS & WARNINGS
 V6.4.0
 
 - fixed: dBase III and IV do not have date+time fields
+- fixed: index search bug, not finding records (rep by peruginia)
 
 
 ------------------------

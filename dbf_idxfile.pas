@@ -837,7 +837,7 @@ function TIndexPage.FindNearest(ARecNo: Integer): Integer;
   //  Result = 0  -> key,recno found, FEntryNo = found key entryno
   //  Result > 0  -> key,recno larger than current entry
 var
-  recNo, low, high: Integer;
+  low, high, current: Integer;
 begin
   // implement binary search, keys are sorted
   low := FLowIndex;
@@ -854,8 +854,8 @@ begin
   // vf: high + 1 - low
   while low < high do
   begin
-    FEntryNo := (low + high) div 2;
-    FEntry := GetEntry(FEntryNo);
+    current := (low + high) div 2;
+    FEntry := GetEntry(current);
     // calc diff
     Result := MatchKey;
     // test if we need to go lower or higher
@@ -863,9 +863,9 @@ begin
     // result = 0 implies key equal to tested entry
     // result > 0 implies key greater than tested entry
     if (Result < 0) or ((ARecNo<>-3) and (Result=0)) then
-      high := FEntryNo
+      high := current
     else
-      low := FEntryNo+1;
+      low := current+1;
   end;
   // high will contain first greater-or-equal key
   // ARecNo <> -3 -> Entry(high).Key will contain first key that matches    -> go to high
@@ -898,10 +898,8 @@ begin
             // check if entry key still ok
             Result := MatchKey;
           end;
-          // get recno of current item
-          recNo := GetRecNo;
-          // test if out of range or found
-          if (Result <> 0) or (recNo = ARecNo) then
+          // test if out of range or found recno
+          if (Result <> 0) or (GetRecNo = ARecNo) then
             high := FEntryNo
           else begin
             // default to EOF
