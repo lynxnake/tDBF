@@ -245,6 +245,9 @@ var
 begin
   // convert to temporary buffer
   resLen := FloatToText(@Buffer[0], Val, {$ifndef FPC_VERSION}fvExtended,{$endif} ffFixed, Size, Precision);
+  // prevent overflow in destination buffer
+  if resLen > Size then
+    resLen := Size;
   // null-terminate buffer
   Buffer[resLen] := #0;
   // we only have to convert if decimal separator different
