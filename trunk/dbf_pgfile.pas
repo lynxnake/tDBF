@@ -1,4 +1,4 @@
-unit Dbf_PgFile;
+unit dbf_pgfile;
 
 interface
 

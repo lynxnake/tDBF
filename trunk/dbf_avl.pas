@@ -1,6 +1,4 @@
-unit Dbf_Avl;
-
-{fix CR/LF}
+unit dbf_avl;
 
 interface
 

@@ -1,6 +1,4 @@
-unit Dbf_Reg;
-
-{tab fix}
+unit dbf_reg;
 
 {===============================================================================
 ||         TDbf Component         ||         http://tdbf.sf.net               ||

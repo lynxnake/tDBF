@@ -1,4 +1,4 @@
-unit Dbf;
+unit dbf;
 
 { design info in dbf_reg.pas }
 

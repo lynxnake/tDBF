@@ -1,4 +1,4 @@
-unit Dbf_Str;
+unit dbf_str;
 
 interface
 

@@ -1,6 +1,4 @@
-unit Dbf_PgcFile;
-
-{force CR/LF fix}
+unit dbf_pgcfile;
 
 // paged, cached file
 

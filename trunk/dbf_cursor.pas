@@ -1,4 +1,4 @@
-unit Dbf_Cursor;
+unit dbf_cursor;
 
 interface
 

@@ -1,4 +1,4 @@
-unit Dbf_Memo;
+unit dbf_memo;
 
 interface
 

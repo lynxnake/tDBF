@@ -1,6 +1,4 @@
-unit Dbf_Fields;
-
-{force CR/LF fix}
+unit dbf_fields;
 
 interface
 
