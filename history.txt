@@ -33,6 +33,10 @@ BUGS & WARNINGS
 
 
 ------------------------
+V6.4.0
+
+
+------------------------
 V6.3.9
 
 - fixed: recursive loop in index first/last
