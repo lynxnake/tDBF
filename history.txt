@@ -35,6 +35,17 @@ BUGS & WARNINGS
 
 
 ------------------------
+V6.2.8
+
+- fixed: character fields support upto 65534 characters now
+- fixed: detect, allow visual foxpro file
+- chngd: getfielddata clears user field buffer is string field empty
+- fixed: tdbf version number in delphi 7 package
+- fixed: index update on record insert (thx kirill)
+- fixed: selecting index when cursor is bof,eof; cursor moves (thx kirill)
+
+
+------------------------
 V6.2.7
 
 - added: TDbf.GetKeySize, if index is active retrieves key size
