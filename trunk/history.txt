@@ -39,6 +39,9 @@ V6.4.2
 - fixed: restructure/pack create MDX database desktop compatible;
     write db filename in mdx header (rep by rusmonk)
 - fixed: freepascal objfpc mode compatibility fixes (still needs some @-ies)
+- fixed: upon TDbf.Delete, use internal editing/posting such that BeforeEdit
+    and other events are not fired; also fixes cursor position bug upon
+    deletion (rep by bura)
 
 
 ------------------------
