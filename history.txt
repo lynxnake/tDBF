@@ -46,6 +46,7 @@ V6.3.8
 - added: TDbf.PrepareKey for conversion of key to numeric index key format
 - fixed: set physicalrecno to non-existing recno corrupts table (rep by luchop)
 - fixed: tryexclusive/packtable/endexclusive fail because of memo (rep by sysklop)
+- fixed: crash when calling {un,}locktable on closed dataset (rep by sysklop)
 
 
 ------------------------
