@@ -5,7 +5,7 @@ interface
 {$I Dbf_Common.inc}
 
 uses
-  Classes, SysUtils,
+  Classes, SysUtils, Math,
 {$ifdef WIN32}
   Windows,
 {$else}
@@ -1047,6 +1047,13 @@ begin
   end;
 end;
 
+type
+  TRestructFieldInfo = record
+    SourceOffset: Integer;
+    DestOffset: Integer;
+    Size: Integer;
+  end;
+
 procedure TDbfFile.RestructureTable(DbfFieldDefs: TDbfFieldDefs; Pack: Boolean);
 var
   DestDbfFile: TDbfFile;
@@ -1056,9 +1063,10 @@ var
   TempDstDef, TempSrcDef: TDbfFieldDef;
   OldIndexFiles, NewIndexFiles: TStrings;
   IndexName, NewBaseName, OldBaseName: string;
-  I, lRecNo, lFieldNo, lFieldSize, lBlobRecNo, lWRecNo: Integer;
+  I, lRecNo, lFieldNo, lFieldSize, lBlobRecNo, lWRecNo, srcOffset, dstOffset: Integer;
   pBuff, pDestBuff: PChar;
   pBlobRecNoBuff: array[1..11] of Char;
+  RestructFieldInfo: array of TRestructFieldInfo;
   BlobStream: TMemoryStream;
 begin
   // nothing to do?
@@ -1104,6 +1112,50 @@ begin
     DestDbfFile.FinishCreate(DestFieldDefs, FMemoFile.RecordSize)
   else
     DestDbfFile.FinishCreate(DestFieldDefs, 512);
+
+  // adjust size and offsets of fields
+  SetLength(RestructFieldInfo, DestFieldDefs.Count);
+  for lFieldNo := 0 to DestFieldDefs.Count - 1 do
+  begin
+    TempDstDef := DestFieldDefs.Items[lFieldNo];
+    if TempDstDef.CopyFrom >= 0 then
+    begin
+      TempSrcDef := FFieldDefs.Items[TempDstDef.CopyFrom];
+      if TempDstDef.NativeFieldType in ['F', 'N'] then
+      begin
+        // get minimum field length
+        lFieldSize := Min(TempSrcDef.Precision, TempDstDef.Precision) +
+          Min(TempSrcDef.Size - TempSrcDef.Precision, 
+            TempDstDef.Size - TempDstDef.Precision);
+        // if one has dec separator, but other not, we lose one digit
+        if (TempDstDef.Precision > 0) xor 
+          ((TempSrcDef.NativeFieldType in ['F', 'N']) and (TempSrcDef.Precision > 0)) then
+          Dec(lFieldSize);
+        // should not happen, but check nevertheless (maybe corrupt data)
+        if lFieldSize < 0 then
+          lFieldSize := 0;
+        srcOffset := TempSrcDef.Size - TempSrcDef.Precision - 
+          (TempDstDef.Size - TempDstDef.Precision);
+        if srcOffset < 0 then
+        begin
+          dstOffset := -srcOffset;
+          srcOffset := 0;
+        end else begin
+          dstOffset := 0;
+        end;
+      end else begin
+        lFieldSize := Min(TempSrcDef.Size, TempDstDef.Size);
+        srcOffset := 0;
+        dstOffset := 0;
+      end;
+      with RestructFieldInfo[lFieldNo] do
+      begin
+        Size := lFieldSize;
+        SourceOffset := TempSrcDef.Offset + srcOffset;
+        DestOffset := TempDstDef.Offset + dstOffset;
+      end;
+    end;
+  end;
 
   // add indexes
   TempIndexDef := TDbfIndexDef.Create(nil);
@@ -1182,15 +1234,9 @@ begin
               DestDbfFile.SetFieldData(lFieldNo, ftInteger, @lBlobRecNo, pDestBuff);
             end else if (DbfFieldDefs <> nil) and (TempDstDef.CopyFrom >= 0) then
             begin
-              // restructure and copy field, get src fielddef
-              // DbfFieldDefs <> nil -> DestFieldDefs = DbfFieldDefs
-              TempSrcDef := FFieldDefs.Items[TempDstDef.CopyFrom];
-              // get size
-              lFieldSize := TempSrcDef.Size;
-              if lFieldSize > TempDstDef.Size then
-                lFieldSize := TempDstDef.Size;
               // copy content of field
-              Move(pBuff[TempSrcDef.Offset], pDestBuff[TempDstDef.Offset], lFieldSize);
+              with RestructFieldInfo[lFieldNo] do
+                Move(pBuff[SourceOffset], pDestBuff[DestOffset], Size);
             end;
           end;
         end;

@@ -33,6 +33,12 @@ BUGS & WARNINGS
 
 
 ------------------------
+V6.4.1
+
+- fixed: restructure numeric fields correctly, try to preserve data
+
+
+------------------------
 V6.4.0
 
 - fixed: dBase III and IV do not have date+time fields
