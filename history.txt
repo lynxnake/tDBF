@@ -42,6 +42,8 @@ V6.3.7
 - added: spanish (thx mauricio) and brazilian portuguese translation (thx adilson)
 - fixed: opening memory streams; more generic implementation
 - fixed: querying ExactRecordCount on open table causes AV (rep by sikorsky)
+- added: smarter Dbf_Parser initialization (thx emled)
+- fixed: copy languageid and autoinc values upon restructure/pack
 
 
 ------------------------
