@@ -46,6 +46,10 @@ V6.2.4
 - fixed: blobstreams delphi 3 compatibility
 - fixed: remove automatically detected indexdefs of previous file at design time
 - fixed: index MDX numeric search (rep by arioch)
+- fixed: index navigation when having a lot of records with the same key
+    (rep by ledoux)
+- fixed: try harder to find a matching locale / codepage combination; any
+    codepage will do if no specific codepage is found
 
 
 ------------------------
