@@ -39,6 +39,7 @@ V6.4.1
 - fixed: read and write foxpro currency fieldtype (thx karelr)
 - fixed: when using TDbf.Insert to add a record, current record indicator does
     not move to newly added record (rep by rpoverdijk)
+- fixed: req. of numeric field size >= 2, it can be 1 too! (rep by rpoverdijk)
 
 
 ------------------------
