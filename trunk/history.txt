@@ -35,6 +35,16 @@ BUGS & WARNINGS
 
 
 ------------------------
+V6.3.0
+
+- fixed: tdbf.physicalrecno not in sync with tdataset
+- added: loPartialKey functionality on index search
+- fixed: mdx file presence not written to dbf header; index does not work (rep by paez)
+- fixed: searchkey on deleted row returns true (rep by sysklop)
+- fixed: primary index creation throws "list index out of bounds(0)" (rep by sysklop)
+
+
+------------------------
 V6.2.9
 
 - fixed: checkkeyviolation bug; should solve locking problem
