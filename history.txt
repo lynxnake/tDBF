@@ -42,6 +42,7 @@ V6.4.2
 - fixed: upon TDbf.Delete, use internal editing/posting such that BeforeEdit
     and other events are not fired; also fixes cursor position bug upon
     deletion (rep by bura)
+- fixed: only use float fields (UseFloatFields) if int64 not supported
 
 
 ------------------------
