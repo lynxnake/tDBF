@@ -39,6 +39,7 @@ V6.4.0
 - fixed: index search bug, not finding records (rep by peruginia)
 - fixed: expression bracket pair checking; caused strange expression errors
 - fixed: parse filter expression upon opening file (rep by mvc)
+- added: do not resync/reparse filter if not property unchanged
 
 
 ------------------------
