@@ -35,10 +35,10 @@
   <OPTIONS>
     <IDLCFLAGS value="-I$(BCB)\include -I$(BCB)\include\vcl -src_suffix cpp -D_DEBUG -boa"/>
     <CFLAG1 value="-Od -Vx -Ve -X- -r- -a8 -5 -b -d -k -y -v -vi- -c -tWM"/>
-    <PFLAGS value="-$Y+ -$W -$T -$O- -$J- -v -JPHNE -M"/>
+    <PFLAGS value="-$Y+ -$W -$T -$O- -$J- -v -JPHNE -M -LUvcl50"/>
     <RFLAGS value=""/>
     <AFLAGS value="/mx /w2 /zi"/>
-    <LFLAGS value="-D&quot;TDBF 5&quot; -aa -Tpp -Gpd -x -Gn -Gl -Gi -v"/>
+    <LFLAGS value="-D&quot;TDBF&quot; -aa -Tpp -Gpd -x -Gn -Gl -Gi -v"/>
   </OPTIONS>
   <LINKER>
     <ALLOBJ value="c0pkg32.obj $(PACKAGES) Memmgr.Lib sysinit.obj $(OBJFILES)"/>
