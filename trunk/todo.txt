@@ -19,6 +19,7 @@ needs fixing:
 - adding records without doing CancelRange causes assertion violation
 - adding records while filter active causes autoinc fields not to be filled in
 - exception safe freeing of items in TOCollection.FreeItem
+- packtable in-memory table
 
 bug reports:
 - wimb\app0018

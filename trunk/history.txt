@@ -43,6 +43,7 @@ V6.4.1
 - fixed: forgot cursor position when disabling filter (rep by bobmitch/luchop)
 - fixed: initialize binary field types '0' (nullflags) and 'Y' (currency)
     properly (thx to karelrys)
+- added: _nullflags field operation support (thx karelrys)
 
 
 ------------------------
