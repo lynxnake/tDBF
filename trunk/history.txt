@@ -35,6 +35,10 @@ BUGS & WARNINGS
 
 
 ------------------------
+V6.3.7
+
+
+------------------------
 V6.3.6
 
 - fixed: crash when optimizing expression with constants
