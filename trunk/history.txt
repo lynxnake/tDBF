@@ -35,6 +35,12 @@ BUGS & WARNINGS
 
 
 ------------------------
+V6.3.5
+
+- fixed: crash when finalizing Dbf_Parser unit
+
+
+------------------------
 V6.3.4
 
 - fixed: improved exception handling in expression parser
