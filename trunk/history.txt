@@ -37,6 +37,7 @@ V6.4.4
 
 - fixed: exception in opening causes double free (thx arioch)
 - fixed: copy precision for float fields
+- fixed: force create index file, if index does not exist yet
 
 
 ------------------------
