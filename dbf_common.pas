@@ -2,12 +2,12 @@ unit dbf_common;
 
 interface
 
-{$I Dbf_Common.inc}
+{$I dbf_common.inc}
 
 uses
   SysUtils, Classes, DB
 {$ifndef WIN32}
-  , Types, Dbf_Wtil
+  , Types, dbf_wtil
 {$ifdef KYLIX}
   , Libc
 {$endif}  

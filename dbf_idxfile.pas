@@ -2,7 +2,7 @@ unit dbf_idxfile;
 
 interface
 
-{$I Dbf_Common.inc}
+{$I dbf_common.inc}
 
 uses
 {$ifdef WIN32}
@@ -11,19 +11,19 @@ uses
 {$ifdef KYLIX}
   Libc,
 {$endif}
-  Types, Dbf_Wtil,
+  Types, dbf_wtil,
 {$endif}
   SysUtils,
   Classes,
-  Db,
-  Dbf_PgFile,
+  db,
+  dbf_pgfile,
 {$ifdef USE_CACHE}
-  Dbf_PgcFile,
+  dbf_pgcfile,
 {$endif}
-  Dbf_Parser,
-  Dbf_PrsDef,
-  Dbf_Cursor,
-  Dbf_Common;
+  dbf_parser,
+  dbf_prsdef,
+  dbf_cursor,
+  dbf_common;
 
 {$ifdef _DEBUG}
 {$define TDBF_INDEX_CHECK}
@@ -397,10 +397,10 @@ type
 implementation
 
 uses
-  Dbf_DbfFile,
-  Dbf_Fields,
-  Dbf_Str,
-  Dbf_Lang;
+  dbf_dbffile,
+  dbf_fields,
+  dbf_str,
+  dbf_lang;
 
 const
   RecBOF = 0;

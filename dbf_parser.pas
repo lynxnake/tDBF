@@ -2,7 +2,7 @@ unit dbf_parser;
 
 interface
 
-{$I Dbf_Common.inc}
+{$I dbf_common.inc}
 
 uses
   SysUtils,
@@ -11,14 +11,14 @@ uses
   Libc,
 {$endif}
 {$ifndef WIN32}
-  Dbf_Wtil,
+  dbf_wtil,
 {$endif}
-  Db,
-  Dbf_PrsCore,
-  Dbf_Common,
-  Dbf_Fields,
-  Dbf_PrsDef,
-  Dbf_PrsSupp;
+  db,
+  dbf_prscore,
+  dbf_common,
+  dbf_fields,
+  dbf_prsdef,
+  dbf_prssupp;
 
 type
 
@@ -191,9 +191,9 @@ procedure Func_NOT(Param: PExpressionRec);
 implementation
 
 uses
-  Dbf,
-  Dbf_DbfFile,
-  Dbf_Str
+  dbf,
+  dbf_dbffile,
+  dbf_str
 {$ifdef WIN32}
   ,Windows
 {$endif}

@@ -2,13 +2,13 @@ unit dbf_prsdef;
 
 interface
 
-{$I Dbf_Common.inc}
+{$I dbf_common.inc}
 
 uses
   SysUtils,
   Classes,
-  Dbf_Common,
-  Dbf_PrsSupp;
+  dbf_common,
+  dbf_prssupp;
 
 const
   MaxArg = 6;

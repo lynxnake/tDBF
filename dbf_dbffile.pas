@@ -2,7 +2,7 @@ unit dbf_dbffile;
 
 interface
 
-{$I Dbf_Common.inc}
+{$I dbf_common.inc}
 
 uses
   Classes, SysUtils, Math,
@@ -12,15 +12,15 @@ uses
 {$ifdef KYLIX}
   Libc, 
 {$endif}  
-  Types, Dbf_Wtil,
+  Types, dbf_wtil,
 {$endif}
   Db,
-  Dbf_Common,
-  Dbf_Cursor,
-  Dbf_PgFile,
-  Dbf_Fields,
-  Dbf_Memo,
-  Dbf_IdxFile;
+  dbf_common,
+  dbf_cursor,
+  dbf_pgfile,
+  dbf_fields,
+  dbf_memo,
+  dbf_idxfile;
 
 //====================================================================
 //=== Dbf support (first part)
@@ -195,12 +195,12 @@ uses
   BaseUnix,
 {$endif}
 {$endif}
-  Dbf_Str, Dbf_Lang;
+  dbf_str, dbf_lang;
 
 const
   sDBF_DEC_SEP = '.';
 
-{$I Dbf_Struct.inc}
+{$I dbf_struct.inc}
 
 //====================================================================
 // International separator

@@ -1,6 +1,6 @@
 unit dbf_wtil;
 
-{$i Dbf_Common.inc}
+{$I dbf_common.inc}
 
 interface
 
