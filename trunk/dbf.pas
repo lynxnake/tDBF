@@ -398,7 +398,8 @@ type
     property StoreDefs: Boolean read FStoreDefs write FStoreDefs default False;
     property TableName: string read FTableName write SetTableName;
     property TableLevel: Integer read FTableLevel write SetTableLevel;
-    property UseFloatFields: Boolean read FUseFloatFields write FUseFloatFields default true;
+    property UseFloatFields: Boolean read FUseFloatFields write FUseFloatFields default 
+      {$ifdef SUPPORT_INT64} false {$else} true {$endif};
     property Version: string read GetVersion write SetVersion stored false;
     property BeforeAutoCreate: TBeforeAutoCreateEvent read FBeforeAutoCreate write FBeforeAutoCreate;
     property OnCompareRecord: TNotifyEvent read FOnCompareRecord write FOnCompareRecord;
@@ -620,7 +621,7 @@ begin
   FPosting := false;
   FReadOnly := false;
   FExclusive := false;
-  FUseFloatFields := true;
+  FUseFloatFields := {$ifdef SUPPORT_INT64} false {$else} true {$endif};
   FDisableResyncOnPost := false;
   FTempExclusive := false;
   FCopyDateTimeAsString := false;
