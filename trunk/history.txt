@@ -33,6 +33,12 @@ BUGS & WARNINGS
 
 
 ------------------------
+V6.4.3
+
+- fixed: delphi 3 compilation; dynamic array of restructure info (rep by kjteng)
+
+
+------------------------
 V6.4.2
 
 - fixed: overflow in storing float field data (large negative number) (thx madruga)
