@@ -2084,6 +2084,9 @@ end;
 
 procedure TDbf.SetFilterText(const Value: String);
 begin
+  if Value = Filter then
+    exit;
+
   // parse
   ParseFilter(Value);
 
@@ -2096,6 +2099,9 @@ end;
 
 procedure TDbf.SetFiltered(Value: Boolean); {override;}
 begin
+  if Value = Filtered then
+    exit;
+
   // pass on to ancestor
   inherited;
 
