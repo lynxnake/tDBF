@@ -38,6 +38,7 @@ BUGS & WARNINGS
 V6.3.7
 
 - fixed: numeric index data exponent (rep by rpoverdijk)
+- fixed: big-endian issues in dbf_idxfile
 
 
 ------------------------
