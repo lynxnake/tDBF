@@ -36,6 +36,7 @@ BUGS & WARNINGS
 V6.4.3
 
 - fixed: delphi 3 compilation; dynamic array of restructure info (rep by kjteng)
+- fixed: datetime index creation using delphi 4 (rep by agam)
 
 
 ------------------------
