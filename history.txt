@@ -55,6 +55,7 @@ V6.3.8
     those fieldtypes? they have been horribly broken, and maybe still are)
 - fixed: getting recno in oncalcfields event (rep by lutz)
 - fixed: AV when checking empty binary fields
+- fixed: better foxpro header writing, fieldoffset, tabletype and headersize
 
 
 ------------------------
