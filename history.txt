@@ -35,6 +35,12 @@ BUGS & WARNINGS
 
 
 ------------------------
+V6.3.8
+
+- fixed: outdated buffer in checking found key
+
+
+------------------------
 V6.3.7
 
 - fixed: numeric index data exponent (rep by rpoverdijk)
