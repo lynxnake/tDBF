@@ -37,6 +37,8 @@ BUGS & WARNINGS
 ------------------------
 V6.3.7
 
+- fixed: numeric index data exponent (rep by rpoverdijk)
+
 
 ------------------------
 V6.3.6
