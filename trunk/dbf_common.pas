@@ -174,44 +174,10 @@ end;
 procedure GetStrFromInt_Width(Val: Integer; const Width: Integer; const Dst: PChar; const PadChar: Char);
 var
   Temp: array[0..10] of Char;
-  I, J, K: Integer;
+  I, J: Integer;
   NegSign: boolean;
 begin
-  if Width <= 0 then
-    exit;
-
-  NegSign := Val < 0;
-  Val := Abs(Val);
-  // we'll have to store characters backwards first
-  I := 0;
-  J := 0;
-  repeat
-    Temp[I] := Chr((Val mod 10) + Ord('0'));
-    Val := Val div 10;
-    Inc(I);
-  until Val = 0;
-  // add sign
-  if NegSign then
-  begin
-    Dst[J] := '-';
-    Inc(J);
-  end;
-  // add spaces
-  for K := 0 to Width - I - J - 1 do
-  begin
-    Dst[J] := PadChar;
-    Inc(J);
-  end;
-  // if field too long, cut off
-  if J + I > Width then
-    I := Width - J;
-  // copy value, remember: stored backwards
-  repeat
-    Dst[J] := Temp[I-1];
-    Inc(J);
-    Dec(I);
-  until I = 0;
-  // done!
+  {$I getstrfromint.inc}
 end;
 
 {$ifdef SUPPORT_INT64}
@@ -219,44 +185,10 @@ end;
 procedure GetStrFromInt64_Width(Val: Int64; const Width: Integer; const Dst: PChar; const PadChar: Char);
 var
   Temp: array[0..19] of Char;
-  I, J, K: Integer;
+  I, J: Integer;
   NegSign: boolean;
 begin
-  if Width <= 0 then
-    exit;
-
-  NegSign := Val < 0;
-  Val := Abs(Val);
-  // we'll have to store characters backwards first
-  I := 0;
-  J := 0;
-  repeat
-    Temp[I] := Chr((Val mod 10) + Ord('0'));
-    Val := Val div 10;
-    inc(I);
-  until Val = 0;
-  // add sign
-  if NegSign then
-  begin
-    Dst[J] := '-';
-    inc(J);
-  end;
-  // add spaces
-  for K := 0 to Width - I - J - 1 do
-  begin
-    Dst[J] := PadChar;
-    inc(J);
-  end;
-  // if field too long, cut off
-  if J + I > Width then
-    I := Width - J;
-  // copy value, remember: stored backwards
-  repeat
-    Dst[J] := Temp[I-1];
-    inc(J);
-    dec(I);
-  until I = 0;
-  // done!
+  {$I getstrfromint.inc}
 end;
 
 {$endif}
