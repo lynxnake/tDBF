@@ -4,6 +4,7 @@ var
 
   STRING_RECORD_LOCKED: string;
   STRING_WRITE_ERROR: string;
+  STRING_WRITE_INDEX_ERROR: string;
   STRING_KEY_VIOLATION: string;
 
   STRING_INVALID_DBF_FILE: string;
