@@ -45,6 +45,8 @@ contains
   dbf_idxfile in 'dbf_idxfile.pas',
   dbf_idxcur in 'dbf_idxcur.pas',
   dbf_dbffile in 'dbf_dbffile.pas',
+  dbf_avl in 'dbf_avl.pas',
+  dbf_pgcfile in 'dbf_pgcfile.pas',
   dbf_wtil in 'dbf_wtil.pas',
   dbf in 'dbf.pas';
 
