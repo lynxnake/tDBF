@@ -382,6 +382,7 @@ begin
       if DbfVersion = xBaseVII then
         FNativeFieldType := '@'
       else
+      if DbfVersion = xFoxPro then
         FNativeFieldType := 'T';
 {$ifdef SUPPORT_FIELDTYPES_V4}
     ftFixedChar,
