@@ -472,29 +472,11 @@ begin
       end;
     'N','F':
       begin
-        case FFieldType of
-          ftSmallInt:
-          begin
-            FSize := DIGITS_SMALLINT;
-            FPrecision := 0;
-          end;
-          ftInteger:
-          begin
-            FSize := DIGITS_INTEGER;
-            FPrecision := 0;
-          end;
-          ftLargeInt:
-          begin
-            FSize := DIGITS_LARGEINT;
-            FPrecision := 0;
-          end;
-        else
-          // floating point
-          if FSize < 2   then FSize := 2;
-          if FSize >= 20 then FSize := 20;
-          if FPrecision > FSize-2 then FPrecision := FSize-2;
-          if FPrecision < 0       then FPrecision := 0;
-        end;
+        // floating point
+        if FSize < 2   then FSize := 2;
+        if FSize >= 20 then FSize := 20;
+        if FPrecision > FSize-2 then FPrecision := FSize-2;
+        if FPrecision < 0       then FPrecision := 0;
       end;
     'D':
       begin
