@@ -870,61 +870,50 @@ begin
   // high will contain first greater-or-equal key
   // ARecNo <> -3 -> Entry(high).Key will contain first key that matches    -> go to high
   // ARecNo =  -3 -> Entry(high).Key will contain first key that is greater -> go to high
-  recNo := high;
-  if FEntryNo <> recNo then
-  begin
-    FEntryNo := recNo;
-    FEntry := GetEntry(recNo);
-  end;
+  EntryNo := high;
   // calc end result: can't inspect high if lowerpage <> nil
   // if this is a leaf, we need to find specific recno
   if (LowerPage = nil) then
   begin
-    // FLowerPage = nil -> can inspect high
-    Result := MatchKey;
-    // test if we need to find a specific recno
-    // result < 0 -> current key greater -> nothing found -> don't search
-    if (ARecNo > 0) then
+    if high > FHighIndex then
     begin
-      // BLS to RecNo
-      high := FHighIndex + 1;
-      low := FEntryNo;
-      // inv: FLowIndex <= FEntryNo <= high <= FHighIndex + 1 /\
-      // (Ai: FLowIndex <= i < FEntryNo: Entry(i).RecNo <> ARecNo)
-      while FEntryNo <> high do
+      Result := 1;
+    end else begin
+      Result := MatchKey;
+      // test if we need to find a specific recno
+      // result < 0 -> current key greater -> nothing found -> don't search
+      if (ARecNo > 0) then
       begin
-        // FEntryNo < high, get new entry
-        if low <> FEntryNo then
+        // BLS to RecNo
+        high := FHighIndex + 1;
+        low := FEntryNo;
+        // inv: FLowIndex <= FEntryNo <= high <= FHighIndex + 1 /\
+        // (Ai: FLowIndex <= i < FEntryNo: Entry(i).RecNo <> ARecNo)
+        while FEntryNo <> high do
         begin
-          FEntry := GetEntry(FEntryNo);
-          // check if entry key still ok
-          Result := MatchKey;
+          // FEntryNo < high, get new entry
+          if low <> FEntryNo then
+          begin
+            FEntry := GetEntry(FEntryNo);
+            // check if entry key still ok
+            Result := MatchKey;
+          end;
+          // get recno of current item
+          recNo := GetRecNo;
+          // test if out of range or found
+          if (Result <> 0) or (recNo = ARecNo) then
+            high := FEntryNo
+          else begin
+            // default to EOF
+            inc(FEntryNo);
+            Result := 1;
+          end;
         end;
-        // get recno of current item
-        recNo := GetRecNo;
-        // test if out of range or found
-        if (Result <> 0) or (recNo = ARecNo) then
-          high := FEntryNo
-        else begin
-          // default to EOF
-          inc(FEntryNo);
-          Result := 1;
-        end;
-      end;
-      // if not found, get EOF entry
-      if (Result <> 0) then
-      begin
-        // Entry(FEntryNo) <> Entry
-        // bypass SetEntryNo check
-        FEntryNo := -1;
-        EntryNo := high;
       end;
     end;
   end else begin
     // FLowerPage <> nil -> high contains entry, can not have empty range
     Result := 0;
-    // sync lower page
-    SyncLowerPage;
   end;
 end;
 
