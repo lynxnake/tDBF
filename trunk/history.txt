@@ -34,6 +34,21 @@ BUGS & WARNINGS
 
 
 ------------------------
+V6.2.4
+
+- fixed: setting memo contents overwrites only first x bytes, not all (rep by avink)
+- fixed: possible corruption in writememo, wrong offset (thx aerceg)
+- fixed: indexname truncated causing inability to select index v7 (thx delphiguru)
+- fixed: (includetrailingpathdelimiter) delphi 4 compatibility (thx bobmitch)
+- fixed: (dbffile.openindex) open NDX file fails due to empty field (thx wschenk)
+- fixed: codepage problems with dbase3 (thx arioch)
+- fixed: result of boolean fields is string type (rep by delphiguru)
+- fixed: blobstreams delphi 3 compatibility
+- fixed: remove automatically detected indexdefs of previous file at design time
+- fixed: index MDX numeric search (rep by arioch)
+
+
+------------------------
 V6.2.3
 
 - added: new assembler implementation for swapint, swapint64 (thx arioch)
