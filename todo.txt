@@ -9,6 +9,7 @@ to be implemented:
 - demo needs master/detail example
 - documentation needs expression index examples
 - val function for indexes
+- retrieve temporary filenames used in restructuretable
 
 needs fixing:
 - parser result string > 100 only for index

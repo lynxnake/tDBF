@@ -663,7 +663,7 @@ end;
 
 procedure TDbf.FreeRecordBuffer(var Buffer: PChar); {override virtual abstract from TDataset}
 begin
-  FreeMem(Buffer);
+  FreeMemAndNil(Buffer);
 end;
 
 procedure TDbf.GetBookmarkData(Buffer: PChar; Data: Pointer); {override virtual abstract from TDataset}
