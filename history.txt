@@ -48,6 +48,7 @@ V6.3.8
 - fixed: use correct dbf version when creating table to decide field types
 - fixed: kylix compilation
 - added: multi-user and insert aware ranges (req by ralf)
+- chngd: made all filenames lowercase to ease usage on *nix
 
 
 ------------------------
