@@ -51,6 +51,8 @@ V6.3.2
     - delphi 4 and higher only
 - fixed: close,open files reset indexnames,files list (rep by paez)
 - fixed: reselect index after repage, compact (rep by paez)
+- added: support for foxpro datetime fields
+- fixed: support for foxpro integer fields
 
 
 ------------------------
