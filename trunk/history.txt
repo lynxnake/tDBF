@@ -46,6 +46,7 @@ V6.3.7
 - fixed: copy languageid and autoinc values upon restructure/pack
 - added: TDbf.LanguageID to set language id of new table; set before CreateTable
 - fixed: remember autoinc value after restructure
+- fixed: do not try to create foxpro currency fields if creating dbase table
 
 
 ------------------------
