@@ -939,7 +939,8 @@ var
   lRecord: pDbfRecord;
 begin
   // start editing
-  Edit;
+  InternalEdit;
+  SetState(dsEdit);
   // get record pointer
   lRecord := pDbfRecord(ActiveBuffer);
   // flag we deleted this record
@@ -947,7 +948,7 @@ begin
   // notify indexes this record is deleted
   FDbfFile.RecordDeleted(FEditingRecNo, @lRecord^.DeletedFlag);
   // done!
-  Post;
+  InternalPost;
 end;
 
 procedure TDbf.InternalFirst; {override virtual abstract from TDataset}
