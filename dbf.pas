@@ -1566,6 +1566,7 @@ begin
     FFindRecordFilter := false;
     if not Result then
       RecNo := oldRecNo;
+    CursorPosChanged;
     Resync([]);
   end;
 end;
@@ -2037,6 +2038,7 @@ begin
 
   DoBeforeScroll;
   FCursor.SequentialRecNo := Value;
+  CursorPosChanged;
   Resync([]);
   DoAfterScroll;
 end;
@@ -2420,6 +2422,7 @@ begin
   CheckBrowseMode;
   DoBeforeScroll;
   FCursor.PhysicalRecNo := NewRecNo;
+  CursorPosChanged;
   Resync([]);
   DoAfterScroll;
 end;
@@ -2598,6 +2601,7 @@ begin
   { if found, then retrieve new current record }
   if Result then
   begin
+    CursorPosChanged;
     Resync([]);
     UpdateCursorPos;
     { recno could have been changed due to deleted record, check if still matches }
