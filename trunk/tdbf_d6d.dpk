@@ -1,7 +1,6 @@
 package tdbf_d6d;
 
 {$R *.res}
-{$R 'dbf.dcr'}
 {$ALIGN 8}
 {$ASSERTIONS ON}
 {$BOOLEVAL OFF}
