@@ -259,6 +259,8 @@ begin
   FNeedLocks := IsSharedAccess;
 {$endif}
   FActive := true;
+  // allocate memory for bufferahead
+  UpdateBufferSize;
 end;
 
 procedure TPagedFile.CloseFile;
@@ -266,9 +268,12 @@ begin
   if FActive then
   begin
     FlushHeader;
+    FlushBuffer;
     // don't free the user's stream
     if not (FMode in [pfMemoryOpen, pfMemoryCreate]) then
       FreeAndNil(FStream);
+    // free bufferahead buffer
+    FreeMemAndNil(FBufferPtr);
 
     // mode possibly overridden in case of auto-created file
     FMode := FUserMode;
