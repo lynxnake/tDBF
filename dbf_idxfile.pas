@@ -2246,7 +2246,7 @@ var
 
   procedure CheckHeaderIntegrity;
   begin
-    if PIndexHdr(FIndexHeader)^.NumKeys * PIndexHdr(FIndexHeader)^.KeyRecLen > RecordSize then
+    if integer(PIndexHdr(FIndexHeader)^.NumKeys * PIndexHdr(FIndexHeader)^.KeyRecLen) > RecordSize then
     begin
       // adjust index header so that integrity is correct
       // WARNING: we can't be sure this gives a correct result, but at
