@@ -3,6 +3,10 @@
 
 {.$define USE_CACHE}
 
+// modifies unix unit dbf_wtil to use hungarian encodings (hack)
+
+{.$define HUNGARIAN}
+
 // enables assembler routines, 486+ only
 
 {$define USE_ASSEMBLER_486_UP}
