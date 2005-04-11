@@ -12,6 +12,7 @@ to be implemented:
 - retrieve temporary filenames used in restructuretable
 
 needs fixing:
+- unix character set conversion is a mess
 - parser result string > 100 only for index
 - check paged cache flushing, recordcount in cache
 - adding records without doing CancelRange causes assertion violation
