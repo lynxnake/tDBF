@@ -2394,7 +2394,7 @@ var
   I: Integer;
 begin
   Strings.Clear;
-  if FDbfFile = nil then
+  if FDbfFile <> nil then
   begin
     if dfDbf in Files then
       Strings.Add(FDbfFile.FileName);
@@ -2403,7 +2403,8 @@ begin
     if dfIndex in Files then
       for I := 0 to Pred(FDbfFile.IndexFiles.Count) do
         Strings.Add(TPagedFile(FDbfFile.IndexFiles.Items[I]).FileName);
-  end;
+  end else
+    Strings.Add(IncludeTrailingPathDelimiter(FilePathFull) + TableName);   
 end;
 
 {$ifdef SUPPORT_DEFAULT_PARAMS}
@@ -2414,20 +2415,12 @@ function TDbf.GetFileNamesString(Files: TDbfFileNames ): string;
 var
   sl: TStrings;
 begin
-  if Files = [dfDbf] then
-  begin
-    //even if closed!
-    // do it myself, since it is rather faster than the code below
-    Result := IncludeTrailingPathDelimiter(FilePathFull) + TableName;
-  end else begin
-    CheckActive;
-    sl := TStringList.Create;
-    try
-      GetFileNames(sl, Files);
-      Result := sl.Text;
-    finally
-      sl.Free
-    end;
+  sl := TStringList.Create;
+  try
+    GetFileNames(sl, Files);
+    Result := sl.Text;
+  finally
+    sl.Free;
   end;
 end;
 

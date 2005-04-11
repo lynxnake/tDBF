@@ -39,6 +39,7 @@ V6.4.4
 - fixed: copy precision for float fields
 - fixed: force create index file, if index does not exist yet
 - fixed: memory leak in TPagedFile.FBufferPtr
+- fixed: TDbf.GetFileNames crash, more robust (rep by arioch)
 
 
 ------------------------
