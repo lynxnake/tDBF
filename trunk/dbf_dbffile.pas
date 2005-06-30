@@ -5,7 +5,10 @@ interface
 {$I dbf_common.inc}
 
 uses
-  Classes, SysUtils, Math,
+  Classes, SysUtils,
+{$ifdef DELPHI_4}
+  Math,
+{$endif}
 {$ifdef WIN32}
   Windows,
 {$else}
