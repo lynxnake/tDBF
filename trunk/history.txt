@@ -43,6 +43,7 @@ V6.4.4
 - fixed: TDbf.GetFileNames crash, more robust (rep by arioch)
 - added: character conversion hungarian (from attila)
 - fixed: index creation for tablelevel 7, mdx type 3
+- fixed: remember cursor position when changing showdeleted setting
 
 
 ------------------------
