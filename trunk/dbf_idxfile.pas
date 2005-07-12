@@ -1974,7 +1974,10 @@ begin
   if FIndexVersion >= xBaseIV then
   begin
     DecodeDate(Now, year, month, day);
-    PMdxHdr(Header)^.MdxVersion := 2;
+    if FIndexVersion = xBaseVII then
+      PMdxHdr(Header)^.MdxVersion := 3
+    else  
+      PMdxHdr(Header)^.MdxVersion := 2;
     PMdxHdr(Header)^.Year := year - 1900;
     PMdxHdr(Header)^.Month := month;
     PMdxHdr(Header)^.Day := day;
