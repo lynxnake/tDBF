@@ -1596,6 +1596,7 @@ begin
       RecNo := oldRecNo;
     CursorPosChanged;
     Resync([]);
+    DoAfterScroll;
   end;
 end;
 
@@ -2134,7 +2135,7 @@ begin
   inherited;
 
   // refilter dataset if filtered
-  if (FDbfFile <> nil) and Filtered then Resync([]);
+  if (FDbfFile <> nil) and Filtered then Refresh;
 end;
 
 procedure TDbf.SetFiltered(Value: Boolean); {override;}
@@ -2147,11 +2148,7 @@ begin
 
   // only refresh if active
   if FCursor <> nil then
-  begin
-    UpdateCursorPos;
-    CursorPosChanged;
-    Resync([]);
-  end;
+    Refresh;
 end;
 
 procedure TDbf.SetFilePath(const Value: string);
@@ -2492,7 +2489,7 @@ begin
     FShowDeleted := Value;
     // refresh view only if active
     if FCursor <> nil then
-      Resync([]);
+      Refresh;
   end;
 end;
 
@@ -2530,7 +2527,7 @@ begin
   // disable current range if any
   FIndexFile.CancelRange;
   // reretrieve previous and next records
-  Resync([]);
+  Refresh;
 end;
 
 procedure TDbf.SetRangeBuffer(LowRange: PChar; HighRange: PChar);
