@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils,
-{$ifdef DELPHI_4}
+{$ifdef SUPPORT_MATH_UNIT}
   Math,
 {$endif}
 {$ifdef WIN32}

@@ -152,6 +152,7 @@
   {$define SUPPORT_FIELDDEF_INDEX}
   {$define SUPPORT_FIELDTYPES_V4}
   {$define SUPPORT_UINT32_CARDINAL}
+  {$define SUPPORT_MATH_UNIT}
 
 {$ifdef DELPHI_5}
 
@@ -199,6 +200,7 @@
   {$define SUPPORT_FIELDTYPES_V4}
   {$define SUPPORT_UINT32_CARDINAL}
   {$define SUPPORT_REINTRODUCE}
+  {$define SUPPORT_MATH_UNIT}
 
   // FPC 1.0.x exceptions: no 0/0 support
   {$ifdef VER1_0}
