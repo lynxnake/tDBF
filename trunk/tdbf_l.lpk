@@ -1,12 +1,14 @@
 <?xml version="1.0"?>
 <CONFIG>
   <Package Version="2">
+    <PathDelim Value="\"/>
     <Name Value="tdbf_l"/>
     <CompilerOptions>
-      <Version Value="2"/>
+      <Version Value="5"/>
+      <PathDelim Value="\"/>
       <SearchPaths>
-        <OtherUnitFiles Value="$(LazarusDir)/ideintf/units/$(TargetCPU)/$(TargetOS)/"/>
-        <UnitOutputDirectory Value="lib/"/>
+        <OtherUnitFiles Value="$(LazarusDir)\ideintf\units\$(TargetCPU)\$(TargetOS)\"/>
+        <UnitOutputDirectory Value="lib\"/>
       </SearchPaths>
       <CodeGeneration>
         <Optimizations>
@@ -21,32 +23,24 @@
         <CompilerPath Value="$(CompPath)"/>
       </Other>
     </CompilerOptions>
-    <Files Count="2">
+    <Files Count="1">
       <Item1>
         <Filename Value="Dbf.pas"/>
         <UnitName Value="Dbf"/>
       </Item1>
-      <Item2>
-        <Filename Value="Dbf_Reg.pas"/>
-        <HasRegisterProc Value="True"/>
-        <UnitName Value="Dbf_Reg"/>
-      </Item2>
     </Files>
-    <Type Value="RunAndDesignTime"/>
-    <RequiredPkgs Count="2">
+    <RequiredPkgs Count="1">
       <Item1>
-        <PackageName Value="LCL"/>
-      </Item1>
-      <Item2>
         <PackageName Value="FCL"/>
         <MinVersion Major="1" Valid="True"/>
-      </Item2>
+      </Item1>
     </RequiredPkgs>
     <UsageOptions>
-      <UnitPath Value="$(PkgOutDir)/"/>
+      <UnitPath Value="$(PkgOutDir)\"/>
     </UsageOptions>
     <PublishOptions>
       <Version Value="2"/>
+      <DestinationDirectory Value="$(TestDir)\publishedpackage\"/>
       <IgnoreBinaries Value="False"/>
     </PublishOptions>
   </Package>

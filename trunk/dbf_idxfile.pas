@@ -2101,8 +2101,9 @@ begin
   try
     TempParser.ParseExpression(FieldDesc);
     // check if result type is correct
+    fieldType := 'C';
     case TempParser.ResultType of
-      etString: fieldType := 'C';
+      { etString: default set above to suppress delphi warning ; }
       etInteger, etLargeInt, etFloat: fieldType := 'N';
     else
       raise EDbfError.Create(STRING_INVALID_INDEX_TYPE);
@@ -3416,6 +3417,8 @@ begin
     exit;
 
   // disable current range if any
+  //  init to 0 to suppress delphi warning
+  currRecNo := 0;
   if KeepPosition then
     currRecNo := SequentialRecNo;
   ResetRange;
@@ -3472,6 +3475,8 @@ var
 begin
   // if at BOF or EOF, then we need to resync by first or last
   // remember where the cursor was
+  //  init to 0 to suppress delphi warning
+  recno := 0;
   if FLeaf.Entry = FEntryBof then
   begin
     action := 0;
