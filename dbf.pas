@@ -1579,6 +1579,7 @@ begin
   CheckBrowseMode;
   DoBeforeScroll;
   Result := false;
+  UpdateCursorPos;
   oldRecNo := RecNo;
   try
     FFindRecordFilter := true;
@@ -1593,10 +1594,13 @@ begin
   finally
     FFindRecordFilter := false;
     if not Result then
+    begin
       RecNo := oldRecNo;
-    CursorPosChanged;
-    Resync([]);
-    DoAfterScroll;
+    end else begin
+      CursorPosChanged;
+      Resync([]);
+      DoAfterScroll;
+    end;
   end;
 end;
 
