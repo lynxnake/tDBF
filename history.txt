@@ -33,6 +33,12 @@ BUGS & WARNINGS
 
 
 ------------------------
+V6.4.5
+
+- fixed: index create string raises exception unknown type
+
+
+------------------------
 V6.4.4
 
 - fixed: delphi 3 does not have math unit
