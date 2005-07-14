@@ -2103,7 +2103,7 @@ begin
     // check if result type is correct
     fieldType := 'C';
     case TempParser.ResultType of
-      { etString: default set above to suppress delphi warning ; }
+      etString: ; { default set above to suppress delphi warning }
       etInteger, etLargeInt, etFloat: fieldType := 'N';
     else
       raise EDbfError.Create(STRING_INVALID_INDEX_TYPE);
