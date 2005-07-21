@@ -202,6 +202,13 @@
   {$define SUPPORT_REINTRODUCE}
   {$define SUPPORT_MATH_UNIT}
 
+  // FPC 2.0.x improvements
+  {$ifdef VER2}
+    {$ifndef VER2_0_0}
+      {$define SUPPORT_BACKWARD_FIELDDATA}
+    {$endif}
+  {$endif}
+
   // FPC 1.0.x exceptions: no 0/0 support
   {$ifdef VER1_0}
     {$undef NAN}
