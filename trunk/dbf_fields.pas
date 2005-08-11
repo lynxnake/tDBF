@@ -466,8 +466,16 @@ begin
   case FNativeFieldType of
     'C':
       begin
-        if FSize < 0      then FSize := 0;
-        if FSize >= 65534 then FSize := 65534;
+        if FSize < 0 then 
+          FSize := 0;
+        if DbfVersion = xFoxPro then
+        begin
+          if FSize >= $FFFF then 
+            FSize := $FFFF;
+        end else begin
+          if FSize >= $FF then 
+            FSize := $FF;
+        end;
         FPrecision := 0;
       end;
     'L':
