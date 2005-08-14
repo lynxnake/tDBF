@@ -234,11 +234,15 @@ begin
   if (BlockNo<=0) or (RecordSize=0) then
     exit;
   // read first block
-  if ReadRecord(BlockNo, @FBuffer[0]) = 0 then
+  numBytes := ReadRecord(BlockNo, @FBuffer[0]);
+  if numBytes = 0 then
   begin
     // EOF reached?
     exit;
-  end;
+  end else
+  if numBytes < RecordSize then
+    FillChar(FBuffer[RecordSize-numBytes], numBytes, #0);
+
   bytesLeft := GetMemoSize;
   // bytesLeft <> -1 -> memo size is known (FoxPro, dBase4)
   // bytesLeft =  -1 -> memo size unknown (dBase3)

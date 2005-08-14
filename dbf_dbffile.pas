@@ -1564,6 +1564,12 @@ begin
         end;
 {$endif}
       end;
+    'B':    // foxpro double
+      begin
+        Result := true;
+        if Dst <> nil then
+          PDouble(Dst)^ := PDouble(Src)^;
+      end;
   else
     //    SetString(s, PChar(Src) + FieldOffset, FieldSize );
     //    s := {TrimStr(s)} TrimRight(s);
@@ -1789,6 +1795,13 @@ begin
         end;
         // TODO: data is little endian
 {$endif}
+      end;
+    'B':
+      begin
+        if Src = nil then
+          PDouble(Dst)^ := 0
+        else
+          PDouble(Dst)^ := PDouble(Src)^;
       end;
   else
     if Src = nil then

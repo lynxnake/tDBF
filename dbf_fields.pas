@@ -257,7 +257,7 @@ begin
   // convert VCL fieldtypes to native DBF fieldtypes
   VCLToNative;
   // for integer / float fields try fill in size/precision
-  SetDefaultSize;
+  CheckSizePrecision;
   // VCL does not have default value support
   AllocBuffers;
   FHasDefault := false;
@@ -363,7 +363,11 @@ begin
       end;
     'D' : FFieldType := ftDate;
     'M' : FFieldType := ftMemo;
-    'B' : FFieldType := ftBlob;
+    'B' : 
+      if DbfVersion = xFoxPro then
+        FFieldType := ftFloat
+      else
+        FFieldType := ftBlob;
     'G' : FFieldType := ftDBaseOle;
     'Y' :
       if DbfGlobals.CurrencyAsBCD then

@@ -39,6 +39,8 @@ V6.4.6
     for datetime fields in particular (from alexandrov)
 - fixed: only allow >255 field length for creating foxpro files; prevents
     range check error (rep by miguel)
+- fixed: memo read: check number of bytes read, clear rest for safety
+- added: support for foxpro double, fieldtype 'B'
 
 
 ------------------------
