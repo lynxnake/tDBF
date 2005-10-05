@@ -1410,6 +1410,7 @@ var
   ldd, ldm, ldy, lth, ltm, lts: Integer;
   date: TDateTime;
   timeStamp: TTimeStamp;
+  asciiContents: boolean;
 
 {$ifdef SUPPORT_INT64}
   function GetInt64FromStrLength(Src: Pointer; Size: Integer; Default: Int64): Int64;
@@ -1486,6 +1487,7 @@ begin
   FieldOffset := AFieldDef.Offset;
   FieldSize := AFieldDef.Size;
   Src := PChar(Src) + FieldOffset;
+  asciiContents := false;
   // field types that are binary and of which the fieldsize should not be truncated
   case AFieldDef.NativeFieldType of
     '+', 'I':
@@ -1570,7 +1572,21 @@ begin
         if Dst <> nil then
           PDouble(Dst)^ := PDouble(Src)^;
       end;
+    'M':
+      begin
+        if FieldSize = 4 then
+        begin
+          Result := PInteger(Src)^ <> 0;
+          if Dst <> nil then
+            PInteger(Dst)^ := PInteger(Src)^;
+        end else
+          asciiContents := true;
+      end;
   else
+    asciiContents := true;
+  end;
+  if asciiContents then
+  begin
     //    SetString(s, PChar(Src) + FieldOffset, FieldSize );
     //    s := {TrimStr(s)} TrimRight(s);
     // truncate spaces at end by shortening fieldsize
@@ -1685,6 +1701,7 @@ var
   hour, minute, sec, msec: Word;
   date: TDateTime;
   timeStamp: TTimeStamp;
+  asciiContents: boolean;
 
   procedure LoadDateFromSrc;
   begin
@@ -1720,6 +1737,7 @@ begin
 
   // copy field data to record buffer
   Dst := PChar(Dst) + TempFieldDef.Offset;
+  asciiContents := false;
   case TempFieldDef.NativeFieldType of
     '+', 'I':
       begin
@@ -1803,7 +1821,22 @@ begin
         else
           PDouble(Dst)^ := PDouble(Src)^;
       end;
+    'M':
+      begin
+        if FieldSize = 4 then
+        begin
+          if Src = nil then
+            PInteger(Dst)^ := 0
+          else
+            PInteger(Dst)^ := PInteger(Src)^;
+        end else
+          asciiContents := true;
+      end;
   else
+    asciiContents := true;
+  end;
+  if asciiContents then
+  begin
     if Src = nil then
     begin
       FillChar(Dst^, FieldSize, ' ');
