@@ -502,7 +502,10 @@ begin
       end;
     'M','G','B':
       begin
-        FSize := 10;
+        if DbfVersion = xFoxPro then
+          FSize := 4
+        else
+          FSize := 10;
         FPrecision := 0;
       end;
     '+','I':
