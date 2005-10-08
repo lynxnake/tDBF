@@ -42,6 +42,7 @@ V6.4.6
 - fixed: memo read: check number of bytes read, clear rest for safety
 - added: support for foxpro double, fieldtype 'B'
 - fixed: foxpro memo pageno is binary 4 byte integer, not ascii
+- added: default values are buffered, better/faster record insert
 
 
 ------------------------
