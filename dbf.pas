@@ -915,8 +915,6 @@ begin
 
   if FParser <> nil then
     FreeAndNil(FParser);
-  if (FDbfFile <> nil) and not FReadOnly then
-    FDbfFile.WriteHeader;
   FreeAndNil(FCursor);
   if FDbfFile <> nil then
     FreeAndNil(FDbfFile);
