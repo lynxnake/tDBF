@@ -655,7 +655,11 @@ begin
       // apply field transformation tricks
       lSize := lFieldDef.Size;
       lPrec := lFieldDef.Precision;
-      if (FDbfVersion = xFoxPro) and (lFieldDef.NativeFieldType = 'C') then
+      if (lFieldDef.NativeFieldType = 'C')
+{$ifndef USE_LONG_CHAR_FIELDS}
+          and (FDbfVersion = xFoxPro)
+{$endif}
+                then
       begin
         lPrec := lSize shr 8;
         lSize := lSize and $FF;
@@ -870,7 +874,11 @@ begin
       end;
 
       // apply field transformation tricks
-      if (lNativeFieldType = 'C') and (FDbfVersion = xFoxPro) then
+      if (lNativeFieldType = 'C') 
+{$ifdef USE_LONG_CHAR_FIELDS}
+          and (FDbfVersion = xFoxPro) 
+{$endif}
+                then
       begin
         lSize := lSize + lPrec shl 8;
         lPrec := 0;
