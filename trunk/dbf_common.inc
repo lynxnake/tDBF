@@ -3,6 +3,12 @@
 
 {.$define USE_CACHE}
 
+// define the following if you want support for 65535 length character
+// fields for all dbase files (and not only foxpro); if you define this, 
+// you will not be able to read MS Excel generated .dbf files!
+
+{.$define USE_LONG_CHAR_FIELDS}
+
 // modifies unix unit dbf_wtil to use hungarian encodings (hack)
 
 {.$define HUNGARIAN}
