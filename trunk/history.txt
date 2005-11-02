@@ -45,6 +45,7 @@ V6.4.6
 - added: default values are buffered, better/faster record insert
 - added: support for long character fields compiletime definable
     (USE_LONG_CHAR_FIELDS)
+- fixed: added boolean field support in expressions (note: breaks existing)
 
 
 ------------------------
