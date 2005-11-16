@@ -46,6 +46,7 @@ V6.4.6
 - added: support for long character fields compiletime definable
     (USE_LONG_CHAR_FIELDS)
 - fixed: added boolean field support in expressions (note: breaks existing)
+- fixed: compilation with USE_CACHE directive
 
 
 ------------------------
