@@ -98,6 +98,7 @@ function GetFreeMemory: Integer;
 {$endif}
 
 // OH 2000-11-15 dBase7 support. Swap Byte order for 4 and 8 Byte Integer
+function SwapWord(const Value: word): word;
 function SwapInt(const Value: Cardinal): Cardinal;
 { SwapInt64 NOTE: do not call with same value for Value and Result ! }
 procedure SwapInt64(Value, Result: Pointer); register;
@@ -339,6 +340,11 @@ end;
 //====================================================================
 // Utility routines
 //====================================================================
+
+function SwapWord(const Value: word): word;
+begin
+  Result := ((Value and $FF) shl 8) or ((Value shr 8) and $FF);
+end;
 
 {$ifdef USE_ASSEMBLER_486_UP}
 
