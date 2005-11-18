@@ -183,15 +183,12 @@ begin
 
     RecordSize := GetBlockLen;
     // checking for right blocksize not needed for foxpro?
-    if FDbfVersion <> xFoxPro then
+    // mod 128 <> 0 <-> and 0x7F <> 0
+    if (RecordSize = 0) and ((FDbfVersion = xFoxPro) or ((RecordSize and $7F) <> 0)) then
     begin
-      // mod 128 <> 0 <-> and 0x7F <> 0
-      if (RecordSize = 0) or ((RecordSize and $7F) <> 0) then
-      begin
-        SetBlockLen(512);
-        RecordSize := 512;
-        WriteHeader;
-      end;
+      SetBlockLen(512);
+      RecordSize := 512;
+      WriteHeader;
     end;
 
     // get memory for temporary buffer
@@ -459,7 +456,7 @@ end;
 
 function  TFoxProMemoFile.GetBlockLen: Integer;
 begin
-  Result := Swap(PFptHdr(Header)^.BlockLen);
+  Result := SwapWord(PFptHdr(Header)^.BlockLen);
 end;
 
 function  TFoxProMemoFile.GetMemoSize: Integer;
@@ -479,7 +476,7 @@ end;
 
 procedure TFoxProMemoFile.SetBlockLen(BlockLen: Integer);
 begin
-  PFptHdr(Header)^.BlockLen := Swap(BlockLen);
+  PFptHdr(Header)^.BlockLen := SwapWord(BlockLen);
 end;
 
 // ------------------------------------------------------------------
