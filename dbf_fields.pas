@@ -391,7 +391,9 @@ begin
         FNativeFieldType := '@'
       else
       if DbfVersion = xFoxPro then
-        FNativeFieldType := 'T';
+        FNativeFieldType := 'T'
+      else
+        FNativeFieldType := 'D';
 {$ifdef SUPPORT_FIELDTYPES_V4}
     ftFixedChar,
     ftWideString,

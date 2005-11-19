@@ -48,6 +48,8 @@ V6.4.6
 - fixed: added boolean field support in expressions (note: breaks existing)
 - fixed: compilation with USE_CACHE directive
 - fixed: add my own SwapWord function, because Swap seems buggy in fpc
+- fixed: VCL fieldtype ftDateTime was not translated to any native type
+    for non dBase VII and non FoxPro (hint by paul van helden)
 
 
 ------------------------
