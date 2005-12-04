@@ -515,7 +515,7 @@ begin
 //      TDbf(FBlobField.DataSet).SetModified(true);
       // is following better? seems to provide notification for user (from VCL)
       if not (FBlobField.DataSet.State in [dsCalcFields, dsFilter, dsNewValue]) then
-        TDbf(FBlobField.DataSet).DataEvent(deFieldChange, Longint(FBlobField));
+        TDbf(FBlobField.DataSet).DataEvent(deFieldChange, PtrInt(FBlobField));
     end;
   end;
   Dec(FRefCount);
@@ -1191,9 +1191,7 @@ begin
   BindFields(true);
 
   // create array of blobstreams to store memo's in. each field is a possible blob
-  GetMem(FBlobStreams, FieldCount * SizeOf(TDbfBlobStream));
-  for I := 0 to Pred(FieldCount) do
-    FBlobStreams^[I] := nil;
+  FBlobStreams := AllocMem(FieldDefs.Count * SizeOf(TDbfBlobStream));
 
   // check codepage settings
   DetermineTranslationMode;
@@ -1832,11 +1830,11 @@ begin
   // check if in editing mode if user wants to write
   if (Mode = bmWrite) or (Mode = bmReadWrite) then
     if not (State in [dsEdit, dsInsert]) then
-{$ifdef DELPHI_3}    
+{$ifdef DELPHI_3}
       DatabaseError(SNotEditing);
-{$else}    
+{$else}
       DatabaseError(SNotEditing, Self);
-{$endif}      
+{$endif}
   // already created a `placeholder' blob for this field?
   MemoFieldNo := Field.FieldNo - 1;
   if FBlobStreams^[MemoFieldNo] = nil then
@@ -1859,7 +1857,7 @@ begin
       lBlob.ReadSize := 0;
     end;
     lBlob.MemoRecNo := MemoPageNo;
-  end else 
+  end else
   if not lBlob.Dirty or (Mode = bmWrite) then
   begin
     // reading and memo is empty and not written yet, or rewriting
@@ -2009,7 +2007,7 @@ begin
 //    end;
   end;     { end of ***** fkCalculated, fkLookup ***** }
   if not (State in [dsCalcFields, dsFilter, dsNewValue]) then begin
-    DataEvent(deFieldChange, Longint(Field));
+    DataEvent(deFieldChange, PtrInt(Field));
   end;
 end;
 
@@ -2329,7 +2327,7 @@ begin
     Result := lIndexDef.SortField;
 end;
 
-procedure tdbf.SetIndexFieldNames(const Value: string);
+procedure TDbf.SetIndexFieldNames(const Value: string);
 var
   lIndexDef: TDbfIndexDef;
 begin

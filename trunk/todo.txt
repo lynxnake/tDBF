@@ -10,6 +10,7 @@ to be implemented:
 - documentation needs expression index examples
 - val function for indexes
 - retrieve temporary filenames used in restructuretable
+- foNoPartialCompare in filter
 
 needs fixing:
 - lazarus projects need unit ideintf when dropping tdbf on forum
