@@ -17,7 +17,7 @@ uses
 
 const
   TDBF_MAJOR_VERSION      = 6;
-  TDBF_MINOR_VERSION      = 46;
+  TDBF_MINOR_VERSION      = 47;
   TDBF_SUB_MINOR_VERSION  = 0;
 
   TDBF_TABLELEVEL_FOXPRO = 25;
@@ -44,6 +44,8 @@ type
       ftTime: (Time: Longint);
       ftDateTime: (DateTime: TDateTimeAlias);
   end;
+{$else}
+  PtrInt = Longint;
 {$endif}
 
   PSmallInt = ^SmallInt;

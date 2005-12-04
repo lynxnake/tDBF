@@ -33,6 +33,13 @@ BUGS & WARNINGS
 
 
 ------------------------
+V6.4.7
+
+- fixed: 64bit compatibility
+- fixed: Field.FieldNo is relative to number of FieldDefs, may be larger
+
+
+------------------------
 V6.4.6
 
 - fixed: FPC 2.0.1 implements "backward-compatible" fielddata 
