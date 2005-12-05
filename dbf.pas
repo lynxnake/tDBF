@@ -901,9 +901,8 @@ begin
   // free blobs
   if FBlobStreams <> nil then
   begin
-    for I := 0 to Pred(FieldCount) do
-      if FBlobStreams^[I] <> nil then
-        FBlobStreams^[I].Free;
+    for I := 0 to Pred(FieldDefs.Count) do
+      FBlobStreams^[I].Free;
     FreeMemAndNil(Pointer(FBlobStreams));
   end;
   FreeRecordBuffer(FTempBuffer);
@@ -1775,7 +1774,7 @@ begin
             else
               varCompare := KeyValues;
             Result := CompareValues;
-            iIndex := iIndex + 1;
+            Inc(iIndex);
           end;
           if not Result then
             Next;
