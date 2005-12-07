@@ -924,7 +924,7 @@ var
   I: Integer;
 begin
   // cancel blobs
-  for I := 0 to Pred(FieldCount) do
+  for I := 0 to Pred(FieldDefs.Count) do
     if Assigned(FBlobStreams^[I]) then
       FBlobStreams^[I].Cancel;
   // if we have locked a record, unlock it
@@ -1285,7 +1285,7 @@ begin
   FEditingRecNo := FCursor.PhysicalRecNo;
   // reread blobs, execute cancel -> clears remembered memo pageno,
   // causing it to reread the memo contents
-  for I := 0 to Pred(FieldCount) do
+  for I := 0 to Pred(FieldDefs.Count) do
     if Assigned(FBlobStreams^[I]) then
       FBlobStreams^[I].Cancel;
   // try to lock this record
@@ -1312,7 +1312,7 @@ begin
   // if internalpost is called, we know we are active
   pRecord := pDbfRecord(ActiveBuffer);
   // commit blobs
-  for I := 0 to Pred(FieldCount) do
+  for I := 0 to Pred(FieldDefs.Count) do
     if Assigned(FBlobStreams^[I]) then
       FBlobStreams^[I].Commit;
   if State = dsEdit then
