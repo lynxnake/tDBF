@@ -115,6 +115,7 @@ function MemScan(const Buffer: Pointer; Chr: Byte; Length: Integer): Pointer;
 {$ifdef DELPHI_3}
 {$ifndef DELPHI_4}
 function Min(x, y: integer): integer;
+function Max(x, y: integer): integer;
 {$endif}
 {$endif}
 
@@ -472,6 +473,14 @@ begin
     result := x
   else
     result := y;
+end;
+
+function Max(x, y: integer): integer;
+begin
+  if x < y then
+    result := y
+  else
+    result := x;
 end;
 
 {$endif}
