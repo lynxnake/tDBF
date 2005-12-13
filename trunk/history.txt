@@ -38,6 +38,7 @@ V6.4.7
 - fixed: 64bit compatibility
 - fixed: Field.FieldNo is relative to number of FieldDefs, may be larger
 - added: function Max for Delphi 3, needed by dbf_avl unit
+- added: BCB3 package files (thx to pzelotti)
 
 
 ------------------------
