@@ -1520,9 +1520,11 @@ end;
 
 procedure TDbf.CopyFrom(DataSet: TDataSet; FileName: string; DateTimeAsString: Boolean; Level: Integer);
 var
+  lFieldDefs: TDbfFieldDefs;
   I: integer;
 begin
   FInCopyFrom := true;
+  lFieldDefs := TDbfFieldDefs.Create(nil);
   try
     if Active then
       Close;
@@ -1533,9 +1535,15 @@ begin
     if not DataSet.Active then
       DataSet.Open;
     DataSet.FieldDefs.Update;
-    FieldDefs.Assign(DataSet.FieldDefs);
-    IndexDefs.Clear;
-    CreateTable;
+    if DataSet is TDbf then
+    begin
+      lFieldDefs.Assign(TDbf(DataSet).DbfFieldDefs);
+      IndexDefs.Assign(TDbf(DataSet).IndexDefs);
+    end else begin
+      lFieldDefs.Assign(DataSet.FieldDefs);
+      IndexDefs.Clear;
+    end;
+    CreateTableEx(lFieldDefs);
     Open;
     DataSet.First;
     while not DataSet.EOF do
@@ -1564,6 +1572,7 @@ begin
     Close;
   finally
     FInCopyFrom := false;
+    lFieldDefs.Free;
   end;
 end;
 
