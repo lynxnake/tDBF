@@ -348,9 +348,7 @@ type
     procedure CompactIndexFile(const AIndexFile: string);
 
 {$ifdef SUPPORT_VARIANTS}
-{$ifdef USE_BUGGY_LOOKUP}
     function  Lookup(const KeyFields: string; const KeyValues: Variant; const ResultFields: string): Variant; override;
-{$endif}
     function  Locate(const KeyFields: string; const KeyValues: Variant; Options: TLocateOptions): Boolean; {$ifndef FPC_VERSION}override;{$endif}
 {$endif}
 
@@ -1644,7 +1642,6 @@ begin
 end;
 
 {$ifdef SUPPORT_VARIANTS}
-{$ifdef USE_BUGGY_LOOKUP}
 
 function TDbf.Lookup(const KeyFields: string; const KeyValues: Variant;
   const ResultFields: string): Variant;
@@ -1674,8 +1671,6 @@ begin
     FCursor.SequentialRecNo := saveRecNo;
   end;
 end;
-
-{$endif}
 
 function TDbf.Locate(const KeyFields: string; const KeyValues: Variant; Options: TLocateOptions): Boolean;
 var
