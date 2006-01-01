@@ -680,16 +680,18 @@ function TDbf.GetCurrentBuffer: PChar;
 begin
   case State of
     dsFilter:     Result := FFilterBuffer;
-    dsCalcFields: Result := @(pDbfRecord(CalcBuffer)^.DeletedFlag);
+    dsCalcFields: Result := CalcBuffer;
 //    dsSetKey:     Result := FKeyBuffer;     // TO BE Implemented
   else
     if IsEmpty then
     begin
       Result := nil;
     end else begin
-      Result := @(pDbfRecord(ActiveBuffer)^.DeletedFlag);
+      Result := ActiveBuffer;
     end;
   end;
+  if Result <> nil then
+    Result := @PDbfRecord(Result)^.DeletedFlag;
 end;
 
 function TDbf.GetFieldData(Field: TField; Buffer: Pointer): Boolean; {override virtual abstract from TDataset}
@@ -824,7 +826,7 @@ begin
     begin
       if Filtered or FFindRecordFilter then
       begin
-        FFilterBuffer := @pRecord^.DeletedFlag;
+        FFilterBuffer := Buffer;
         SaveState := SetTempState(dsFilter);
         DoFilterRecord(acceptable);
         RestoreState(SaveState);
@@ -1648,37 +1650,28 @@ function TDbf.Lookup(const KeyFields: string; const KeyValues: Variant;
   const ResultFields: string): Variant;
 var
 //  OldState:  TDataSetState;
-  retBookmark: TBookmarkStr;
+  saveRecNo: integer;
+  saveState: TDataSetState;
 begin
   Result := Null;
-  if VarIsNull(KeyValues) then exit;
+  if (FCursor = nil) or VarIsNull(KeyValues) then exit;
 
-  retBookmark := Bookmark;
-  DisableControls;
+  saveRecNo := FCursor.SequentialRecNo;
   try
     if LocateRecord(KeyFields, KeyValues, []) then
     begin
-{
-      OldState := SetTempState(dsCalcFields);
-//      OldState := SetTempState(dsInternalCalc);
-        // disable Calculated fields - otherwise were heavy AVs
-        // and buffer troubles below
+      // FFilterBuffer contains record buffer
+      saveState := SetTempState(dsCalcFields);
       try
-//        CalculateFields(PChar(@FDbfCalcBuffer));
-        CalculateFields(TempBuffer);
-//        CalculateFields(GetCurrentBuffer);
-        if KeyValues = FieldValues[KeyFields] then // there was bug in TDbf.SearchKey
-}
-           Result := FieldValues[ResultFields]; // also there may be buffer troubles from above
-{
+        CalculateFields(FFilterBuffer);
+        if KeyValues = FieldValues[KeyFields] then
+           Result := FieldValues[ResultFields];
       finally
-          (* else *) RestoreState(OldState);
+        RestoreState(saveState);
       end;
-}
     end;
   finally
-    Bookmark := retBookmark;
-    EnableControls;
+    FCursor.SequentialRecNo := saveRecNo;
   end;
 end;
 
@@ -1686,19 +1679,22 @@ end;
 
 function TDbf.Locate(const KeyFields: string; const KeyValues: Variant; Options: TLocateOptions): Boolean;
 var
-  retBookmark: TBookmarkStr;
+  saveRecNo: integer;
 begin
+  if FCursor = nil then
+  begin
+    Result := false;
+    exit;
+  end;
+
   DoBeforeScroll;
-  try
-    DisableControls;
-    retBookmark := Bookmark;
-    Result := LocateRecord(KeyFields, KeyValues, Options);
-    if Result then
-      DoAfterScroll
-    else
-      Bookmark := retBookmark;
-  finally
-    EnableControls;
+  saveRecNo := FCursor.SequentialRecNo;
+  Result := LocateRecord(KeyFields, KeyValues, Options);
+  if Result then
+    DoAfterScroll
+  else begin
+    FCursor.SequentialRecNo := saveRecNo;
+    CursorPosChanged;
   end;
 end;
 
@@ -1712,7 +1708,6 @@ var
   bVarIsArray          : Boolean;
   varCompare           : Variant;
   doLinSearch          : Boolean;
-  pIndexValue          : PChar;
 
   function CompareValues: Boolean;
   var
@@ -1750,13 +1745,12 @@ var
 
 var
   searchFlag: TSearchKeyType;
-  searchString: string;
-  strLength: Integer;
+  lPhysRecNo, matchRes: Integer;
+  SaveState: TDataSetState;
+  lTempBuffer: array [0..100] of Char;
 
 begin
   Result := false;
-  CheckBrowseMode;
-
   doLinSearch := true;
   // index active?
   if FCursor is TIndexCursor then
@@ -1770,18 +1764,24 @@ begin
         searchFlag := stGreaterEqual
       else
         searchFlag := stEqual;
-      Result := SearchKey(KeyValues, searchFlag);
-      if Result and (loPartialKey in Options) then
+      TIndexCursor(FCursor).VariantToBuffer(KeyValues, @lTempBuffer[0]);
+      Result := FIndexFile.SearchKey(@lTempBuffer[0], searchFlag);
+      if Result then
       begin
-        searchString := VarToStr(KeyValues);
-        strLength := Length(searchString);
-        pIndexValue := TIndexCursor(FCursor).IndexFile.ExtractKeyFromBuffer(GetCurrentBuffer);
-        if loCaseInsensitive in Options then
+        Result := GetRecord(TempBuffer, gmCurrent, false) = grOK;
+        if not Result then
         begin
-          Result := AnsiStrLIComp(pIndexValue, PChar(searchString), strLength) = 0;
-        end else begin
-          Result := StrLComp(pIndexValue, PChar(searchString), strLength) = 0;
+          Result := GetRecord(TempBuffer, gmNext, false) = grOK;
+          if Result then
+          begin
+            matchRes := TIndexCursor(FCursor).IndexFile.MatchKey(@lTempBuffer[0]);
+            if loPartialKey in Options then
+              Result := matchRes <= 0
+            else
+              Result := matchRes =  0;
+          end;
         end;
+        FFilterBuffer := TempBuffer;
       end;
     end;
   end;
@@ -1789,8 +1789,9 @@ begin
   if doLinSearch then
   begin
     bVarIsArray := false;
-    CursorPosChanged;
     lstKeys := TList.Create;
+    FFilterBuffer := TempBuffer;
+    SaveState := SetTempState(dsFilter);
     try
       GetFieldList(lstKeys, KeyFields);
       if VarArrayDimCount(KeyValues) = 0 then
@@ -1803,10 +1804,18 @@ begin
         bMatchedData := false;
       if bMatchedData then
       begin
-        First;
-        while not Eof and not Result Do
+        FCursor.First;
+        while not Result and FCursor.Next do
         begin
-          Result := true;
+          lPhysRecNo := FCursor.PhysicalRecNo;
+          if (lPhysRecNo = 0) or not FDbfFile.IsRecordPresent(lPhysRecNo) then
+            break;
+          
+          FDbfFile.ReadRecord(lPhysRecNo, @PDbfRecord(FFilterBuffer)^.DeletedFlag);
+          Result := FShowDeleted or (PDbfRecord(FFilterBuffer)^.DeletedFlag <> '*');
+          if Result and Filtered then
+            DoFilterRecord(Result);
+          
           iIndex := 0;
           while Result and (iIndex < lstKeys.Count) Do
           begin
@@ -1818,12 +1827,11 @@ begin
             Result := CompareValues;
             Inc(iIndex);
           end;
-          if not Result then
-            Next;
         end;
       end;
     finally
       lstKeys.Free;
+      RestoreState(SaveState);
     end;
   end;
 end;

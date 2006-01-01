@@ -43,6 +43,7 @@ V6.4.7
     more precise field types
 - fixed: TDbf.CopyFrom to keep Fields and FieldDefs seperate
 - fixed: TDbfFieldDefs.Add to ignore size when it is zero
+- added: TDbf.Lookup and as such, lookup fields, should work now
 
 
 ------------------------
