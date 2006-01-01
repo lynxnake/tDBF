@@ -21,10 +21,6 @@
 
 {.$define TDBF_UPDATE_FIRSTLAST_NODE}
 
-// use this to enable the lookup function which is still buggy
-
-{.$define USE_BUGGY_LOOKUP}
-
 // use this directive to suppress math exceptions,
 // instead NAN is returned.
 // Using this directive is slightly less efficient
