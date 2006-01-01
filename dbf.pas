@@ -1520,11 +1520,13 @@ end;
 
 procedure TDbf.CopyFrom(DataSet: TDataSet; FileName: string; DateTimeAsString: Boolean; Level: Integer);
 var
-  lFieldDefs: TDbfFieldDefs;
+  lPhysFieldDefs, lFieldDefs: TDbfFieldDefs;
+  lSrcField, lDestField: TField;
   I: integer;
 begin
   FInCopyFrom := true;
   lFieldDefs := TDbfFieldDefs.Create(nil);
+  lPhysFieldDefs := TDbfFieldDefs.Create(nil);
   try
     if Active then
       Close;
@@ -1535,35 +1537,61 @@ begin
     if not DataSet.Active then
       DataSet.Open;
     DataSet.FieldDefs.Update;
+    // first get a list of physical field defintions
+    // we need it for numeric precision in case source is tdbf
     if DataSet is TDbf then
     begin
-      lFieldDefs.Assign(TDbf(DataSet).DbfFieldDefs);
+      lPhysFieldDefs.Assign(TDbf(DataSet).DbfFieldDefs);
       IndexDefs.Assign(TDbf(DataSet).IndexDefs);
     end else begin
-      lFieldDefs.Assign(DataSet.FieldDefs);
+      lPhysFieldDefs.Assign(DataSet.FieldDefs);
       IndexDefs.Clear;
     end;
+    // convert list of tfields into a list of tdbffielddefs
+    // so that our tfields will correspond to the source tfields
+    for I := 0 to Pred(DataSet.FieldCount) do
+    begin
+      lSrcField := DataSet.Fields[I];
+      with lFieldDefs.AddFieldDef do
+      begin
+        FieldName := lSrcField.Name;
+        FieldType := lSrcField.DataType;
+        Required := lSrcField.Required;
+        Size := lSrcField.Size;
+        if (0 <= lSrcField.FieldNo) 
+            and (lSrcField.FieldNo < lPhysFieldDefs.Count) then
+          Precision := lPhysFieldDefs.Items[lSrcField.FieldNo].Precision;
+      end;
+    end;
+
     CreateTableEx(lFieldDefs);
     Open;
     DataSet.First;
+{$ifdef USE_CACHE}
+    FDbfFile.BufferAhead := true;
+    if DataSet is TDbf then
+      TDbf(DataSet).DbfFile.BufferAhead := true;
+{$endif}      
     while not DataSet.EOF do
     begin
       Append;
       for I := 0 to Pred(FieldCount) do
       begin
-        if not DataSet.Fields[I].IsNull then
+        lSrcField := DataSet.Fields[I];
+        lDestField := Fields[I];
+        if not lSrcField.IsNull then
         begin
-          if DataSet.Fields[I].DataType = ftDateTime then
+          if lSrcField.DataType = ftDateTime then
           begin
             if FCopyDateTimeAsString then
             begin
-              Fields[I].AsString := DataSet.Fields[I].AsString;
+              lDestField.AsString := lSrcField.AsString;
               if Assigned(FOnCopyDateTimeAsString) then
-                FOnCopyDateTimeAsString(Self, Fields[I], DataSet.Fields[I])
+                FOnCopyDateTimeAsString(Self, lDestField, lSrcField)
             end else
-              Fields[I].AsDateTime := DataSet.Fields[I].AsDateTime;
+              lDestField.AsDateTime := lSrcField.AsDateTime;
           end else
-            Fields[I].Assign(DataSet.Fields[I]);
+            lDestField.Assign(lSrcField);
         end;
       end;
       Post;
@@ -1571,8 +1599,13 @@ begin
     end;
     Close;
   finally
+{$ifdef USE_CACHE}
+    if (DataSet is TDbf) and (TDbf(DataSet).DbfFile <> nil) then
+      TDbf(DataSet).DbfFile.BufferAhead := false;
+{$endif}      
     FInCopyFrom := false;
     lFieldDefs.Free;
+    lPhysFieldDefs.Free;
   end;
 end;
 

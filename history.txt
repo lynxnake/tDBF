@@ -41,6 +41,8 @@ V6.4.7
 - added: BCB3 package files (thx to pzelotti)
 - fixed: add special case for copying from source TDbf in CopyFrom to retain
     more precise field types
+- fixed: TDbf.CopyFrom to keep Fields and FieldDefs seperate
+- fixed: TDbfFieldDefs.Add to ignore size when it is zero
 
 
 ------------------------
