@@ -178,7 +178,8 @@ begin
   FieldDef := AddFieldDef;
   FieldDef.FieldName := Name;
   FieldDef.FieldType := DataType;
-  FieldDef.Size := size;
+  if Size <> 0 then
+    FieldDef.Size := Size;
   FieldDef.Required := Required;
 end;
 
