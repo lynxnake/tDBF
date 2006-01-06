@@ -104,7 +104,7 @@ type
 
   PDbtHdr = ^rDbtHdr;
   rDbtHdr = record
-    NextBlock : Longint;
+    NextBlock : dword;
     Dummy     : array [4..7] of Byte;
     DbfFile   : array [0..7] of Byte;   // 8..15
     bVer      : Byte;                   // 16
@@ -115,7 +115,7 @@ type
 
   PFptHdr = ^rFptHdr;
   rFptHdr = record
-    NextBlock : Longint;
+    NextBlock : dword;
     Dummy     : array [4..5] of Byte;
     BlockLen  : Word;                   // 20..21
     Dummy3    : array [8..511] of Byte;
@@ -471,12 +471,12 @@ end;
 
 procedure TFoxProMemoFile.SetNextFreeBlock(BlockNo: Integer);
 begin
-  PFptHdr(Header)^.NextBlock := SwapInt(BlockNo);
+  PFptHdr(Header)^.NextBlock := SwapInt(dword(BlockNo));
 end;
 
 procedure TFoxProMemoFile.SetBlockLen(BlockLen: Integer);
 begin
-  PFptHdr(Header)^.BlockLen := SwapWord(BlockLen);
+  PFptHdr(Header)^.BlockLen := SwapWord(dword(BlockLen));
 end;
 
 // ------------------------------------------------------------------
