@@ -1506,7 +1506,7 @@ begin
           Result := PDWord(Src)^ <> 0;
           if Result and (Dst <> nil) then
           begin
-            PInteger(Dst)^ := SwapInt(PInteger(Src)^);
+            PDWord(Dst)^ := SwapInt(PDWord(Src)^);
             if Result then
               PInteger(Dst)^ := Integer(PDWord(Dst)^ xor $80000000);
           end;
@@ -1705,7 +1705,8 @@ const
 var
   FieldSize,FieldPrec: Integer;
   TempFieldDef: TDbfFieldDef;
-  Len, IntValue: Integer;
+  Len: Integer;
+  IntValue: dword;
   year, month, day: Word;
   hour, minute, sec, msec: Word;
   date: TDateTime;
@@ -1755,13 +1756,13 @@ begin
           if Src = nil then
             IntValue := 0
           else
-            IntValue := Integer(PDWord(Src)^ xor $80000000);
-          PInteger(Dst)^ := SwapInt(IntValue);
+            IntValue := PDWord(Src)^ xor $80000000;
+          PDWord(Dst)^ := SwapInt(IntValue);
         end else begin
           if Src = nil then
-            PInteger(Dst)^ := 0
+            PDWord(Dst)^ := 0
           else
-            PInteger(Dst)^ := PInteger(Src)^;
+            PDWord(Dst)^ := PDWord(Src)^;
         end;
       end;
     'O':

@@ -45,6 +45,7 @@ V6.4.7
 - fixed: TDbfFieldDefs.Add to ignore size when it is zero
 - added: TDbf.Lookup and as such, lookup fields, should work now
 - added: defines for delphi 2006 and 2007
+- fixed: some range checking errors when swapping data
 
 
 ------------------------

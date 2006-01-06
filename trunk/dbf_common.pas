@@ -58,6 +58,10 @@ type
   PLargeInt = ^Int64;
 {$endif}
 
+{$ifdef DELPHI_3}
+  dword = cardinal;
+{$endif}
+
 //-------------------------------------
 
 {$ifndef SUPPORT_FREEANDNIL}
@@ -101,7 +105,7 @@ function GetFreeMemory: Integer;
 
 // OH 2000-11-15 dBase7 support. Swap Byte order for 4 and 8 Byte Integer
 function SwapWord(const Value: word): word;
-function SwapInt(const Value: Cardinal): Cardinal;
+function SwapInt(const Value: dword): dword;
 { SwapInt64 NOTE: do not call with same value for Value and Result ! }
 procedure SwapInt64(Value, Result: Pointer); register;
 
@@ -351,7 +355,7 @@ end;
 
 {$ifdef USE_ASSEMBLER_486_UP}
 
-function SwapInt(const Value: Cardinal): Cardinal; register; assembler;
+function SwapInt(const Value: dword): dword; register; assembler;
 asm
   BSWAP EAX;
 end;
