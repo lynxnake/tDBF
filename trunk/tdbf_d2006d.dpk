@@ -1,4 +1,4 @@
-package tdbf_d7d;
+package tdbf_d2006d;
 
 {$R *.res}
 
@@ -28,7 +28,7 @@ package tdbf_d7d;
 
 requires
   designide,
-  tdbf_d10r;
+  tdbf_d2006r;
 
 contains
   dbf_reg in 'dbf_reg.pas' {dbfdesigntimeform};
