@@ -1,4 +1,4 @@
-package tdbf_d10r;
+package tdbf_d2006r;
 
 {$R *.res}
 {$ALIGN 8}
