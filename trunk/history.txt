@@ -48,6 +48,7 @@ V6.4.7
 - fixed: some range checking errors when swapping data
 - added: packages for delphi 2005 and 2006, c++ 2006 (from stan and others)
 - fixed: modifying records with active range
+- added: packages for kylix 3, fix casing (from jvargas)
 
 
 ------------------------

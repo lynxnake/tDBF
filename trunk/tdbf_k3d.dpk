@@ -1,40 +1,37 @@
-package tdbf_k2d;
+package tdbf_k3d;
 
 {$R *.res}
 {$ALIGN 8}
-{ ASSERTIONS ON}
+{$ASSERTIONS ON}
 {$BOOLEVAL OFF}
-{ DEBUGINFO ON}
+{$DEBUGINFO ON}
 {$EXTENDEDSYNTAX ON}
 {$IMPORTEDDATA ON}
 {$IOCHECKS ON}
-{ LOCALSYMBOLS ON}
+{$LOCALSYMBOLS ON}
 {$LONGSTRINGS ON}
 {$OPENSTRINGS ON}
-{ OPTIMIZATION OFF}
+{$OPTIMIZATION ON}
 {$OVERFLOWCHECKS OFF}
 {$RANGECHECKS OFF}
-{$REFERENCEINFO OFF}
+{$REFERENCEINFO ON}
 {$SAFEDIVIDE OFF}
-{ STACKFRAMES OFF}
+{$STACKFRAMES OFF}
 {$TYPEDADDRESS OFF}
 {$VARSTRINGCHECKS ON}
-{$WRITEABLECONST ON}
+{$WRITEABLECONST OFF}
 {$MINENUMSIZE 1}
 {$IMAGEBASE $400000}
-{$DESCRIPTION 'TDbf for Kylix 2'}
-{$SOPREFIX 'dcl'}
-{$SONAME 'dcltdbf_k2d.so.6.5'}
-{$SOVERSION '.6.5.0'}
-{$DESIGNONLY}
 {$IMPLICITBUILD OFF}
 
 requires
+  rtl,
   visualclx,
   designide,
-  tdbf_k2r;
+  vcl,
+  designhooks;
 
 contains
-  dbf_reg in 'dbf_reg.pas' {DbfDesignTimeForm};
+  dbf_reg in 'dbf_reg.pas';
 
 end.
