@@ -1685,12 +1685,13 @@ begin
   DoBeforeScroll;
   saveRecNo := FCursor.SequentialRecNo;
   Result := LocateRecord(KeyFields, KeyValues, Options);
+  CursorPosChanged;
   if Result then
-    DoAfterScroll
-  else begin
+  begin
+    Resync([]);
+    DoAfterScroll;
+  end else
     FCursor.SequentialRecNo := saveRecNo;
-    CursorPosChanged;
-  end;
 end;
 
 function TDbf.LocateRecord(const KeyFields: String; const KeyValues: Variant;
