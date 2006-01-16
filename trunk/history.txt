@@ -46,7 +46,7 @@ V6.4.7
 - added: TDbf.Lookup and as such, lookup fields, should work now
 - added: defines for delphi 2006 and 2007
 - fixed: some range checking errors when swapping data
-- added: packages for delphi 2005 and 2006
+- added: packages for delphi 2005 and 2006, c++ 2006 (from stan and others)
 - fixed: modifying records with active range
 
 
