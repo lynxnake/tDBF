@@ -208,6 +208,7 @@ type
     FFieldDef: TDbfFieldDef;
     FDbfFile: TDbfFile;
     FFieldName: string;
+    FExprWord: TExprWord;
   protected
     function GetFieldVal: Pointer; virtual; abstract;
     function GetFieldType: TExpressionType; virtual; abstract;
@@ -1430,46 +1431,39 @@ begin
         begin
           { raw string fields have fixed length, not null-terminated }
           TempFieldVar := TRawStringFieldVar.Create(FieldInfo, TDbfFile(FDbfFile));
-          DefineStringVariableFixedLen(VarName, TempFieldVar.FieldVal, FieldInfo.Size);
+          TempFieldVar.FExprWord := DefineStringVariableFixedLen(VarName, TempFieldVar.FieldVal, FieldInfo.Size);
         end else begin
           { ansi string field function translates and null-terminates field value }
           TempFieldVar := TAnsiStringFieldVar.Create(FieldInfo, TDbfFile(FDbfFile));
-          DefineStringVariable(VarName, TempFieldVar.FieldVal);
+          TempFieldVar.FExprWord := DefineStringVariable(VarName, TempFieldVar.FieldVal);
         end;
       end;
     ftBoolean:
       begin
         TempFieldVar := TBooleanFieldVar.Create(FieldInfo, TDbfFile(FDbfFile));
-        DefineBooleanVariable(VarName, TempFieldVar.FieldVal);
+        TempFieldVar.FExprWord := DefineBooleanVariable(VarName, TempFieldVar.FieldVal);
       end;
     ftFloat:
       begin
         TempFieldVar := TFloatFieldVar.Create(FieldInfo, TDbfFile(FDbfFile));
-        DefineFloatVariable(VarName, TempFieldVar.FieldVal);
+        TempFieldVar.FExprWord := DefineFloatVariable(VarName, TempFieldVar.FieldVal);
       end;
     ftAutoInc, ftInteger, ftSmallInt:
       begin
         TempFieldVar := TIntegerFieldVar.Create(FieldInfo, TDbfFile(FDbfFile));
-        DefineIntegerVariable(VarName, TempFieldVar.FieldVal);
+        TempFieldVar.FExprWord := DefineIntegerVariable(VarName, TempFieldVar.FieldVal);
       end;
-{
-    ftSmallInt:
-      begin
-        TempFieldVar := TSmallIntFieldVar.Create(FieldInfo, TDbfFile(FDbfFile));
-        DefineSmallIntVariable(VarName, TempFieldVar.FieldVal);
-      end;
-}
 {$ifdef SUPPORT_INT64}
     ftLargeInt:
       begin
         TempFieldVar := TLargeIntFieldVar.Create(FieldInfo, TDbfFile(FDbfFile));
-        DefineLargeIntVariable(VarName, TempFieldVar.FieldVal);
+        TempFieldVar.FExprWord := DefineLargeIntVariable(VarName, TempFieldVar.FieldVal);
       end;
 {$endif}
     ftDate, ftDateTime:
       begin
         TempFieldVar := TDateTimeFieldVar.Create(FieldInfo, TDbfFile(FDbfFile));
-        DefineDateTimeVariable(VarName, TempFieldVar.FieldVal);
+        TempFieldVar.FExprWord := DefineDateTimeVariable(VarName, TempFieldVar.FieldVal);
       end;
   else
     raise EDbfError.CreateFmt(STRING_INDEX_BASED_ON_INVALID_FIELD, [VarName]);
@@ -1497,7 +1491,7 @@ begin
     for I := 0 to FFieldVarList.Count - 1 do
     begin
       // replacing with nil = undefining variable
-      ReplaceFunction(TFieldVar(FFieldVarList.Objects[I]).FieldName, nil);
+      FWordsList.Remove(TFieldVar(FFieldVarList.Objects[I]).FExprWord);
       TFieldVar(FFieldVarList.Objects[I]).Free;
     end;
     FFieldVarList.Clear;
