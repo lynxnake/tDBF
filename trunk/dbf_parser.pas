@@ -1503,7 +1503,7 @@ end;
 
 procedure TDbfParser.ParseExpression(AExpression: string);
 var
-  TempBuffer: array[0..4000] of Char;
+  TempBuffer: pchar;
 begin
   // clear any current expression
   ClearExpressions;
@@ -1519,8 +1519,13 @@ begin
     if ResultType = etString then
     begin
       // make empty record
-      TDbfFile(FDbfFile).InitRecord(@TempBuffer[0]);
-      FResultLen := StrLen(ExtractFromBuffer(@TempBuffer[0]));
+      GetMem(TempBuffer, TDbfFile(FDbfFile).RecordSize);
+      try
+        TDbfFile(FDbfFile).InitRecord(TempBuffer);
+        FResultLen := StrLen(ExtractFromBuffer(TempBuffer));
+      finally
+        FreeMem(TempBuffer);
+      end;
     end;
   end else begin
     // simple field, create field variable for it

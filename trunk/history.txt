@@ -38,6 +38,7 @@ V6.4.8
 - remove duplicate names, may cause ambiguity
 - allow duplicate names in function list for expressions
 - remember exprword reference for every field variable so we can remove it
+- prevent possible buffer overrun when parsing expression (thx leexgone)
 
 
 ------------------------
