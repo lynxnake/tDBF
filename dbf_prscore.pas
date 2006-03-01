@@ -938,7 +938,6 @@ end;
 function TCustomExpressionParser.DefineStringVariable(AVarName: string; AValue: PPChar): TExprWord;
 begin
   Result := DefineStringVariableFixedLen(AVarName, AValue, -1);
-  FWordsList.Add(Result);
 end;
 
 function TCustomExpressionParser.DefineStringVariableFixedLen(AVarName: string; AValue: PPChar; ALength: Integer): TExprWord;
