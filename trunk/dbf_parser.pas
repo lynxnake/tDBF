@@ -1356,8 +1356,6 @@ begin
     // clear and regenerate functions
     FCaseInsensitive := NewInsensitive;
     FillExpressList;
-    if Length(Expression) > 0 then
-      ParseExpression(Expression);
   end;
 end;
 
@@ -1368,8 +1366,6 @@ begin
     // refill function list
     FPartialMatch := NewPartialMatch;
     FillExpressList;
-    if Length(Expression) > 0 then
-      ParseExpression(Expression);
   end;
 end;
 
@@ -1385,7 +1381,11 @@ begin
 end;
 
 procedure TDbfParser.FillExpressList;
+var
+  lExpression: string;
 begin
+  lExpression := FCurrentExpression;
+  ClearExpressions;
   FWordsList.FreeAll;
   FWordsList.AddList(DbfWordsGeneralList, 0, DbfWordsGeneralList.Count - 1);
   if FCaseInsensitive then
@@ -1406,6 +1406,8 @@ begin
       FWordsList.AddList(DbfWordsSensNoPartialList, 0, DbfWordsSensNoPartialList.Count - 1);
     end;
   end;
+  if Length(lExpression) > 0 then
+    ParseExpression(lExpression);
 end;
 
 function TDbfParser.GetVariableInfo(VarName: string): TDbfFieldDef;
@@ -1491,7 +1493,7 @@ begin
     for I := 0 to FFieldVarList.Count - 1 do
     begin
       // replacing with nil = undefining variable
-      FWordsList.Remove(TFieldVar(FFieldVarList.Objects[I]).FExprWord);
+      FWordsList.DoFree(TFieldVar(FFieldVarList.Objects[I]).FExprWord);
       TFieldVar(FFieldVarList.Objects[I]).Free;
     end;
     FFieldVarList.Clear;
