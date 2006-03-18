@@ -387,7 +387,7 @@ type
     property FilePathFull: string read FAbsolutePath write SetFilePath stored false;
     property Indexes: TDbfIndexDefs read FIndexDefs write SetDbfIndexDefs stored false;
     property IndexDefs: TDbfIndexDefs read FIndexDefs write SetDbfIndexDefs;
-    property IndexFieldNames: string read GetIndexFieldNames write SetIndexFieldNames;
+    property IndexFieldNames: string read GetIndexFieldNames write SetIndexFieldNames stored false;
     property IndexName: string read GetIndexName write SetIndexName;
     property MasterFields: string read GetMasterFields write SetMasterFields;
     property MasterSource: TDataSource read GetDataSource write SetDataSource;
