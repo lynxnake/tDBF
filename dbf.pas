@@ -1556,13 +1556,18 @@ begin
       lSrcField := DataSet.Fields[I];
       with lFieldDefs.AddFieldDef do
       begin
-        FieldName := lSrcField.Name;
+        if Length(lSrcField.Name) > 0 then
+          FieldName := lSrcField.Name
+        else
+          FieldName := lSrcField.FieldName;
         FieldType := lSrcField.DataType;
         Required := lSrcField.Required;
-        Size := lSrcField.Size;
-        if (0 <= lSrcField.FieldNo) 
-            and (lSrcField.FieldNo < lPhysFieldDefs.Count) then
-          Precision := lPhysFieldDefs.Items[lSrcField.FieldNo].Precision;
+        if (1 <= lSrcField.FieldNo) 
+            and (lSrcField.FieldNo <= lPhysFieldDefs.Count) then
+        begin
+          Size := lPhysFieldDefs.Items[lSrcField.FieldNo-1].Size;
+          Precision := lPhysFieldDefs.Items[lSrcField.FieldNo-1].Precision;
+        end;
       end;
     end;
 
