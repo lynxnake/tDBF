@@ -40,6 +40,7 @@ V6.4.8
 - remember exprword reference for every field variable so we can remove it
 - prevent possible buffer overrun when parsing expression (thx leexgone)
 - fix some memory references in the parser
+- add ability for locate/lookup to use alternate index than current one
 
 
 ------------------------

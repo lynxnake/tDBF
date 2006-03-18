@@ -274,6 +274,8 @@ type
     procedure SetIndexFieldNames(const Value: string); {virtual;}
 
 {$ifdef SUPPORT_VARIANTS}
+    function  LocateRecordLinear(const KeyFields: String; const KeyValues: Variant; Options: TLocateOptions): Boolean;
+    function  LocateRecordIndex(const KeyFields: String; const KeyValues: Variant; Options: TLocateOptions): Boolean;
     function  LocateRecord(const KeyFields: String; const KeyValues: Variant; Options: TLocateOptions): Boolean;
 {$endif}
 
@@ -1694,7 +1696,7 @@ begin
     FCursor.SequentialRecNo := saveRecNo;
 end;
 
-function TDbf.LocateRecord(const KeyFields: String; const KeyValues: Variant;
+function TDbf.LocateRecordLinear(const KeyFields: String; const KeyValues: Variant;
     Options: TLocateOptions): Boolean;
 var
   lstKeys              : TList;
@@ -1703,7 +1705,6 @@ var
   bMatchedData         : Boolean;
   bVarIsArray          : Boolean;
   varCompare           : Variant;
-  doLinSearch          : Boolean;
 
   function CompareValues: Boolean;
   var
@@ -1740,96 +1741,137 @@ var
   end;
 
 var
-  searchFlag: TSearchKeyType;
-  lPhysRecNo, matchRes: Integer;
   SaveState: TDataSetState;
-  lTempBuffer: array [0..100] of Char;
-
+  lPhysRecNo: integer;
 begin
   Result := false;
-  doLinSearch := true;
-  // index active?
-  if FCursor is TIndexCursor then
-  begin
-    // matches field to search on?
-    if TIndexCursor(FCursor).IndexFile.Expression = KeyFields then
+  bVarIsArray := false;
+  lstKeys := TList.Create;
+  FFilterBuffer := TempBuffer;
+  SaveState := SetTempState(dsFilter);
+  try
+    GetFieldList(lstKeys, KeyFields);
+    if VarArrayDimCount(KeyValues) = 0 then
+      bMatchedData := lstKeys.Count = 1
+    else if VarArrayDimCount (KeyValues) = 1 then
     begin
-      // can do index search
-      doLinSearch := false;
-      if loPartialKey in Options then
-        searchFlag := stGreaterEqual
-      else
-        searchFlag := stEqual;
-      TIndexCursor(FCursor).VariantToBuffer(KeyValues, @lTempBuffer[0]);
-      Result := FIndexFile.SearchKey(@lTempBuffer[0], searchFlag);
+      bMatchedData := VarArrayHighBound (KeyValues,1) + 1 = lstKeys.Count;
+      bVarIsArray := true;
+    end else
+      bMatchedData := false;
+    if bMatchedData then
+    begin
+      FCursor.First;
+      while not Result and FCursor.Next do
+      begin
+        lPhysRecNo := FCursor.PhysicalRecNo;
+        if (lPhysRecNo = 0) or not FDbfFile.IsRecordPresent(lPhysRecNo) then
+          break;
+        
+        FDbfFile.ReadRecord(lPhysRecNo, @PDbfRecord(FFilterBuffer)^.DeletedFlag);
+        Result := FShowDeleted or (PDbfRecord(FFilterBuffer)^.DeletedFlag <> '*');
+        if Result and Filtered then
+          DoFilterRecord(Result);
+        
+        iIndex := 0;
+        while Result and (iIndex < lstKeys.Count) Do
+        begin
+          Field := TField (lstKeys [iIndex]);
+          if bVarIsArray then
+            varCompare := KeyValues [iIndex]
+          else
+            varCompare := KeyValues;
+          Result := CompareValues;
+          Inc(iIndex);
+        end;
+      end;
+    end;
+  finally
+    lstKeys.Free;
+    RestoreState(SaveState);
+  end;
+end;
+
+function TDbf.LocateRecordIndex(const KeyFields: String; const KeyValues: Variant;
+    Options: TLocateOptions): Boolean;
+var
+  searchFlag: TSearchKeyType;
+  matchRes: Integer;
+  lTempBuffer: array [0..100] of Char;
+begin
+  if loPartialKey in Options then
+    searchFlag := stGreaterEqual
+  else
+    searchFlag := stEqual;
+  TIndexCursor(FCursor).VariantToBuffer(KeyValues, @lTempBuffer[0]);
+  Result := FIndexFile.SearchKey(@lTempBuffer[0], searchFlag);
+  if Result then
+  begin
+    Result := GetRecord(TempBuffer, gmCurrent, false) = grOK;
+    if not Result then
+    begin
+      Result := GetRecord(TempBuffer, gmNext, false) = grOK;
       if Result then
       begin
-        Result := GetRecord(TempBuffer, gmCurrent, false) = grOK;
-        if not Result then
-        begin
-          Result := GetRecord(TempBuffer, gmNext, false) = grOK;
-          if Result then
-          begin
-            matchRes := TIndexCursor(FCursor).IndexFile.MatchKey(@lTempBuffer[0]);
-            if loPartialKey in Options then
-              Result := matchRes <= 0
-            else
-              Result := matchRes =  0;
-          end;
-        end;
-        FFilterBuffer := TempBuffer;
+        matchRes := TIndexCursor(FCursor).IndexFile.MatchKey(@lTempBuffer[0]);
+        if loPartialKey in Options then
+          Result := matchRes <= 0
+        else
+          Result := matchRes =  0;
       end;
     end;
-  end;
-
-  if doLinSearch then
-  begin
-    bVarIsArray := false;
-    lstKeys := TList.Create;
     FFilterBuffer := TempBuffer;
-    SaveState := SetTempState(dsFilter);
-    try
-      GetFieldList(lstKeys, KeyFields);
-      if VarArrayDimCount(KeyValues) = 0 then
-        bMatchedData := lstKeys.Count = 1
-      else if VarArrayDimCount (KeyValues) = 1 then
+  end;
+end;
+
+function TDbf.LocateRecord(const KeyFields: String; const KeyValues: Variant;
+    Options: TLocateOptions): Boolean;
+var
+  lCursor, lSaveCursor: TVirtualCursor;
+  lSaveIndexName, lIndexName: string;
+  lIndexDef: TDbfIndexDef;
+  lIndexFile, lSaveIndexFile: TIndexFile;
+begin
+  lCursor := nil;
+  lSaveCursor := nil;
+  lIndexFile := nil;
+  lSaveIndexFile := FIndexFile;
+  if (FCursor is TIndexCursor) 
+    and (TIndexCursor(FCursor).IndexFile.Expression = KeyFields) then
+  begin
+    lCursor := FCursor;
+  end else begin
+    lIndexDef := FIndexDefs.GetIndexByField(KeyFields);
+    if lIndexDef <> nil then
+    begin
+      lIndexName := ParseIndexName(lIndexDef.IndexFile);
+      lIndexFile := FDbfFile.GetIndexByName(lIndexName);
+      if lIndexFile <> nil then
       begin
-        bMatchedData := VarArrayHighBound (KeyValues,1) + 1 = lstKeys.Count;
-        bVarIsArray := true;
-      end else
-        bMatchedData := false;
-      if bMatchedData then
-      begin
-        FCursor.First;
-        while not Result and FCursor.Next do
-        begin
-          lPhysRecNo := FCursor.PhysicalRecNo;
-          if (lPhysRecNo = 0) or not FDbfFile.IsRecordPresent(lPhysRecNo) then
-            break;
-          
-          FDbfFile.ReadRecord(lPhysRecNo, @PDbfRecord(FFilterBuffer)^.DeletedFlag);
-          Result := FShowDeleted or (PDbfRecord(FFilterBuffer)^.DeletedFlag <> '*');
-          if Result and Filtered then
-            DoFilterRecord(Result);
-          
-          iIndex := 0;
-          while Result and (iIndex < lstKeys.Count) Do
-          begin
-            Field := TField (lstKeys [iIndex]);
-            if bVarIsArray then
-              varCompare := KeyValues [iIndex]
-            else
-              varCompare := KeyValues;
-            Result := CompareValues;
-            Inc(iIndex);
-          end;
-        end;
+        lSaveCursor := FCursor;
+        lCursor := TIndexCursor.Create(lIndexFile);
+        lSaveIndexName := lIndexFile.IndexName;
+        lIndexFile.IndexName := lIndexName;
+        FIndexFile := lIndexFile;
       end;
-    finally
-      lstKeys.Free;
-      RestoreState(SaveState);
     end;
   end;
+  if lCursor <> nil then
+  begin
+    FCursor := lCursor;
+    Result := LocateRecordIndex(KeyFields, KeyValues, Options);
+    if lSaveCursor <> nil then
+    begin
+      FCursor.Free;
+      FCursor := lSaveCursor;
+    end;
+    if lIndexFile <> nil then
+    begin
+      lIndexFile.IndexName := lSaveIndexName;
+      FIndexFile := lSaveIndexFile;
+    end;
+  end else
+    Result := LocateRecordLinear(KeyFields, KeyValues, Options);
 end;
 
 {$endif}
