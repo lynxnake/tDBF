@@ -708,24 +708,11 @@ begin
   if Field.FieldNo>0 then
   begin
     Result := FDbfFile.GetFieldData(Field.FieldNo-1, Field.DataType, Src, Buffer);
-  end else begin { calculated fields.... }
+  end else begin { weird calculated fields voodoo (from dbtables).... }
     Inc(PChar(Src), Field.Offset + GetRecordSize);
-//    Result := Boolean(PChar(Buffer)[0]);
-    Result := true;
-    if {Result and  (Src <> nil) and } (Buffer <> nil) then
-    begin
-      // A ftBoolean was 1 byte in Delphi 3
-      // it is now 2 byte in Delphi 5
-      // not sure about delphi 4.
-{$ifdef DELPHI_5}
-        Move(Src^, Buffer^, Field.DataSize);
-{$else}
-      if Field.DataType = ftBoolean then
-        Move(Src^, Buffer^, 1)
-      else
-        Move(Src^, Buffer^, Field.DataSize);
-{$endif}
-    end;
+    Result := Boolean(Src[0]);
+    if Result and (Buffer <> nil) then
+      Move(Src[1], Buffer^, Field.DataSize);
   end;
 end;
 
@@ -2077,26 +2064,18 @@ end;
 
 procedure TDbf.SetFieldData(Field: TField; Buffer: Pointer); {override virtual abstract from TDataset}
 var
-  pRecord: pDbfRecord;
-  Dst: Pointer;
+  Dst: PChar;
 begin
   if (Field.FieldNo >= 0) then
   begin
-    pRecord := pDbfRecord(ActiveBuffer);
-    dst := @pRecord^.DeletedFlag;
+    Dst := @PDbfRecord(ActiveBuffer)^.DeletedFlag;
     FDbfFile.SetFieldData(Field.FieldNo - 1,Field.DataType,Buffer,Dst);
   end else begin    { ***** fkCalculated, fkLookup ***** }
-    pRecord := pDbfRecord(CalcBuffer);
-    Dst := @pRecord^.DeletedFlag;
+    Dst := @PDbfRecord(CalcBuffer)^.DeletedFlag;
     Inc(PChar(Dst), RecordSize + Field.Offset);
-//    Boolean(dst^) := LongBool(Buffer);
-//    if Boolean(dst^) then begin
-//      Inc(Integer(dst), 1);
+    Boolean(Dst[0]) := Buffer <> nil;
     if Buffer <> nil then
-      Move(Buffer^, Dst^, Field.DataSize)
-    else
-      FillChar(Dst^, Field.DataSize, #0);
-//    end;
+      Move(Buffer^, Dst[1], Field.DataSize)
   end;     { end of ***** fkCalculated, fkLookup ***** }
   if not (State in [dsCalcFields, dsFilter, dsNewValue]) then begin
     DataEvent(deFieldChange, PtrInt(Field));
