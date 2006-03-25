@@ -163,6 +163,7 @@ type
     FFilterBuffer: PChar;
     FTempBuffer: PChar;
     FEditingRecNo: Integer;
+    FLocateRecNo: Integer;
     FLanguageID: Byte;
     FTableLevel: Integer;
     FExclusive: Boolean;
@@ -1678,10 +1679,13 @@ begin
 
   DoBeforeScroll;
   saveRecNo := FCursor.SequentialRecNo;
+  FLocateRecNo := -1;
   Result := LocateRecord(KeyFields, KeyValues, Options);
   CursorPosChanged;
   if Result then
   begin
+    if FLocateRecNo <> -1 then
+      FCursor.PhysicalRecNo := FLocateRecNo;
     Resync([]);
     DoAfterScroll;
   end else
@@ -1859,6 +1863,7 @@ begin
     end;
     if lIndexFile <> nil then
     begin
+      FLocateRecNo := FIndexFile.PhysicalRecNo;
       lIndexFile.IndexName := lSaveIndexName;
       FIndexFile := lSaveIndexFile;
     end;
