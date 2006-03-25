@@ -2693,7 +2693,7 @@ function TDbf.SearchKeyPChar(Key: PChar; SearchType: TSearchKeyType): Boolean;
 var
   StringBuf: array [0..100] of Char;
 begin
-  if FIndexFile = nil then
+  if FCursor = nil then
   begin
     Result := false;
     exit;
