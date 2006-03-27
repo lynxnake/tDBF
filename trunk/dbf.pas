@@ -213,7 +213,6 @@ type
     procedure MasterChanged(Sender: TObject);
     procedure MasterDisabled(Sender: TObject);
     procedure DetermineTranslationMode;
-    procedure CheckMasterRange;
     procedure UpdateRange;
     procedure SetShowDeleted(Value: Boolean);
     procedure GetFieldDefsFromDbfFieldDefs;
@@ -321,6 +320,7 @@ type
     procedure RegenerateIndexes;
 
     procedure CancelRange;
+    procedure CheckMasterRange;
 {$ifdef SUPPORT_VARIANTS}
     function  SearchKey(Key: Variant; SearchType: TSearchKeyType): Boolean;
     procedure SetRange(LowRange: Variant; HighRange: Variant);
