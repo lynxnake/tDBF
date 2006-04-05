@@ -812,6 +812,11 @@ begin
 
     if (Result = grOK) and acceptable then
     begin
+      pRecord^.BookmarkData.PhysicalRecNo := FCursor.PhysicalRecNo;
+      pRecord^.BookmarkFlag := bfCurrent;
+      pRecord^.SequentialRecNo := FCursor.SequentialRecNo;
+      GetCalcFields(Buffer);
+
       if Filtered or FFindRecordFilter then
       begin
         FFilterBuffer := Buffer;
@@ -825,15 +830,8 @@ begin
       Result := grError;
   until (Result <> grOK) or acceptable;
 
-  if (Result = grOK) and not FFindRecordFilter then
-  begin
-    pRecord^.BookmarkData.PhysicalRecNo := FCursor.PhysicalRecNo;
-    pRecord^.BookmarkFlag := bfCurrent;
-    pRecord^.SequentialRecNo := FCursor.SequentialRecNo;
-    GetCalcFields(Buffer);
-  end else begin
+  if Result <> grOK then
     pRecord^.BookmarkData.PhysicalRecNo := -1;
-  end;
 end;
 
 function TDbf.GetRecordSize: Word; {override virtual abstract from TDataset}

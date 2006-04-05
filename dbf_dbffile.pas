@@ -1497,6 +1497,7 @@ begin
   FieldSize := AFieldDef.Size;
   Src := PChar(Src) + FieldOffset;
   asciiContents := false;
+  Result := true;
   // field types that are binary and of which the fieldsize should not be truncated
   case AFieldDef.NativeFieldType of
     '+', 'I':

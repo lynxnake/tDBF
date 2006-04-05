@@ -44,6 +44,7 @@ V6.4.8
 - fix tdbf.copyfrom fieldname copy and fieldno index for size/precision
 - make TDbf.CheckMasterRange public so master/detail can be synced manually
     when for example .DisableControls is active
+- allow calc/lookup fields to work in filters
 
 
 ------------------------
