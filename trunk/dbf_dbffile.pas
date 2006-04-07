@@ -1146,9 +1146,8 @@ var
   TempDstDef, TempSrcDef: TDbfFieldDef;
   OldIndexFiles: TStrings;
   IndexName, NewBaseName: string;
-  I, lRecNo, lFieldNo, lFieldSize, lBlobRecNo, lWRecNo, srcOffset, dstOffset: Integer;
+  I, lRecNo, lFieldNo, lFieldSize, lBlobPageNo, lWRecNo, srcOffset, dstOffset: Integer;
   pBuff, pDestBuff: PChar;
-  pBlobRecNoBuff: array[1..11] of Char;
   RestructFieldInfo: PRestructFieldInfo;
   BlobStream: TMemoryStream;
 begin
@@ -1303,19 +1302,18 @@ begin
             if TempDstDef.IsBlob and ((DbfFieldDefs = nil) or (TempDstDef.CopyFrom >= 0)) then
             begin
               // get current blob blockno
-              GetFieldData(lFieldNo, ftString, pBuff, @pBlobRecNoBuff[1]);
-              lBlobRecNo := StrToIntDef(pBlobRecNoBuff, -1);
+              GetFieldData(lFieldNo, ftInteger, pBuff, @lBlobPageNo);
               // valid blockno read?
-              if lBlobRecNo >= 0 then
+              if lBlobPageNo > 0 then
               begin
                 BlobStream.Clear;
-                FMemoFile.ReadMemo(lBlobRecNo, BlobStream);
+                FMemoFile.ReadMemo(lBlobPageNo, BlobStream);
                 BlobStream.Position := 0;
                 // always append
-                DestDbfFile.FMemoFile.WriteMemo(lBlobRecNo, 0, BlobStream);
+                DestDbfFile.FMemoFile.WriteMemo(lBlobPageNo, 0, BlobStream);
               end;
               // write new blockno
-              DestDbfFile.SetFieldData(lFieldNo, ftInteger, @lBlobRecNo, pDestBuff);
+              DestDbfFile.SetFieldData(lFieldNo, ftInteger, @lBlobPageNo, pDestBuff);
             end else if (DbfFieldDefs <> nil) and (TempDstDef.CopyFrom >= 0) then
             begin
               // copy content of field

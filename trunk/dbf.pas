@@ -163,7 +163,9 @@ type
     FFilterBuffer: PChar;
     FTempBuffer: PChar;
     FEditingRecNo: Integer;
+{$ifdef SUPPORT_VARIANTS}    
     FLocateRecNo: Integer;
+{$endif}    
     FLanguageID: Byte;
     FTableLevel: Integer;
     FExclusive: Boolean;
