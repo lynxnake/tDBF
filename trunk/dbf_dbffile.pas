@@ -2689,8 +2689,11 @@ begin
 {$ifdef WIN32}
   FUserNameLen := MAX_COMPUTERNAME_LENGTH+1;
   SetLength(FUserName, FUserNameLen);
-//  Windows.GetUserName(@FUserName[0], FUserNameLen);
-  Windows.GetComputerName(PChar(FUserName), FUserNameLen);
+  Windows.GetComputerName(PChar(FUserName), 
+    {$ifdef DELPHI_3}Windows.DWORD({$endif}
+      FUserNameLen
+    {$ifdef DELPHI_3}){$endif}
+    );
   SetLength(FUserName, FUserNameLen);
 {$else}  
 {$ifdef FPC}
