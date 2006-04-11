@@ -1548,7 +1548,7 @@ begin
         Result := (PInteger(Src)^ <> 0) or (PInteger(PChar(Src)+4)^ <> 0);
         if Result and (Dst <> nil) then
         begin
-          timeStamp.Date := PInteger(Src)^ - 1721425;
+          timeStamp.Date := PInteger(Src)^ - JulianDateDelta;
           timeStamp.Time := PInteger(PChar(Src)+4)^;
           date := TimeStampToDateTime(timeStamp);
           SaveDateToDst;
@@ -1802,7 +1802,7 @@ begin
         end else begin
           LoadDateFromSrc;
           timeStamp := DateTimeToTimeStamp(date);
-          PInteger(Dst)^ := timeStamp.Date + 1721425;
+          PInteger(Dst)^ := timeStamp.Date + JulianDateDelta;
           PInteger(PChar(Dst)+4)^ := timeStamp.Time;
         end;
       end;
