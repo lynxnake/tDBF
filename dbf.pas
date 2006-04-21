@@ -465,7 +465,7 @@ uses
   Types,
   dbf_wtil,
 {$endif}
-{$ifdef DELPHI_6}
+{$ifdef SUPPORT_SEPARATE_VARIANTS_UNIT}
   Variants,
 {$endif}
   dbf_idxcur,
