@@ -858,7 +858,7 @@ begin
     if Args[1][arg1len-1] = '*' then
     begin
       arg0len := StrLen(Args[0]);
-      match := arg1len >= arg0len - 1;
+      match := arg0len >= arg1len - 1;
       if match then
         match := AnsiStrLIComp(Args[0], Args[1], arg1len-1) = 0;
     end else begin
@@ -924,7 +924,7 @@ begin
     if Args[1][arg1len-1] = '*' then
     begin
       arg0len := StrLen(Args[0]);
-      match := arg1len >= arg0len - 1;
+      match := arg0len >= arg1len - 1;
       if match then
         match := AnsiStrLComp(Args[0], Args[1], arg1len-1) = 0;
     end else begin
