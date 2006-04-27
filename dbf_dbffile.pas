@@ -2128,42 +2128,47 @@ begin
       // always uppercase index expression
       IndexField := AnsiUpperCase(IndexField);
       try
-        // create index if asked
-        lIndexFile.CreateIndex(IndexField, IndexName, Options);
-        // add all records
-        PackIndex(lIndexFile, IndexName);
-        // if we wanted to open index readonly, but we created it, then reopen
-        if Mode = pfReadOnly then
-        begin
-          lIndexFile.CloseFile;
-          lIndexFile.Mode := pfReadOnly;
-          lIndexFile.OpenFile;
+        try
+          // create index if asked
+          lIndexFile.CreateIndex(IndexField, IndexName, Options);
+          // add all records
+          PackIndex(lIndexFile, IndexName);
+          // if we wanted to open index readonly, but we created it, then reopen
+          if Mode = pfReadOnly then
+          begin
+            lIndexFile.CloseFile;
+            lIndexFile.Mode := pfReadOnly;
+            lIndexFile.OpenFile;
+          end;
+          // if mdx file just created, write changes to dbf header
+          // set MDX flag to true
+          PDbfHdr(Header)^.MDXFlag := 1;
+          WriteHeader;
+        except
+          on EDbfError do
+          begin
+            // :-( need to undo 'damage'....
+            // remove index from list(s) if just added
+            if addedIndexFile >= 0 then
+              FIndexFiles.Delete(addedIndexFile);
+            if addedIndexName >= 0 then
+              FIndexNames.Delete(addedIndexName);
+            // if no file created, do not destroy!
+            if addedIndexFile >= 0 then
+            begin
+              lIndexFile.Close;
+              Sysutils.DeleteFile(lIndexFileName);
+              if FMdxFile = lIndexFile then
+                FMdxFile := nil;
+              lIndexFile.Free;
+            end;
+            raise;
+          end;
         end;
-        // if mdx file just created, write changes to dbf header
-        // set MDX flag to true
-        PDbfHdr(Header)^.MDXFlag := 1;
-        WriteHeader;
-      except
-        // :-( need to undo 'damage'....
-        // remove index from list(s) if just added
-        if addedIndexFile >= 0 then
-          FIndexFiles.Delete(addedIndexFile);
-        if addedIndexName >= 0 then
-          FIndexNames.Delete(addedIndexName);
-        // delete index file itself
-        lIndexFile.DeleteIndex(IndexName);
-        // if no file created, do not destroy!
-        if addedIndexFile >= 0 then
-        begin
-          lIndexFile.Close;
-          Sysutils.DeleteFile(lIndexFileName);
-          if FMdxFile = lIndexFile then
-            FMdxFile := nil;
-          lIndexFile.Free;
-        end;
+      finally
+        // return to previous mode
+        if TempMode <> pfNone then EndExclusive;
       end;
-      // return to previous mode
-      if TempMode <> pfNone then EndExclusive;
     end;
   end;
 end;
@@ -2202,24 +2207,35 @@ begin
   if lIndexFile.CacheSize < 16384 * 1024 then
     lIndexFile.CacheSize := 16384 * 1024;
 {$endif}
-  while cur <= last do
-  begin
-    ReadRecord(cur, FPrevBuffer);
-    lIndexFile.Insert(cur, FPrevBuffer);
-    inc(cur);
+  try
+    try
+      while cur <= last do
+      begin
+        ReadRecord(cur, FPrevBuffer);
+        lIndexFile.Insert(cur, FPrevBuffer);
+        inc(cur);
+      end;
+    except
+      on E: EDbfError do
+      begin
+        lIndexFile.DeleteIndex(lIndexFile.IndexName);
+        raise;
+      end;
+    end;
+  finally
+    // restore previous mode
+{$ifdef USE_CACHE}
+    BufferAhead := false;
+    lIndexFile.BufferAhead := true;
+{$endif}
+    lIndexFile.Flush;
+{$ifdef USE_CACHE}
+    lIndexFile.BufferAhead := false;
+    lIndexFile.CacheSize := prevCache;
+{$endif}
+    lIndexFile.UpdateMode := prevMode;
+    lIndexFile.IndexName := prevIndex;
   end;
-  // restore previous mode
-{$ifdef USE_CACHE}
-  BufferAhead := false;
-  lIndexFile.BufferAhead := true;
-{$endif}
-  lIndexFile.Flush;
-{$ifdef USE_CACHE}
-  lIndexFile.BufferAhead := false;
-  lIndexFile.CacheSize := prevCache;
-{$endif}
-  lIndexFile.UpdateMode := prevMode;
-  lIndexFile.IndexName := prevIndex;
 end;
 
 procedure TDbfFile.RepageIndex(AIndexFile: string);
