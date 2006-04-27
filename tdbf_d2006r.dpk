@@ -22,7 +22,7 @@ package tdbf_d2006r;
 {$WRITEABLECONST OFF}
 {$MINENUMSIZE 1}
 {$IMAGEBASE $400000}
-{$DESCRIPTION 'TDbf for Delphi 7 RunTime'}
+{$DESCRIPTION 'TDbf for Delphi 2006 runtime'}
 {$IMPLICITBUILD OFF}
 
 requires
