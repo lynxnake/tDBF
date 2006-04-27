@@ -47,6 +47,7 @@ V6.4.8
 - allow calc/lookup fields to work in filters
 - fix loosing blobs when packing table (rep by cllerici)
 - support variants for freepascal
+- fix (filter) parser string partial matching for "A*" strings
 
 
 ------------------------
