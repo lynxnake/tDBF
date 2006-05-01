@@ -33,6 +33,11 @@ BUGS & WARNINGS
 
 
 ------------------------
+V6.4.9
+
+- fix use long char fields check icw foxpro (thx rpoverdijk)
+
+------------------------
 V6.4.8
 
 - remove duplicate names, may cause ambiguity
