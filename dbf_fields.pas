@@ -84,7 +84,6 @@ type
   private
     FOwner: TPersistent;
     FDbfVersion: TXBaseVersion;
-    FUseFloatFields: Boolean;
 
     function GetItem(Idx: Integer): TDbfFieldDef;
   protected
@@ -101,7 +100,6 @@ type
 
     property Items[Idx: Integer]: TDbfFieldDef read GetItem;
     property DbfVersion: TXBaseVersion read FDbfVersion write FDbfVersion;
-    property UseFloatFields: Boolean read FUseFloatFields write FUseFloatFields;
   end;
 
 implementation
@@ -334,7 +332,9 @@ begin
   case FNativeFieldType of
 // OH 2000-11-15 dBase7 support.
 // Add the new fieldtypes
-    '+' : FFieldType := ftAutoInc;
+    '+' : 
+      if DbfVersion = xBaseVII then
+        FFieldType := ftAutoInc;
     'I' : FFieldType := ftInteger;
     'O' : FFieldType := ftFloat;
     '@', 'T':
@@ -350,16 +350,13 @@ begin
           if FSize <= DIGITS_SMALLINT then
             FFieldType := ftSmallInt
           else
-          if TDbfFieldDefs(Collection).UseFloatFields then
-            FFieldType := ftFloat
-          else
-{$ifdef SUPPORT_INT64}
           if FSize <= DIGITS_INTEGER then
             FFieldType := ftInteger
           else
+{$ifdef SUPPORT_INT64}
             FFieldType := ftLargeInt;
 {$else}
-            FFieldType := ftInteger;
+            FFieldType := ftFloat;
 {$endif}
         end else begin
           FFieldType := ftFloat;
@@ -506,7 +503,15 @@ begin
         FSize := 8;
         FPrecision := 0;
       end;
-    'M','G','B':
+    'B':
+      begin
+        if DbfVersion <> xFoxPro then
+        begin
+          FSize := 10;
+          FPrecision := 0;
+        end;
+      end;
+    'M','G':
       begin
         if DbfVersion = xFoxPro then
           FSize := 4
