@@ -39,6 +39,7 @@ V6.4.9
 - fix TDbf.GetRecNo AV when no file open
 - remove UseFloatFields, delphi 3 will use float fields, others not
 - fix size/precision truncation when opening foxpro B-type fields (thx nring)
+- foxbase memo is 10 character index, sizes 4 and 10 are valid (thx majky)
 
 
 ------------------------

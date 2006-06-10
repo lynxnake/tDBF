@@ -514,8 +514,10 @@ begin
     'M','G':
       begin
         if DbfVersion = xFoxPro then
-          FSize := 4
-        else
+        begin
+          if (FSize <> 4) and (FSize <> 10) then
+            FSize := 4;
+        end else
           FSize := 10;
         FPrecision := 0;
       end;
