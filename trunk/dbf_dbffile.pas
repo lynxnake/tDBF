@@ -74,8 +74,6 @@ type
 
     function GetLanguageId: Integer;
     function GetLanguageStr: string;
-    function GetUseFloatFields: Boolean;
-    procedure SetUseFloatFields(NewUse: Boolean);
     
   protected
     procedure ConstructFieldDefs;
@@ -134,7 +132,6 @@ type
     property PrevBuffer: PChar read FPrevBuffer;
     property ForceClose: Boolean read FForceClose;
     property CopyDateTimeAsString: Boolean read FCopyDateTimeAsString write FCopyDateTimeAsString;
-    property UseFloatFields: Boolean read GetUseFloatFields write SetUseFloatFields;
     property DateTimeHandling: TDateTimeHandling read FDateTimeHandling write FDateTimeHandling;
 
     property OnIndexMissing: TDbfIndexMissingEvent read FOnIndexMissing write FOnIndexMissing;
@@ -318,16 +315,6 @@ begin
 
   // call ancestor
   inherited;
-end;
-
-function TDbfFile.GetUseFloatFields: Boolean;
-begin
-  Result := FFieldDefs.UseFloatFields;
-end;
-
-procedure TDbfFile.SetUseFloatFields(NewUse: Boolean);
-begin
-  FFieldDefs.UseFloatFields := NewUse;
 end;
 
 procedure TDbfFile.Open;
@@ -1182,7 +1169,6 @@ begin
   DestDbfFile.FileName := NewBaseName;
   DestDbfFile.AutoCreate := true;
   DestDbfFile.Mode := pfExclusiveCreate;
-  DestDbfFile.UseFloatFields := UseFloatFields;
   DestDbfFile.OnIndexMissing := FOnIndexMissing;
   DestDbfFile.OnLocaleError := FOnLocaleError;
   DestDbfFile.DbfVersion := FDbfVersion;
@@ -1576,9 +1562,13 @@ begin
       end;
     'B':    // foxpro double
       begin
-        Result := true;
-        if Dst <> nil then
-          PDouble(Dst)^ := PDouble(Src)^;
+        if FDbfVersion = xFoxPro then
+        begin
+          Result := true;
+          if Dst <> nil then
+            PDouble(Dst)^ := PDouble(Src)^;
+        end else
+          asciiContents := true;
       end;
     'M':
       begin
