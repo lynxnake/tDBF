@@ -66,8 +66,9 @@ type
 //--Expression functions-----------------------------------------------------
 
 procedure FuncFloatToStr(Param: PExpressionRec);
-procedure FuncIntToStr_Gen(Param: PExpressionRec; Val: Integer);
+procedure FuncIntToStr_Gen(Param: PExpressionRec; Val: {$ifdef SUPPORT_INT64}Int64{$else}Integer{$endif});
 procedure FuncIntToStr(Param: PExpressionRec);
+procedure FuncInt64ToStr(Param: PExpressionRec);
 procedure FuncDateToStr(Param: PExpressionRec);
 procedure FuncSubString(Param: PExpressionRec);
 procedure FuncUppercase(Param: PExpressionRec);
@@ -492,7 +493,7 @@ begin
   end;
 end;
 
-procedure FuncIntToStr_Gen(Param: PExpressionRec; Val: Integer);
+procedure FuncIntToStr_Gen(Param: PExpressionRec; Val: {$ifdef SUPPORT_INT64}Int64{$else}Integer{$endif});
 var
   width: Integer;
 begin
@@ -503,7 +504,12 @@ begin
     begin
       // convert to string
       width := PInteger(Args[1])^;
-      GetStrFromInt_Width(Val, width, Res.MemoryPos^, #32);
+{$ifdef SUPPORT_INT64}
+      GetStrFromInt64_Width
+{$else}
+      GetStrFromInt_Width
+{$endif}
+        (Val, width, Res.MemoryPos^, #32);
       // advance pointer
       Inc(Res.MemoryPos^, width);
       // need to add decimal?
@@ -521,7 +527,13 @@ begin
       end;
     end else begin
       // convert to string
-      width := GetStrFromInt(Val, Res.MemoryPos^);
+      width := 
+{$ifdef SUPPORT_INT64}
+        GetStrFromInt64
+{$else}
+        GetStrFromInt
+{$endif}
+          (Val, Res.MemoryPos^);
       // advance pointer
       Inc(Param^.Res.MemoryPos^, width);
     end;
@@ -534,6 +546,15 @@ procedure FuncIntToStr(Param: PExpressionRec);
 begin
   FuncIntToStr_Gen(Param, PInteger(Param^.Args[0])^);
 end;
+
+{$ifdef SUPPORT_INT64}
+
+procedure FuncInt64ToStr(Param: PExpressionRec);
+begin
+  FuncIntToStr_Gen(Param, PInt64(Param^.Args[0])^);
+end;
+
+{$endif}
 
 procedure FuncDateToStr(Param: PExpressionRec);
 var
@@ -1705,6 +1726,7 @@ initialization
     // Functions - name, description, param types, min params, result type, Func addr
     Add(TFunction.Create('STR',       '',      'FII', 1, etString, FuncFloatToStr, ''));
     Add(TFunction.Create('STR',       '',      'III', 1, etString, FuncIntToStr, ''));
+    Add(TFunction.Create('STR',       '',      'LII', 1, etString, FuncInt64ToStr, ''));
     Add(TFunction.Create('DTOS',      '',      'D',   1, etString, FuncDateToStr, ''));
     Add(TFunction.Create('SUBSTR',    'SUBS',  'SII', 3, etString, FuncSubString, ''));
     Add(TFunction.Create('UPPERCASE', 'UPPER', 'S',   1, etString, FuncUppercase, ''));
