@@ -11,6 +11,7 @@ to be implemented:
 - val function for indexes
 - retrieve temporary filenames used in restructuretable
 - foNoPartialCompare in filter
+- autoinc field support for visual foxpro
 
 needs fixing:
 - lazarus projects need unit ideintf when dropping tdbf on forum

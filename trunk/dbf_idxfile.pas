@@ -619,6 +619,11 @@ type
     procedure SetKeyType(NewType: Char); override;
   end;
 
+  TDbfIndexParser = class(TDbfParser)
+  public
+    constructor Create(ADbfFile: Pointer);
+  end;
+
 var
   Entry_Mdx_BOF: rMdxEntry;   //(RecBOF, #0);
   Entry_Mdx_EOF: rMdxEntry;   //(RecBOF, #0);
@@ -1683,6 +1688,14 @@ begin
   PMdx7Tag(Tag)^.KeyType := NewType;
 end;
 
+{ TDbfIndexParser }
+
+constructor TDbfIndexParser.Create(ADbfFile: pointer);
+begin
+  inherited;
+  MaxResultLen := 100;
+end;
+
 //==============================================================================
 //============ TIndexFile
 //==============================================================================
@@ -1803,7 +1816,7 @@ begin
       FIndexHeaders[0] := Header;
       FIndexHeader := Header;
       // create default root
-      FParsers[0] := TDbfParser.Create(FDbfFile);
+      FParsers[0] := TDbfIndexParser.Create(FDbfFile);
       FRoots[0] := TNdxPage.Create(Self);
       FCurrentParser := FParsers[0];
       FRoot := FRoots[0];
@@ -2092,12 +2105,12 @@ procedure TIndexFile.CreateIndex(FieldDesc, TagName: string; Options: TIndexOpti
 var
   tagNo: Integer;
   fieldType: Char;
-  TempParser: TDbfParser;
+  TempParser: TDbfIndexParser;
 begin
   // check if we have exclusive access to table
   TDbfFile(FDbfFile).CheckExclusiveAccess;
   // parse index expression; if it cannot be parsed, why bother making index?
-  TempParser := TDbfParser.Create(FDbfFile);
+  TempParser := TDbfIndexParser.Create(FDbfFile);
   try
     TempParser.ParseExpression(FieldDesc);
     // check if result type is correct
@@ -2122,7 +2135,7 @@ begin
     // get memory for root
     if FRoots[tagNo] = nil then
     begin
-      FParsers[tagNo] := TDbfParser.Create(FDbfFile);
+      FParsers[tagNo] := TDbfIndexParser.Create(FDbfFile);
       FRoots[tagNo] := TMdxPage.Create(Self)
     end else begin
       FreeAndNil(FRoots[tagNo].FLowerPage);
@@ -2282,7 +2295,7 @@ begin
       // create root if needed
       if FRoots[I] = nil then
       begin
-        FParsers[I] := TDbfParser.Create(FDbfFile);
+        FParsers[I] := TDbfIndexParser.Create(FDbfFile);
         FRoots[I] := TMdxPage.Create(Self);
       end;
       // check header integrity

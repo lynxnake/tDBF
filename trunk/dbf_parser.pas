@@ -27,6 +27,7 @@ type
     FDbfFile: Pointer;
     FFieldVarList: TStringList;
     FResultLen: Integer;
+    FMaxResultLen: Integer;
     FIsExpression: Boolean;       // expression or simple field?
     FFieldType: TExpressionType;
     FCaseInsensitive: Boolean;
@@ -56,6 +57,7 @@ type
 
     property DbfFile: Pointer read FDbfFile write FDbfFile;
     property Expression: string read FCurrentExpression;
+    property MaxResultLen: integer read FMaxResultLen write FMaxResultLen;
     property ResultLen: Integer read FResultLen;
 
     property CaseInsensitive: Boolean read FCaseInsensitive write SetCaseInsensitive;
@@ -1351,6 +1353,7 @@ begin
   FFieldVarList := TStringList.Create;
   FCaseInsensitive := true;
   FRawStringFields := true;
+  FMaxResultLen := High(Integer);
   inherited Create;
 end;
 
@@ -1568,7 +1571,7 @@ begin
   end;
 
   // check if expression not too long
-  if FResultLen > 100 then
+  if FResultLen > FMaxResultLen then
     raise EDbfError.CreateFmt(STRING_INDEX_EXPRESSION_TOO_LONG, [AExpression, FResultLen]);
 
   // if no errors, assign current expression
