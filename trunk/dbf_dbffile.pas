@@ -107,9 +107,11 @@ type
     procedure RestructureTable(DbfFieldDefs: TDbfFieldDefs; Pack: Boolean);
     procedure Rename(DestFileName: string; NewIndexFileNames: TStrings; DeleteFiles: boolean);
     function  GetFieldInfo(FieldName: string): TDbfFieldDef;
-    function  GetFieldData(Column: Integer; DataType: TFieldType; Src,Dst: Pointer): Boolean;
-    function  GetFieldDataFromDef(AFieldDef: TDbfFieldDef; DataType: TFieldType; Src, Dst: Pointer): Boolean;
-    procedure SetFieldData(Column: Integer; DataType: TFieldType; Src,Dst: Pointer);
+    function  GetFieldData(Column: Integer; DataType: TFieldType; Src,Dst: Pointer; 
+      NativeFormat: boolean): Boolean;
+    function  GetFieldDataFromDef(AFieldDef: TDbfFieldDef; DataType: TFieldType; 
+      Src, Dst: Pointer; NativeFormat: boolean): Boolean;
+    procedure SetFieldData(Column: Integer; DataType: TFieldType; Src,Dst: Pointer; NativeFormat: boolean);
     procedure InitRecord(DestBuf: PChar);
     procedure PackIndex(lIndexFile: TIndexFile; AIndexName: string);
     procedure RegenerateIndexes;
@@ -1288,7 +1290,7 @@ begin
             if TempDstDef.IsBlob and ((DbfFieldDefs = nil) or (TempDstDef.CopyFrom >= 0)) then
             begin
               // get current blob blockno
-              GetFieldData(lFieldNo, ftInteger, pBuff, @lBlobPageNo);
+              GetFieldData(lFieldNo, ftInteger, pBuff, @lBlobPageNo, false);
               // valid blockno read?
               if lBlobPageNo > 0 then
               begin
@@ -1299,7 +1301,7 @@ begin
                 DestDbfFile.FMemoFile.WriteMemo(lBlobPageNo, 0, BlobStream);
               end;
               // write new blockno
-              DestDbfFile.SetFieldData(lFieldNo, ftInteger, @lBlobPageNo, pDestBuff);
+              DestDbfFile.SetFieldData(lFieldNo, ftInteger, @lBlobPageNo, pDestBuff, false);
             end else if (DbfFieldDefs <> nil) and (TempDstDef.CopyFrom >= 0) then
             begin
               // copy content of field
@@ -1387,16 +1389,18 @@ begin
 end;
 
 // NOTE: Dst may be nil!
-function TDbfFile.GetFieldData(Column: Integer; DataType: TFieldType; Src, Dst: Pointer): Boolean;
+function TDbfFile.GetFieldData(Column: Integer; DataType: TFieldType; 
+  Src, Dst: Pointer; NativeFormat: boolean): Boolean;
 var
   TempFieldDef: TDbfFieldDef;
 begin
   TempFieldDef := TDbfFieldDef(FFieldDefs.Items[Column]);
-  Result := GetFieldDataFromDef(TempFieldDef, DataType, Src, Dst);
+  Result := GetFieldDataFromDef(TempFieldDef, DataType, Src, Dst, NativeFormat);
 end;
 
 // NOTE: Dst may be nil!
-function TDbfFile.GetFieldDataFromDef(AFieldDef: TDbfFieldDef; DataType: TFieldType; Src, Dst: Pointer): Boolean;
+function TDbfFile.GetFieldDataFromDef(AFieldDef: TDbfFieldDef; DataType: TFieldType; 
+  Src, Dst: Pointer; NativeFormat: boolean): Boolean;
 var
   FieldOffset, FieldSize: Integer;
 //  s: string;
@@ -1444,20 +1448,21 @@ var
 
   procedure SaveDateToDst;
   begin
-{$ifdef SUPPORT_NEW_FIELDDATA}
-    // Delphi 5 requests a TDateTime
-    PDateTime(Dst)^ := date;
-{$else}
-    // Delphi 3 and 4 request a TDateTimeRec
-    //  date is TTimeStamp.date
-    //  datetime = msecs == BDE timestamp as we implemented it
-    if DataType = ftDateTime then
+    if not NativeFormat then
     begin
-      PDateTimeRec(Dst)^.DateTime := date;
+      // Delphi 5 requests a TDateTime
+      PDateTime(Dst)^ := date;
     end else begin
-      PLongInt(Dst)^ := DateTimeToTimeStamp(date).Date;
+      // Delphi 3 and 4 request a TDateTimeRec
+      //  date is TTimeStamp.date
+      //  datetime = msecs == BDE timestamp as we implemented it
+      if DataType = ftDateTime then
+      begin
+        PDateTimeRec(Dst)^.DateTime := date;
+      end else begin
+        PLongInt(Dst)^ := DateTimeToTimeStamp(date).Date;
+      end;
     end;
-{$endif}
   end;
 
 begin
@@ -1687,7 +1692,8 @@ begin
   end;
 end;
 
-procedure TDbfFile.SetFieldData(Column: Integer; DataType: TFieldType; Src, Dst: Pointer);
+procedure TDbfFile.SetFieldData(Column: Integer; DataType: TFieldType; 
+  Src, Dst: Pointer; NativeFormat: boolean);
 const
   IsBlobFieldToPadChar: array[Boolean] of Char = (#32, '0');
   SrcNilToUpdateNullField: array[boolean] of TUpdateNullField = (unClear, unSet);
@@ -1704,22 +1710,23 @@ var
 
   procedure LoadDateFromSrc;
   begin
-{$ifdef SUPPORT_NEW_FIELDDATA}
-    // Delphi 5 passes a TDateTime
-    date := PDateTime(Src)^;
-{$else}
-    // Delphi 3 and 4 pass a TDateTimeRec with a time stamp
-    //  date = integer
-    //  datetime = msecs == BDETimeStampToDateTime as we implemented it
-    if DataType = ftDateTime then
+    if not NativeFormat then
     begin
-      date := PDouble(Src)^;
+      // Delphi 5, new format, passes a TDateTime
+      date := PDateTime(Src)^;
     end else begin
-      timeStamp.Time := 0;
-      timeStamp.Date := PLongInt(Src)^;
-      date := TimeStampToDateTime(timeStamp);
+      // Delphi 3 and 4, old "native" format, pass a TDateTimeRec with a time stamp
+      //  date = integer
+      //  datetime = msecs == BDETimeStampToDateTime as we implemented it
+      if DataType = ftDateTime then
+      begin
+        date := PDouble(Src)^;
+      end else begin
+        timeStamp.Time := 0;
+        timeStamp.Date := PLongInt(Src)^;
+        date := TimeStampToDateTime(timeStamp);
+      end;
     end;
-{$endif}
   end;
 
 begin

@@ -371,7 +371,7 @@ end;
 procedure TFloatFieldVar.Refresh(Buffer: PChar);
 begin
   // database width is default 64-bit double
-  if not FDbfFile.GetFieldDataFromDef(FieldDef, FieldDef.FieldType, Buffer, @FFieldVal) then
+  if not FDbfFile.GetFieldDataFromDef(FieldDef, FieldDef.FieldType, Buffer, @FFieldVal, false) then
     FFieldVal := 0.0;
 end;
 
@@ -389,7 +389,7 @@ end;
 procedure TIntegerFieldVar.Refresh(Buffer: PChar);
 begin
   FFieldVal := 0;
-  FDbfFile.GetFieldDataFromDef(FieldDef, FieldDef.FieldType, Buffer, @FFieldVal);
+  FDbfFile.GetFieldDataFromDef(FieldDef, FieldDef.FieldType, Buffer, @FFieldVal, false);
 end;
 
 {$ifdef SUPPORT_INT64}
@@ -407,7 +407,7 @@ end;
 
 procedure TLargeIntFieldVar.Refresh(Buffer: PChar);
 begin
-  if not FDbfFile.GetFieldDataFromDef(FieldDef, FieldDef.FieldType, Buffer, @FFieldVal) then
+  if not FDbfFile.GetFieldDataFromDef(FieldDef, FieldDef.FieldType, Buffer, @FFieldVal, false) then
     FFieldVal := 0;
 end;
 
@@ -426,7 +426,7 @@ end;
 
 procedure TDateTimeFieldVar.Refresh(Buffer: PChar);
 begin
-  if not FDbfFile.GetFieldDataFromDef(FieldDef, ftDateTime, Buffer, @FFieldVal) then
+  if not FDbfFile.GetFieldDataFromDef(FieldDef, ftDateTime, Buffer, @FFieldVal, false) then
     FFieldVal.DateTime := 0.0;
 end;
 
@@ -445,7 +445,7 @@ procedure TBooleanFieldVar.Refresh(Buffer: PChar);
 var
   lFieldVal: word;
 begin
-  if FDbfFile.GetFieldDataFromDef(FieldDef, ftBoolean, Buffer, @lFieldVal) then
+  if FDbfFile.GetFieldDataFromDef(FieldDef, ftBoolean, Buffer, @lFieldVal, false) then
     FFieldVal := lFieldVal <> 0
   else
     FFieldVal := false;

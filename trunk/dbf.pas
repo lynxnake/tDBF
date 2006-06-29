@@ -296,10 +296,10 @@ type
     procedure Translate(Src, Dest: PChar; ToOem: Boolean); override; {virtual}
 {$endif}
 
-{$ifdef SUPPORT_BACKWARD_FIELDDATA}
-    function  GetFieldData(Field: TField; Buffer: Pointer; NativeFormat: Boolean): Boolean; overload; override;
-    procedure SetFieldData(Field: TField; Buffer: Pointer; NativeFormat: Boolean); overload; override;
-{$endif}
+    function  GetFieldData(Field: TField; Buffer: Pointer; NativeFormat: Boolean): Boolean;
+      {$ifdef SUPPORT_BACKWARD_FIELDDATA} overload; override; {$endif}
+    procedure SetFieldData(Field: TField; Buffer: Pointer; NativeFormat: Boolean);
+      {$ifdef SUPPORT_BACKWARD_FIELDDATA} overload; override; {$endif}
 
     function CompareBookmarks(Bookmark1, Bookmark2: TBookmark): Integer; override;
     procedure CheckDbfFieldDefs(ADbfFieldDefs: TDbfFieldDefs);
@@ -551,7 +551,7 @@ begin
     Translate(true);
     Dbf.FDbfFile.MemoFile.WriteMemo(FMemoRecNo, FReadSize, Self);
     Dbf.FDbfFile.SetFieldData(FBlobField.FieldNo-1, ftInteger, @FMemoRecNo,
-      @pDbfRecord(TDbf(FBlobField.DataSet).ActiveBuffer)^.DeletedFlag);
+      @pDbfRecord(TDbf(FBlobField.DataSet).ActiveBuffer)^.DeletedFlag, false);
     FDirty := false;
   end;
 end;
@@ -693,6 +693,18 @@ begin
 end;
 
 function TDbf.GetFieldData(Field: TField; Buffer: Pointer): Boolean; {override virtual abstract from TDataset}
+begin
+  Result := GetFieldData(Field, Buffer, true);
+end;
+
+// we don't want converted data formats, we want native :-)
+// it makes coding easier in TDbfFile.GetFieldData
+//  ftCurrency:
+//    Delphi 3,4: BCD array
+//  ftBCD:
+// ftDateTime is more difficult though
+
+function TDbf.GetFieldData(Field: TField; Buffer: Pointer; NativeFormat: Boolean): Boolean; {overload; override;}
 var
   Src: PChar;
 begin
@@ -705,7 +717,7 @@ begin
 
   if Field.FieldNo>0 then
   begin
-    Result := FDbfFile.GetFieldData(Field.FieldNo-1, Field.DataType, Src, Buffer);
+    Result := FDbfFile.GetFieldData(Field.FieldNo-1, Field.DataType, Src, Buffer, NativeFormat);
   end else begin { weird calculated fields voodoo (from dbtables).... }
     Inc(PChar(Src), Field.Offset + GetRecordSize);
     Result := Boolean(Src[0]);
@@ -714,28 +726,25 @@ begin
   end;
 end;
 
-{$ifdef SUPPORT_BACKWARD_FIELDDATA}
-
-// we don't want converted data formats, we want native :-)
-// it makes coding easier in TDbfFile.GetFieldData
-//  ftCurrency:
-//    Delphi 3,4: BCD array
-//  ftBCD:
-// ftDateTime is more difficult though
-
-function TDbf.GetFieldData(Field: TField; Buffer: Pointer; NativeFormat: Boolean): Boolean; {overload; override;}
-begin
-  // pretend nativeformat is true
-  Result := inherited GetFieldData(Field, Buffer, True);
-end;
-
 procedure TDbf.SetFieldData(Field: TField; Buffer: Pointer; NativeFormat: Boolean); {overload; override;}
+var
+  Dst: PChar;
 begin
-  // pretend nativeformat is true
-  inherited SetFieldData(Field, Buffer, True);
+  if (Field.FieldNo >= 0) then
+  begin
+    Dst := @PDbfRecord(ActiveBuffer)^.DeletedFlag;
+    FDbfFile.SetFieldData(Field.FieldNo - 1, Field.DataType, Buffer, Dst, NativeFormat);
+  end else begin    { ***** fkCalculated, fkLookup ***** }
+    Dst := @PDbfRecord(CalcBuffer)^.DeletedFlag;
+    Inc(PChar(Dst), RecordSize + Field.Offset);
+    Boolean(Dst[0]) := Buffer <> nil;
+    if Buffer <> nil then
+      Move(Buffer^, Dst[1], Field.DataSize)
+  end;     { end of ***** fkCalculated, fkLookup ***** }
+  if not (State in [dsCalcFields, dsFilter, dsNewValue]) then begin
+    DataEvent(deFieldChange, PtrInt(Field));
+  end;
 end;
-
-{$endif}
 
 procedure TDbf.DoFilterRecord(var Acceptable: Boolean);
 begin
@@ -1918,7 +1927,7 @@ begin
     FBlobStreams^[MemoFieldNo] := TDbfBlobStream.Create(Field);
   lBlob := FBlobStreams^[MemoFieldNo].AddReference;
   // update pageno of blob <-> location where to read/write in memofile
-  if FDbfFile.GetFieldData(Field.FieldNo-1, ftInteger, GetCurrentBuffer, @MemoPageNo) then
+  if FDbfFile.GetFieldData(Field.FieldNo-1, ftInteger, GetCurrentBuffer, @MemoPageNo, false) then
   begin
     // read blob? different blob?
     if (Mode = bmRead) or (Mode = bmReadWrite) then
@@ -2061,23 +2070,8 @@ begin
 end;
 
 procedure TDbf.SetFieldData(Field: TField; Buffer: Pointer); {override virtual abstract from TDataset}
-var
-  Dst: PChar;
 begin
-  if (Field.FieldNo >= 0) then
-  begin
-    Dst := @PDbfRecord(ActiveBuffer)^.DeletedFlag;
-    FDbfFile.SetFieldData(Field.FieldNo - 1,Field.DataType,Buffer,Dst);
-  end else begin    { ***** fkCalculated, fkLookup ***** }
-    Dst := @PDbfRecord(CalcBuffer)^.DeletedFlag;
-    Inc(PChar(Dst), RecordSize + Field.Offset);
-    Boolean(Dst[0]) := Buffer <> nil;
-    if Buffer <> nil then
-      Move(Buffer^, Dst[1], Field.DataSize)
-  end;     { end of ***** fkCalculated, fkLookup ***** }
-  if not (State in [dsCalcFields, dsFilter, dsNewValue]) then begin
-    DataEvent(deFieldChange, PtrInt(Field));
-  end;
+  SetFieldData(Field, Buffer, true);
 end;
 
 // this function counts real number of records: skip deleted records, filter, etc.
