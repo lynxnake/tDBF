@@ -16,7 +16,6 @@ to be implemented:
 needs fixing:
 - lazarus projects need unit ideintf when dropping tdbf on forum
 - unix character set conversion is a mess
-- parser result string > 100 only for index
 - check paged cache flushing, recordcount in cache
 - adding records without doing CancelRange causes assertion violation
 - adding records while filter active causes autoinc fields not to be filled in

@@ -150,9 +150,9 @@ function TSortedCollection.Search(Key: Pointer; var Index: Integer): Boolean;
 var
   L, H, I, C: Integer;
 begin
-  Search := False;
   L := 0;
   H := Count - 1;
+  C := 1; { something <> 0 }
   while L <= H do
   begin
     I := (L + H) div 2;
@@ -160,12 +160,9 @@ begin
     if C < 0 then
       L := I + 1
     else
-    begin
       H := I - 1;
-      if C = 0 then
-        Search := True;
-    end;
   end;
+  Search := C = 0;
   Index := L;
 end;
 

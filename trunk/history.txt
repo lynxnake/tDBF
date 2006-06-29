@@ -42,6 +42,8 @@ V6.4.9
 - foxbase memo is 10 character index, sizes 4 and 10 are valid (thx majky)
 - add int64 to string conversion in expression parser function STR
 - fix nativeformat for tdbf.getfielddata(A,B) users
+- allow later defined expression variables to have same name as 
+    already defined function
 
 
 ------------------------

@@ -176,15 +176,34 @@ end;
 procedure TCustomExpressionParser.CheckArguments(ExprRec: PExpressionRec);
 var
   TempExprWord: TExprWord;
-  I, error: Integer;
+  I, error, funcIndex: Integer;
   foundAltFunc: Boolean;
-begin
-  with ExprRec^ do
+
+  procedure FindAlternate;
   begin
-    repeat
-      I := 0;
-      error := 0;
-      foundAltFunc := false;
+    // see if we can find another function
+    if funcIndex < 0 then
+      funcIndex := FWordsList.IndexOf(ExprRec^.ExprWord);
+    // check if not last function
+    if (0 <= funcIndex) and (funcIndex < FWordsList.Count - 1) then
+    begin
+      TempExprWord := TExprWord(FWordsList.Items[funcIndex+1]);
+      if FWordsList.Compare(FWordsList.KeyOf(ExprRec^.ExprWord), FWordsList.KeyOf(TempExprWord)) = 0 then
+      begin
+        ExprRec^.ExprWord := TempExprWord;
+        ExprRec^.Oper := ExprRec^.ExprWord.ExprFunc;
+        foundAltFunc := true;
+      end;
+    end;
+  end;
+
+  procedure InternalCheckArguments;
+  begin
+    I := 0;
+    error := 0;
+    foundAltFunc := false;
+    with ExprRec^ do
+    begin
       while (I < ExprWord.MaxFunctionArg) and (ArgList[I] <> nil) and (error = 0) do
       begin
         // test subarguments first
@@ -205,32 +224,37 @@ begin
       // test if too many parameters passed
       if (error = 0) and (I > ExprWord.MaxFunctionArg) then
         error := 3;
-
-      // error occurred?
-      if error <> 0 then
-      begin
-        // see if we can find another function
-        I := FWordsList.IndexOf(ExprWord);
-        // check if not last function
-        if I < FWordsList.Count - 1 then
-        begin
-          TempExprWord := TExprWord(FWordsList.Items[I+1]);
-          if FWordsList.Compare(FWordsList.KeyOf(ExprWord), FWordsList.KeyOf(TempExprWord)) = 0 then
-          begin
-            ExprWord := TempExprWord;
-            Oper := ExprWord.ExprFunc;
-            foundAltFunc := true;
-          end;
-        end;
-      end;
-    until (error = 0) or not foundAltFunc;
-
-    // fatal error?
-    case error of
-      1: raise EParserException.Create('Function or operand has too few arguments');
-      2: raise EParserException.Create('Argument type mismatch');
-      3: raise EParserException.Create('Function or operand has too many arguments');
     end;
+  end;
+
+begin
+  funcIndex := -1;
+  repeat
+    InternalCheckArguments;
+
+    // error occurred?
+    if error <> 0 then
+      FindAlternate;
+  until (error = 0) or not foundAltFunc;
+
+  // maybe it's an undefined variable
+  if not foundAltFunc and (I = 0) then
+  begin
+    HandleUnknownVariable(ExprRec^.ExprWord.Name);
+    funcIndex := FWordsList.IndexOf(ExprRec^.ExprWord);
+    if funcIndex >= 0 then
+    begin
+      ExprRec^.ExprWord := TExprWord(FWordsList.Items[funcIndex]);
+      ExprRec^.Oper := ExprRec^.ExprWord.ExprFunc;
+      InternalCheckArguments;
+    end;
+  end;
+
+  // fatal error?
+  case error of
+    1: raise EParserException.Create('Function or operand has too few arguments');
+    2: raise EParserException.Create('Argument type mismatch');
+    3: raise EParserException.Create('Function or operand has too many arguments');
   end;
 end;
 
