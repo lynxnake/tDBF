@@ -6,9 +6,6 @@ interface
 
 uses
   Classes, SysUtils,
-{$ifdef SUPPORT_MATH_UNIT}
-  Math,
-{$endif}
 {$ifdef WIN32}
   Windows,
 {$else}
@@ -198,6 +195,9 @@ uses
 {$else}
   BaseUnix,
 {$endif}
+{$endif}
+{$ifdef SUPPORT_MATH_UNIT}
+  Math,
 {$endif}
   dbf_str, dbf_lang;
 
