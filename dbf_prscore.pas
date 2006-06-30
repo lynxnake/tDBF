@@ -103,6 +103,40 @@ type
 
 implementation
 
+procedure LinkVariable(ExprRec: PExpressionRec);
+begin
+  with ExprRec^ do
+  begin
+    if ExprWord.IsVariable then
+    begin
+      // copy pointer to variable
+      Args[0] := ExprWord.AsPointer;
+      // is this a fixed length string variable?
+      if ExprWord.FixedLen >= 0 then
+      begin
+        // store length as second parameter
+        Args[1] := PChar(ExprWord.LenAsPointer);
+      end;
+    end;
+  end;
+end;
+
+procedure LinkVariables(ExprRec: PExpressionRec);
+var
+  I: integer;
+begin
+  with ExprRec^ do
+  begin
+    I := 0;
+    while (I < MaxArg) and (ArgList[I] <> nil) do
+    begin
+      LinkVariables(ArgList[I]);
+      Inc(I);
+    end;
+  end;
+  LinkVariable(ExprRec);
+end;
+
 { TCustomExpressionParser }
 
 constructor TCustomExpressionParser.Create;
@@ -155,6 +189,7 @@ begin
       ExprTree := MakeTree(ExpColl, 0, ExpColl.Count - 1);
       FCurrentRec := nil;
       CheckArguments(ExprTree);
+      LinkVariables(ExprTree);
       if Optimize then
         RemoveConstants(ExprTree);
       // all constant expressions are evaluated and replaced by variables
@@ -176,18 +211,22 @@ end;
 procedure TCustomExpressionParser.CheckArguments(ExprRec: PExpressionRec);
 var
   TempExprWord: TExprWord;
-  I, error, funcIndex: Integer;
+  I, error, firstFuncIndex, funcIndex: Integer;
   foundAltFunc: Boolean;
 
   procedure FindAlternate;
   begin
     // see if we can find another function
     if funcIndex < 0 then
-      funcIndex := FWordsList.IndexOf(ExprRec^.ExprWord);
+    begin
+      firstFuncIndex := FWordsList.IndexOf(ExprRec^.ExprWord);
+      funcIndex := firstFuncIndex;
+    end;
     // check if not last function
     if (0 <= funcIndex) and (funcIndex < FWordsList.Count - 1) then
     begin
-      TempExprWord := TExprWord(FWordsList.Items[funcIndex+1]);
+      inc(funcIndex);
+      TempExprWord := TExprWord(FWordsList.Items[funcIndex]);
       if FWordsList.Compare(FWordsList.KeyOf(ExprRec^.ExprWord), FWordsList.KeyOf(TempExprWord)) = 0 then
       begin
         ExprRec^.ExprWord := TempExprWord;
@@ -238,16 +277,15 @@ begin
   until (error = 0) or not foundAltFunc;
 
   // maybe it's an undefined variable
-  if not foundAltFunc and (I = 0) then
+  if (error <> 0) and (I = 0) and (firstFuncIndex >= 0) then
   begin
     HandleUnknownVariable(ExprRec^.ExprWord.Name);
-    funcIndex := FWordsList.IndexOf(ExprRec^.ExprWord);
-    if funcIndex >= 0 then
-    begin
-      ExprRec^.ExprWord := TExprWord(FWordsList.Items[funcIndex]);
-      ExprRec^.Oper := ExprRec^.ExprWord.ExprFunc;
-      InternalCheckArguments;
-    end;
+    { must not add variable as first function in this set of duplicates,
+      otherwise following searches will not find it }
+    FWordsList.Exchange(firstFuncIndex, firstFuncIndex+1);
+    ExprRec^.ExprWord := TExprWord(FWordsList.Items[firstFuncIndex+1]);
+    ExprRec^.Oper := ExprRec^.ExprWord.ExprFunc;
+    InternalCheckArguments;
   end;
 
   // fatal error?
@@ -501,17 +539,6 @@ begin
   begin
     Result^.ExprWord := TExprWord(Expr.Items[FirstItem]);
     Result^.Oper := Result^.ExprWord.ExprFunc;
-    if Result^.ExprWord.IsVariable then
-    begin
-      // copy pointer to variable
-      Result^.Args[0] := Result^.ExprWord.AsPointer;
-      // is this a fixed length string variable?
-      if Result^.ExprWord.FixedLen >= 0 then
-      begin
-        // store length as second parameter
-        Result^.Args[1] := PChar(Result^.ExprWord.LenAsPointer);
-      end;
-    end;
     exit;
   end;
 

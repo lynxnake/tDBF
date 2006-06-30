@@ -150,19 +150,20 @@ function TSortedCollection.Search(Key: Pointer; var Index: Integer): Boolean;
 var
   L, H, I, C: Integer;
 begin
+  Result := false;
   L := 0;
   H := Count - 1;
-  C := 1; { something <> 0 }
   while L <= H do
   begin
     I := (L + H) div 2;
     C := Compare(KeyOf(Items[I]), Key);
     if C < 0 then
       L := I + 1
-    else
+    else begin
       H := I - 1;
+      Result := C = 0;
+    end;
   end;
-  Search := C = 0;
   Index := L;
 end;
 
