@@ -579,11 +579,14 @@ begin
   begin
     srcLen := StrLen(Args[0]);
     index := PInteger(Args[1])^ - 1;
-    count := PInteger(Args[2])^;
-    if index + count <= srcLen then
-      Res.Append(Args[0]+index, count)
-    else
-      Res.MemoryPos^^ := #0;
+    if Args[2] <> nil then
+    begin
+      count := PInteger(Args[2])^;
+      if index + count > srcLen then
+        count := srcLen - index;
+    end else
+      count := srcLen - index;
+    Res.Append(Args[0]+index, count)
   end;
 end;
 
@@ -1731,7 +1734,7 @@ initialization
     Add(TFunction.Create('STR',       '',      'III', 1, etString, FuncIntToStr, ''));
     Add(TFunction.Create('STR',       '',      'LII', 1, etString, FuncInt64ToStr, ''));
     Add(TFunction.Create('DTOS',      '',      'D',   1, etString, FuncDateToStr, ''));
-    Add(TFunction.Create('SUBSTR',    'SUBS',  'SII', 3, etString, FuncSubString, ''));
+    Add(TFunction.Create('SUBSTR',    'SUBS',  'SII', 2, etString, FuncSubString, ''));
     Add(TFunction.Create('UPPERCASE', 'UPPER', 'S',   1, etString, FuncUppercase, ''));
     Add(TFunction.Create('LOWERCASE', 'LOWER', 'S',   1, etString, FuncLowercase, ''));
   end;
