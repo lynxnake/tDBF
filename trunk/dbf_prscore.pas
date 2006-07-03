@@ -306,7 +306,7 @@ begin
     Result := ExprWord.CanVary;
     if not Result then
       for I := 0 to ExprWord.MaxFunctionArg - 1 do
-        if ResultCanVary(ArgList[I]) then
+        if (ArgList[I] <> nil) and ResultCanVary(ArgList[I]) then
         begin
           Result := true;
           Exit;

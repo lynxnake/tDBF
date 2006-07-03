@@ -44,6 +44,7 @@ V6.4.9
 - fix nativeformat for tdbf.getfielddata(A,B) users
 - allow later defined expression variables to have same name as 
     already defined function
+- third parameter in substr function is optional now
 
 
 ------------------------
