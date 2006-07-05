@@ -243,7 +243,7 @@ var
     foundAltFunc := false;
     with ExprRec^ do
     begin
-      if WantsFunction <> ExprWord.IsFunction then
+      if WantsFunction <> (ExprWord.IsFunction and not ExprWord.IsOperator) then
       begin
         error := 4;
         exit;
