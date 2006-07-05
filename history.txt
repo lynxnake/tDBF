@@ -45,6 +45,7 @@ V6.4.9
 - allow later defined expression variables to have same name as 
     already defined function
 - third parameter in substr function is optional now
+- expression parser distinguishes between function() and variable, =no brackets
 
 
 ------------------------

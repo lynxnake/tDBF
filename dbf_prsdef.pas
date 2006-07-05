@@ -58,7 +58,8 @@ type
     Res: TDynamicType;
     ExprWord: TExprWord;
     AuxData: pointer;
-    ResetDest: Boolean;
+    ResetDest: boolean;
+    WantsFunction: boolean;
     Args: array[0..MaxArg-1] of PChar;
     ArgsPos: array[0..MaxArg-1] of PChar;
     ArgsSize: array[0..MaxArg-1] of Integer;

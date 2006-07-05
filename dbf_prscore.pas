@@ -243,6 +243,12 @@ var
     foundAltFunc := false;
     with ExprRec^ do
     begin
+      if WantsFunction <> ExprWord.IsFunction then
+      begin
+        error := 4;
+        exit;
+      end;
+
       while (I < ExprWord.MaxFunctionArg) and (ArgList[I] <> nil) and (error = 0) do
       begin
         // test subarguments first
@@ -277,7 +283,7 @@ begin
   until (error = 0) or not foundAltFunc;
 
   // maybe it's an undefined variable
-  if (error <> 0) and (I = 0) and (firstFuncIndex >= 0) then
+  if (error <> 0) and not ExprRec^.WantsFunction and (firstFuncIndex >= 0) then
   begin
     HandleUnknownVariable(ExprRec^.ExprWord.Name);
     { must not add variable as first function in this set of duplicates,
@@ -293,6 +299,7 @@ begin
     1: raise EParserException.Create('Function or operand has too few arguments');
     2: raise EParserException.Create('Argument type mismatch');
     3: raise EParserException.Create('Function or operand has too many arguments');
+    4: raise EParserException.Create('No function with this name, remove brackets for variable');
   end;
 end;
 
@@ -582,6 +589,7 @@ begin
     // save function
     Result^.ExprWord := TExprWord(Expr.Items[FirstItem]);
     Result^.Oper := Result^.ExprWord.ExprFunc;
+    Result^.WantsFunction := true;
     // parse function arguments
     IEnd := FirstItem + 1;
     IStart := IEnd;
@@ -897,9 +905,8 @@ begin
       if (TExprWord(Items[I]).IsVariable) and ((I < Count - 1) and
         (TExprWord(Items[I + 1]).IsVariable)) then
         raise EParserException.Create('Missing operator between '''+TExprWord(Items[I]).Name+''' and '''+TExprWord(Items[I]).Name+'''');
-      if (TExprWord(Items[I]).ResultType = etLeftBracket) and ((I >= Count - 1) or
-        (TExprWord(Items[I + 1]).ResultType = etRightBracket)) then
-        raise EParserException.Create('Empty brackets ()');
+      if (TExprWord(Items[I]).ResultType = etLeftBracket) and (I >= Count - 1) then
+        raise EParserException.Create('Missing closing bracket');
       if (TExprWord(Items[I]).ResultType = etRightBracket) and ((I < Count - 1) and
         (TExprWord(Items[I + 1]).ResultType = etLeftBracket)) then
         raise EParserException.Create('Missing operator between )(');
@@ -1032,6 +1039,7 @@ begin
   New(Result);
   Result^.Oper := nil;
   Result^.AuxData := nil;
+  Result^.WantsFunction := false;
   for I := 0 to MaxArg - 1 do
   begin
     Result^.Args[I] := nil;
