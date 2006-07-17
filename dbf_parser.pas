@@ -26,8 +26,6 @@ type
   private
     FDbfFile: Pointer;
     FFieldVarList: TStringList;
-    FResultLen: Integer;
-    FMaxResultLen: Integer;
     FIsExpression: Boolean;       // expression or simple field?
     FFieldType: TExpressionType;
     FCaseInsensitive: Boolean;
@@ -41,6 +39,7 @@ type
     procedure HandleUnknownVariable(VarName: string); override;
     function  GetVariableInfo(VarName: string): TDbfFieldDef;
     function  CurrentExpression: string; override;
+    procedure ValidateExpression(AExpression: string); virtual;
     function  GetResultType: TExpressionType; override;
 
     procedure SetCaseInsensitive(NewInsensitive: Boolean);
@@ -57,8 +56,6 @@ type
 
     property DbfFile: Pointer read FDbfFile write FDbfFile;
     property Expression: string read FCurrentExpression;
-    property MaxResultLen: integer read FMaxResultLen write FMaxResultLen;
-    property ResultLen: Integer read FResultLen;
 
     property CaseInsensitive: Boolean read FCaseInsensitive write SetCaseInsensitive;
     property RawStringFields: Boolean read FRawStringFields write SetRawStringFields;
@@ -1356,7 +1353,6 @@ begin
   FFieldVarList := TStringList.Create;
   FCaseInsensitive := true;
   FRawStringFields := true;
-  FMaxResultLen := High(Integer);
   inherited Create;
 end;
 
@@ -1530,9 +1526,11 @@ begin
   FCurrentExpression := EmptyStr;
 end;
 
+procedure TDbfParser.ValidateExpression(AExpression: string);
+begin
+end;
+
 procedure TDbfParser.ParseExpression(AExpression: string);
-var
-  TempBuffer: pchar;
 begin
   // clear any current expression
   ClearExpressions;
@@ -1543,39 +1541,13 @@ begin
   begin
     // parse requested
     CompileExpression(AExpression);
-
-    // determine length of string length expressions
-    if ResultType = etString then
-    begin
-      // make empty record
-      GetMem(TempBuffer, TDbfFile(FDbfFile).RecordSize);
-      try
-        TDbfFile(FDbfFile).InitRecord(TempBuffer);
-        FResultLen := StrLen(ExtractFromBuffer(TempBuffer));
-      finally
-        FreeMem(TempBuffer);
-      end;
-    end;
   end else begin
     // simple field, create field variable for it
     HandleUnknownVariable(AExpression);
     FFieldType := TFieldVar(FFieldVarList.Objects[0]).FieldType;
-    // set result len of variable length fields
-    if FFieldType = etString then
-      FResultLen := TFieldVar(FFieldVarList.Objects[0]).FieldDef.Size
   end;
 
-  // set result len for fixed length expressions / fields
-  case ResultType of
-    etBoolean:  FResultLen := 1;
-    etInteger:  FResultLen := 4;
-    etFloat:    FResultLen := 8;
-    etDateTime: FResultLen := 8;
-  end;
-
-  // check if expression not too long
-  if FResultLen > FMaxResultLen then
-    raise EDbfError.CreateFmt(STRING_INDEX_EXPRESSION_TOO_LONG, [AExpression, FResultLen]);
+  ValidateExpression(AExpression);
 
   // if no errors, assign current expression
   FCurrentExpression := AExpression;

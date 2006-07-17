@@ -77,6 +77,14 @@ type
     property Options: TIndexOptions read FOptions write FOptions;
   end;
 
+  TDbfIndexParser = class(TDbfParser)
+  protected
+    FResultLen: Integer; 
+
+    procedure ValidateExpression(AExpression: string); override;
+  public
+    property ResultLen: Integer read FResultLen;
+  end;
 //===========================================================================
   TIndexFile = class;
   TIndexPageClass = class of TIndexPage;
@@ -216,14 +224,14 @@ type
 {$endif}
   protected
     FIndexName: string;
-    FParsers: array[0..MaxIndexes-1] of TDbfParser;
+    FParsers: array[0..MaxIndexes-1] of TDbfIndexParser;
     FIndexHeaders: array[0..MaxIndexes-1] of Pointer;
     FIndexHeaderModified: array[0..MaxIndexes-1] of Boolean;
     FIndexHeader: Pointer;
     FIndexVersion: TXBaseVersion;
     FRoots: array[0..MaxIndexes-1] of TIndexPage;
     FLeaves: array[0..MaxIndexes-1] of TIndexPage;
-    FCurrentParser: TDbfParser;
+    FCurrentParser: TDbfIndexParser;
     FRoot: TIndexPage;
     FLeaf: TIndexPage;
     FMdxTag: TIndexTag;
@@ -617,11 +625,6 @@ type
     procedure SetBackwardTag(NewTag: Byte); override;
     procedure SetReserved(NewReserved: Byte); override;
     procedure SetKeyType(NewType: Char); override;
-  end;
-
-  TDbfIndexParser = class(TDbfParser)
-  public
-    constructor Create(ADbfFile: Pointer);
   end;
 
 var
@@ -1690,10 +1693,32 @@ end;
 
 { TDbfIndexParser }
 
-constructor TDbfIndexParser.Create(ADbfFile: pointer);
+procedure TDbfIndexParser.ValidateExpression(AExpression: string);
+var
+  TempBuffer: pchar;
 begin
-  inherited;
-  MaxResultLen := 100;
+  // set result len for fixed length expressions / fields
+  case ResultType of
+    etBoolean:  FResultLen := 1;
+    etInteger:  FResultLen := 4;
+    etFloat:    FResultLen := 8;
+    etDateTime: FResultLen := 8;
+    etString:
+    begin
+      // make empty record
+      GetMem(TempBuffer, TDbfFile(DbfFile).RecordSize);
+      try
+        TDbfFile(DbfFile).InitRecord(TempBuffer);
+        FResultLen := StrLen(ExtractFromBuffer(TempBuffer));
+      finally
+        FreeMem(TempBuffer);
+      end;
+    end;
+  end;
+
+  // check if expression not too long
+  if FResultLen > 100 then
+    raise EDbfError.CreateFmt(STRING_INDEX_EXPRESSION_TOO_LONG, [AExpression, FResultLen]);
 end;
 
 //==============================================================================
@@ -2336,7 +2361,7 @@ var
   I, found, numTags, moveItems: Integer;
   tempHeader: Pointer;
   tempRoot, tempLeaf: TIndexPage;
-  tempParser: TDbfParser;
+  tempParser: TDbfIndexParser;
 begin
   // check if we have exclusive access to table
   TDbfFile(FDbfFile).CheckExclusiveAccess;
