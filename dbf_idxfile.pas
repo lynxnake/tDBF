@@ -23,6 +23,7 @@ uses
   dbf_parser,
   dbf_prsdef,
   dbf_cursor,
+  dbf_collate,
   dbf_common;
 
 {$ifdef _DEBUG}
@@ -46,7 +47,6 @@ type
   TIndexModifyMode = (mmNormal, mmDeleteRecall);
 
   TDbfLocaleErrorEvent = procedure(var Error: TLocaleError; var Solution: TLocaleSolution) of object;
-  TDbfCompareKeyEvent = function(Key: PChar): Integer of object;
   TDbfCompareKeysEvent = function(Key1, Key2: PChar): Integer of object;
 
   PDouble = ^Double;
@@ -262,10 +262,8 @@ type
     FUserNumeric: Double;
     FForceClose: Boolean;
     FForceReadOnly: Boolean;
-    FLocaleID: LCID;
-    FLocaleCP: Integer;
     FCodePage: Integer;
-    FCompareKey: TDbfCompareKeyEvent;
+    FCollation: PCollationTable;
     FCompareKeys: TDbfCompareKeysEvent;
     FOnLocaleError: TDbfLocaleErrorEvent;
 
@@ -299,10 +297,6 @@ type
     function  WalkPrev: boolean;
     function  WalkNext: boolean;
     
-    procedure TranslateToANSI(Src, Dest: PChar);
-    function  CompareKeyNumericNDX(Key: PChar): Integer;
-    function  CompareKeyNumericMDX(Key: PChar): Integer;
-    function  CompareKeyString(Key: PChar): Integer;
     function  CompareKeysNumericNDX(Key1, Key2: PChar): Integer;
     function  CompareKeysNumericMDX(Key1, Key2: PChar): Integer;
     function  CompareKeysString(Key1, Key2: PChar): Integer;
@@ -321,9 +315,6 @@ type
     procedure SetPhysicalRecNo(RecNo: Integer);
     procedure SetUpdateMode(NewMode: TIndexUpdateMode);
     procedure SetIndexName(const AIndexName: string);
-    procedure SetLocaleID(const NewID: LCID);
-
-    property InternalLocaleID: LCID read FLocaleID write SetLocaleID;
 
   public
     constructor Create(ADbfFile: Pointer);
@@ -395,7 +386,6 @@ type
 
     property ForceClose: Boolean read FForceClose;
     property ForceReadOnly: Boolean read FForceReadOnly;
-    property LocaleID: LCID read FLocaleID;
     property CodePage: Integer read FCodePage write FCodePage;
 
     property OnLocaleError: TDbfLocaleErrorEvent read FOnLocaleError write FOnLocaleError;
@@ -1849,7 +1839,7 @@ begin
       // parse index expression
       FCurrentParser.ParseExpression(PIndexHdr(FIndexHeader)^.KeyDesc);
       // set index locale
-      InternalLocaleID := LCID(lcidBinary);
+      FCollation := BINARY_COLLATION;
     end;
 
     // determine how to open file
@@ -1869,27 +1859,27 @@ begin
         begin
           // if dbf is version 3, no language id, if no MDX language, use binary
           if PMdxHdr(Header)^.Language = 0 then
-            InternalLocaleID := lcidBinary
+            FCollation := BINARY_COLLATION
           else
-            InternalLocaleID := LangId_To_Locale[PMdxHdr(Header)^.Language];
+            FCollation := GetCollationTable(PMdxHdr(Header)^.Language);
         end else begin
           // check if MDX - DBF language id's match
           if (PMdxHdr(Header)^.Language = 0) or (PMdxHdr(Header)^.Language = DbfLangId) then
-            InternalLocaleID := LangId_To_Locale[DbfLangId]
+            FCollation := GetCollationTable(DbfLangId)
           else
             localeError := leTableIndexMismatch;
         end;
         // don't overwrite previous error
-        if (FLocaleID = DbfLocale_NotFound) and (localeError = leNone) then
+        if (FCollation = UNKNOWN_COLLATION) and (localeError = leNone) then
           localeError := leUnknown;
       end else begin
         // dbase III always binary?
-        InternalLocaleID := lcidBinary;
+        FCollation := BINARY_COLLATION;
       end;
       // check if selected locale is available, binary is always available...
-      if (localeError <> leNone) and (FLocaleID <> LCID(lcidBinary)) then
+      if (localeError <> leNone) and (FCollation <> BINARY_COLLATION) then
       begin
-        if LCIDList.IndexOf(Pointer(FLocaleID)) < 0 then
+        if LCIDList.IndexOf(Pointer(FCollation)) < 0 then
           localeError := leNotAvailable;
       end;
       // check if locale error detected
@@ -1905,8 +1895,8 @@ begin
           lsNotOpen: FForceClose := true;
           lsNoEdit: FForceReadOnly := true;
         else
-          // `trust' user knows correct locale
-          InternalLocaleID := LCID(localeSolution);
+          { lsBinary }
+          FCollation := BINARY_COLLATION;
         end;
       end;
       // now read info
@@ -2034,9 +2024,9 @@ begin
     // use locale id of parent
     DbfLangId := GetDbfLanguageId;
     if DbfLangId = 0 then
-      InternalLocaleID := lcidBinary
+      FCollation := BINARY_COLLATION
     else
-      InternalLocaleID := LangID_To_Locale[DbfLangId];
+      FCollation := GetCollationTable(DbfLangId);
     // write index headers
     prevSelIndex := FSelectedIndex;
     for pos := 0 to PMdxHdr(Header)^.TagsUsed - 1 do
@@ -2950,6 +2940,7 @@ function TIndexFile.ExtractKeyFromBuffer(Buffer: PChar): PChar;
 begin
   // execute expression to get key
   Result := PrepareKey(FCurrentParser.ExtractFromBuffer(Buffer), FCurrentParser.ResultType);
+  TranslateString(GetACP, FCodePage, Result, Result, KeyLen);
 end;
 
 procedure TIndexFile.InsertKey(Buffer: PChar);
@@ -2970,21 +2961,11 @@ end;
 procedure TIndexFile.InsertCurrent;
   // insert in current index
   // assumes: FUserKey is an OEM key
-var
-  lSearchKey: array[0..100] of Char;
-  OemKey: PChar;
 begin
   // only insert if not recalling or mode = distinct
   // modify = mmDeleteRecall /\ unique <> distinct -> key already present
   if (FModifyMode <> mmDeleteRecall) or (FUniqueMode = iuDistinct) then
   begin
-    // translate OEM key to ANSI key for searching
-    OemKey := FUserKey;
-    if KeyType = 'C' then
-    begin
-      FUserKey := @lSearchKey[0];
-      TranslateToANSI(OemKey, FUserKey);
-    end;
     // temporarily remove range to find correct location of key
     ResetRange;
     // find this record as closely as possible
@@ -2992,8 +2973,6 @@ begin
     // if unique index, then don't insert key if already present
     if (FindKey(true) <> 0) or (FUniqueMode = iuNormal) then
     begin
-      // switch to oem key
-      FUserKey := OemKey;
       // if we found eof, write to pagebuffer
       FLeaf.GotoInsertEntry;
       // insert requested entry, we know there is an entry available
@@ -3057,9 +3036,6 @@ end;
 
 procedure TIndexFile.DeleteCurrent;
   // deletes from current index
-var
-  lSearchKey: array[0..100] of Char;
-  OemKey: PChar;
 begin
   // only delete if not delete record or mode = distinct
   // modify = mmDeleteRecall /\ unique = distinct -> key needs to be deleted from index
@@ -3070,13 +3046,6 @@ begin
     // search correct entry to delete
     if FLeaf.PhysicalRecNo <> FUserRecNo then
     begin
-      // translate OEM key to ANSI key for searching
-      OemKey := FUserKey;
-      if KeyType = 'C' then
-      begin
-        FUserKey := @lSearchKey[0];
-        TranslateToANSI(OemKey, FUserKey);
-      end;
       FindKey(false);
     end;
     // delete selected entry
@@ -3122,7 +3091,7 @@ begin
     FUserKey := ExtractKeyFromBuffer(PrevBuffer);
 
     // compare to see if anything changed
-    if CompareKeys(@TempBuffer[0], FUserKey) <> 0 then
+    if CompareKey(@TempBuffer[0]) <> 0 then
     begin
       // first set userkey to key to delete
       // FUserKey = KeyFrom(PrevBuffer)
@@ -3366,28 +3335,6 @@ begin
   FModifyMode := mmNormal;
 end;
 
-procedure TIndexFile.SetLocaleID(const NewID: LCID);
-{$ifdef WIN32}
-var
-  InfoStr: array[0..7] of Char;
-{$endif}
-begin
-  FLocaleID := NewID;
-  if NewID = lcidBinary then
-  begin
-    // no conversion on binary sort order
-    FLocaleCP := FCodePage;
-  end else begin
-    // get default ansi codepage for comparestring
-{$ifdef WIN32}
-    GetLocaleInfo(NewID, LOCALE_IDEFAULTANSICODEPAGE, InfoStr, 8);
-    FLocaleCP := StrToIntDef(InfoStr, GetACP);
-{$else}
-    FLocaleCP := GetACP;
-{$endif}
-  end;
-end;
-
 procedure TIndexFile.SetPhysicalRecNo(RecNo: Integer);
 begin
   // check if already at specified recno
@@ -3401,9 +3348,6 @@ begin
     TDbfFile(FDbfFile).ReadRecord(RecNo, TDbfFile(FDbfFile).PrevBuffer);
     // extract key
     FUserKey := ExtractKeyFromBuffer(TDbfFile(FDbfFile).PrevBuffer);
-    // translate to a search key
-    if KeyType = 'C' then
-      TranslateToANSI(FUserKey, FUserKey);
     // find this key
     FUserRecNo := RecNo;
     FindKey(false);
@@ -3527,9 +3471,6 @@ begin
   end else begin
     // read current key into buffer
     Move(FLeaf.Key^, FKeyBuffer, PIndexHdr(FIndexHeader)^.KeyLen);
-    // translate to searchable key
-    if KeyType = 'C' then
-      TranslateToANSI(FKeyBuffer, FKeyBuffer);
     recno := FLeaf.PhysicalRecNo;
     action := 2;
   end;
@@ -3794,64 +3735,15 @@ begin
 end;
 
 function TIndexFile.CompareKeysString(Key1, Key2: PChar): Integer;
-var
-  Key1T, Key2T: array [0..100] of Char;
-  FromCP, ToCP: Integer;
 begin
-  if FLocaleID = LCID(lcidBinary) then
-  begin
-    Result := StrLComp(Key1, Key2, KeyLen)
-  end else begin
-    FromCP := FCodePage;
-    ToCP := FLocaleCP;
-    TranslateString(FromCP, ToCP, Key1, Key1T, KeyLen);
-    TranslateString(FromCP, ToCP, Key2, Key2T, KeyLen);
-    Result := CompareString(FLocaleID, 0, Key1T, KeyLen, Key2T, KeyLen);
-    if Result > 0 then
-      Dec(Result, 2);
-  end
+  Result := DbfCompareString(FCollation, Key1, KeyLen, Key2, KeyLen);
+  if Result > 0 then
+    Dec(Result, 2);
 end;
 
 function TIndexFile.CompareKey(Key: PChar): Integer;
 begin
-  // call compare routine
-  Result := FCompareKey(Key);
-
-  // if descending then reverse order
-  if FIsDescending then
-    Result := -Result;
-end;
-
-function TIndexFile.CompareKeyNumericNDX(Key: PChar): Integer;
-begin
-  Result := CompareKeysNumericNDX(FUserKey, Key);
-end;
-
-function TIndexFile.CompareKeyNumericMDX(Key: PChar): Integer;
-begin
-  Result := CompareKeysNumericMDX(FUserKey, Key);
-end;
-
-procedure TIndexFile.TranslateToANSI(Src, Dest: PChar);
-begin
-  { FromCP = FCodePage; }
-  { ToCP = FLocaleCP;   }
-  TranslateString(FCodePage, FLocaleCP, Src, Dest, KeyLen);
-end;
-
-function TIndexFile.CompareKeyString(Key: PChar): Integer;
-var
-  KeyT: array [0..100] of Char;
-begin
-  if FLocaleID = LCID(lcidBinary) then
-  begin
-    Result := StrLComp(FUserKey, Key, KeyLen)
-  end else begin
-    TranslateToANSI(Key, KeyT);
-    Result := CompareString(FLocaleID, 0, FUserKey, KeyLen, KeyT, KeyLen);
-    if Result > 0 then
-      Dec(Result, 2);
-  end
+  Result := CompareKeys(FUserKey, Key);
 end;
 
 function TIndexFile.IndexOf(const AIndexName: string): Integer;
@@ -3937,18 +3829,12 @@ begin
     FUniqueMode := iuDistinct;
   // select key compare routine
   if PIndexHdr(FIndexHeader)^.KeyType = 'C' then
-  begin
-    FCompareKeys := CompareKeysString;
-    FCompareKey := CompareKeyString;
-  end else
+    FCompareKeys := CompareKeysString
+  else
   if FIndexVersion >= xBaseIV then
-  begin
-    FCompareKeys := CompareKeysNumericMDX;
-    FCompareKey := CompareKeyNumericMDX;
-  end else begin
+    FCompareKeys := CompareKeysNumericMDX
+  else
     FCompareKeys := CompareKeysNumericNDX;
-    FCompareKey := CompareKeyNumericNDX;
-  end;
 end;
 
 procedure TIndexFile.Flush;

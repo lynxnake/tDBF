@@ -33,8 +33,10 @@ BUGS & WARNINGS
 
 
 ------------------------
-V6.4.9
+V7.0
 
+- BDE compatible index collation: MDX/NDXes have to be rebuilt!
+    (thx sstewart for generating collation tables)
 - fix use long char fields check icw foxpro (thx rpoverdijk)
 - fix TDbf.GetRecNo AV when no file open
 - remove UseFloatFields, delphi 3 will use float fields, others not
