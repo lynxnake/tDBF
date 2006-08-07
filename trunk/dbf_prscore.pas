@@ -81,7 +81,6 @@ type
     function DefineDateTimeVariable(AVarName: string; AValue: PDateTimeRec): TExprWord;
     function DefineBooleanVariable(AVarName: string; AValue: PBoolean): TExprWord;
     function DefineStringVariable(AVarName: string; AValue: PPChar): TExprWord;
-    function DefineStringVariableFixedLen(AVarName: string; AValue: PPChar; ALength: Integer): TExprWord;
     function DefineFunction(AFunctName, AShortName, ADescription, ATypeSpec: string;
         AMinFunctionArg: Integer; AResultType: TExpressionType; AFuncAddress: TExprFunc): TExprWord;
     procedure Evaluate(AnExpression: string);
@@ -995,12 +994,7 @@ end;
 
 function TCustomExpressionParser.DefineStringVariable(AVarName: string; AValue: PPChar): TExprWord;
 begin
-  Result := DefineStringVariableFixedLen(AVarName, AValue, -1);
-end;
-
-function TCustomExpressionParser.DefineStringVariableFixedLen(AVarName: string; AValue: PPChar; ALength: Integer): TExprWord;
-begin
-  Result := TStringVariable.Create(AVarName, AValue, ALength);
+  Result := TStringVariable.Create(AVarName, AValue);
   FWordsList.Add(Result);
 end;
 

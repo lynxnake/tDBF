@@ -2036,6 +2036,7 @@ var
   lIndexFile: TIndexFile;
   lIndexFileName: string;
   createMdxFile: Boolean;
+  tempExclusive: boolean;
   addedIndexFile: Integer;
   addedIndexName: Integer;
 begin
@@ -2121,7 +2122,8 @@ begin
     if CreateIndex then
     begin
       // try get exclusive mode
-      if IsSharedAccess then TryExclusive;
+      tempExclusive := IsSharedAccess;
+      if tempExclusive then TryExclusive;
       // always uppercase index expression
       IndexField := AnsiUpperCase(IndexField);
       try
@@ -2164,7 +2166,7 @@ begin
         end;
       finally
         // return to previous mode
-        if TempMode <> pfNone then EndExclusive;
+        if tempExclusive then EndExclusive;
       end;
     end;
   end;
