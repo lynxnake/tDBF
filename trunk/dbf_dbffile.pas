@@ -1822,10 +1822,14 @@ begin
       end;
     'B':
       begin
-        if Src = nil then
-          PDouble(Dst)^ := 0
-        else
-          PDouble(Dst)^ := PDouble(Src)^;
+        if DbfVersion = xFoxPro then
+        begin
+          if Src = nil then
+            PDouble(Dst)^ := 0
+          else
+            PDouble(Dst)^ := PDouble(Src)^;
+        end else
+          asciiContents := true;
       end;
     'M':
       begin
