@@ -49,6 +49,7 @@ V7.0
 - third parameter in substr function is optional now
 - expression parser distinguishes between function() and variable, =no brackets
 - updated bcb 4 packages files from troy dalton
+- fix write blob B-type field for non-foxpro (thx leexgone)
 
 
 ------------------------
