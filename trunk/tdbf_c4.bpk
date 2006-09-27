@@ -4,29 +4,24 @@ BCB = $(MAKEDIR)\..
 !endif
 
 # ---------------------------------------------------------------------------
-# Section EDI
+# IDE SECTION
 # ---------------------------------------------------------------------------
-# La section suivante du Makefile du projet est gérée par l'EDI de BCB.
-# Il est recommandé d'utiliser l'EDI pour modifier les valeurs de cette
+# The following section of the project makefile is managed by the BCB IDE.
+# It is recommended to use the IDE to change any of the values in this
 # section.
 # ---------------------------------------------------------------------------
 
 VERSION = BCB.04.04
 # ---------------------------------------------------------------------------
-PROJECT = tdbf_4c.bpl
-OBJFILES = dbf_reg.obj Common.obj Cursor.obj FieldDef.obj \
-  DbfFile.obj IndexCur.obj IndexFile.obj Memo.obj PagedFile.obj \
-  Strings.obj Dbf.obj ParseSupp.obj ParseDef.obj ParseCore.obj \
-  tdbf_4c.obj
-RESFILES = Dbf.dcr
+PROJECT = tdbf_c4.bpl
+OBJFILES = dbf_wtil.obj dbf.obj dbf_avl.obj dbf_common.obj dbf_cursor.obj dbf_dbffile.obj dbf_fields.obj dbf_idxcur.obj dbf_idxfile.obj dbf_lang.obj \
+  dbf_memo.obj dbf_parser.obj dbf_pgcfile.obj dbf_pgfile.obj dbf_prscore.obj dbf_prsdef.obj dbf_prssupp.obj dbf_reg.obj dbf_str.obj tdbf_c4.obj
+RESFILES = tdbf_c4.res dbf.dcr
 RESDEPEN = $(RESFILES)
 LIBFILES =
-LIBRARIES = dclocx40.lib nmfast40.lib tee40.lib teedb40.lib teeui40.lib vcldbx40.lib \
-  ibsmp40.lib vcldb40.lib qrpt40.lib vcljpg40.lib
-SPARELIBS = VCL40.lib vclx40.lib vcljpg40.lib bcbsmp40.lib qrpt40.lib vcldb40.lib \
-  ibsmp40.lib vcldbx40.lib teeui40.lib teedb40.lib tee40.lib nmfast40.lib \
-  dclocx40.lib
-PACKAGES = vcl40.bpi VCLX40.bpi
+LIBRARIES =
+SPARELIBS = Vcl40.lib
+PACKAGES = vcl40.bpi vcldb40.bpi
 DEFFILE =
 # ---------------------------------------------------------------------------
 PATHCPP = .;
@@ -38,13 +33,12 @@ RELEASELIBPATH = $(BCB)\lib\release
 USERDEFINES =
 SYSDEFINES = _RTLDLL;NO_STRICT;USEPACKAGES
 # ---------------------------------------------------------------------------
-CFLAG1 = -I$(BCB)\include;$(BCB)\include\vcl -Od -Hc -H=$(BCB)\lib\vcl40.csm -w -Ve -r- \
-  -a8 -k -y -v -vi- -c -b- -w-par -w-inl -Vx -tWM -D$(SYSDEFINES);$(USERDEFINES)
-PFLAGS = -U$(BCB)\lib\obj;$(BCB)\lib;$(RELEASELIBPATH) \
-  -I$(BCB)\include;$(BCB)\include\vcl -$YD -$W -$O- -v -JPHNE -M
+CFLAG1 = -I$(BCB)\include;$(BCB)\include\vcl -Od -Hc -H=$(BCB)\lib\vcl40.csm -w -Ve -r- -a8 -k -y -v -vi- -c -b- -w-par -w-inl -Vx -tWM \
+  -D$(SYSDEFINES);$(USERDEFINES)
+PFLAGS = -U..\..\cbuilder4\lib\release;$(BCB)\lib\obj;$(BCB)\lib;$(RELEASELIBPATH) -I$(BCB)\include;$(BCB)\include\vcl -$YD -$W -$O- -v -JPHNE -M
 RFLAGS = -i$(BCB)\include;$(BCB)\include\vcl
-AFLAGS = /i$(BCB)\include /i$(BCB)\include\vcl /mx /w2 /zd /dDELPHI_STD
-LFLAGS = -L$(BCB)\lib\obj;$(BCB)\lib;$(RELEASELIBPATH) -aa -Tpp -Gpd -x -Gn -Gl -Gi -v
+AFLAGS = /i$(BCB)\include /i$(BCB)\include\vcl /mx /w2 /zd
+LFLAGS = -L..\..\cbuilder4\lib\release;$(BCB)\lib\obj;$(BCB)\lib;$(RELEASELIBPATH) -aa -Tpp -x -Gn -Gl -Gi -v
 # ---------------------------------------------------------------------------
 ALLOBJ = c0pkg32.obj Memmgr.Lib $(PACKAGES) sysinit.obj $(OBJFILES)
 ALLRES = $(RESFILES)
@@ -53,7 +47,7 @@ ALLLIB = $(LIBFILES) $(LIBRARIES) import32.lib cp32mti.lib
 !ifdef IDEOPTIONS
 
 [Version Info]
-IncludeVerInfo=0
+IncludeVerInfo=1
 AutoIncBuild=0
 MajorVer=1
 MinorVer=0
@@ -64,7 +58,7 @@ PreRelease=0
 Special=0
 Private=0
 DLL=0
-Locale=2057
+Locale=1033
 CodePage=1252
 
 [Version Info Keys]
@@ -78,26 +72,6 @@ OriginalFilename=
 ProductName=
 ProductVersion=1.0.0.0
 Comments=
-
-[Excluded Packages]
-$(BCB)\Bin\bcbdrt40.bpl=C++ Builder Direct module
-$(BCB)\Bin\bcbide40.bpl=Borland C++Builder Core IDE Package
-
-[HistoryLists\hlIncludePath]
-Count=1
-Item0=$(BCB)\include;$(BCB)\include\vcl
-
-[HistoryLists\hlLibraryPath]
-Count=1
-Item0=$(BCB)\lib\obj;$(BCB)\lib
-
-[HistoryLists\hlDebugSourcePath]
-Count=1
-Item0=$(BCB)\source\vcl
-
-[HistoryLists\hlConditionals]
-Count=1
-Item0=DELPHI_STD
 
 [Debugging]
 DebugSourceDirs=$(BCB)\source\vcl
@@ -116,10 +90,10 @@ ShowInfoMsgs=0
 !endif
 
 # ---------------------------------------------------------------------------
-# SECTION MAKE
+# MAKE SECTION
 # ---------------------------------------------------------------------------
-# Cette section du fichier projet n'est pas utilisée par l'EDI de BCB. Elle est destinée
-# à la construction à partir de la ligne de commande en utilisant l'utilitaire MAKE.
+# This section of the project file is not used by the BCB IDE.  It is for
+# the benefit of building from the command-line using the MAKE utility.
 # ---------------------------------------------------------------------------
 
 .autodepend
