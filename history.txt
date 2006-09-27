@@ -48,6 +48,7 @@ V7.0
     already defined function
 - third parameter in substr function is optional now
 - expression parser distinguishes between function() and variable, =no brackets
+- updated bcb 4 packages files from troy dalton
 
 
 ------------------------
