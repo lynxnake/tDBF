@@ -459,7 +459,7 @@ uses
 {$ifndef FPC}
   DBConsts,
 {$endif}
-{$ifdef WIN32}
+{$ifdef WINDOWS}
   Windows,
 {$else}
 {$ifdef KYLIX}

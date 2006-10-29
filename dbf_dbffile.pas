@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils,
-{$ifdef WIN32}
+{$ifdef WINDOWS}
   Windows,
 {$else}
 {$ifdef KYLIX}
@@ -189,7 +189,7 @@ var
 implementation
 
 uses
-{$ifndef WIN32}
+{$ifndef WINDOWS}
 {$ifndef FPC}
   RTLConsts,
 {$else}
@@ -2699,13 +2699,13 @@ end;
 
 procedure TDbfGlobals.InitUserName;
 {$ifdef FPC}
-{$ifndef WIN32}
+{$ifndef WINDOWS}
 var
   TempName: UTSName;
 {$endif}
 {$endif}
 begin
-{$ifdef WIN32}
+{$ifdef WINDOWS}
   FUserNameLen := MAX_COMPUTERNAME_LENGTH+1;
   SetLength(FUserName, FUserNameLen);
   Windows.GetComputerName(PChar(FUserName), 

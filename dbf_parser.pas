@@ -10,7 +10,7 @@ uses
 {$ifdef KYLIX}
   Libc,
 {$endif}
-{$ifndef WIN32}
+{$ifndef WINDOWS}
   dbf_wtil,
 {$endif}
   db,
@@ -194,7 +194,7 @@ uses
   dbf,
   dbf_dbffile,
   dbf_str
-{$ifdef WIN32}
+{$ifdef WINDOWS}
   ,Windows
 {$endif}
   ;
