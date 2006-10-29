@@ -274,7 +274,7 @@ function BDETimeStampToDateTime(aBT: double): TDateTime;
 var
   aTS: TTimeStamp;
 begin
-  aTS := MSecsToTimeStamp(aBT);
+  aTS := MSecsToTimeStamp(Round(aBT));
   Result := TimeStampToDateTime(aTS);
 end;
 
