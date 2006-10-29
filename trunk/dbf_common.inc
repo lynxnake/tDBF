@@ -163,6 +163,7 @@
 {$ifdef DELPHI_3}
 
   {$define SUPPORT_VARIANTS}
+  {$define WINDOWS}
 
 {$ifdef DELPHI_4}
 
@@ -248,10 +249,10 @@
 {$endif}
 
 //----------------------------------------------------------
-//--- Conclude supported features in non-Win32 platforms ---
+//--- Conclude supported features in non-Windows platforms ---
 //----------------------------------------------------------
 
-{$ifndef WIN32}
+{$ifndef WINDOWS}
 
     {$define SUPPORT_PATHDELIM}
     {$define SUPPORT_INCLUDETRAILPATHDELIM}

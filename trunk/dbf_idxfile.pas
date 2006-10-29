@@ -5,7 +5,7 @@ interface
 {$I dbf_common.inc}
 
 uses
-{$ifdef WIN32}
+{$ifdef WINDOWS}
   Windows,
 {$else}
 {$ifdef KYLIX}

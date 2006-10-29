@@ -6,7 +6,7 @@ interface
 
 uses
   SysUtils, Classes, DB
-{$ifndef WIN32}
+{$ifndef WINDOWS}
   , Types, dbf_wtil
 {$ifdef KYLIX}
   , Libc
@@ -76,7 +76,7 @@ procedure FreeMemAndNil(var P: Pointer);
 
 {$ifndef SUPPORT_PATHDELIM}
 const
-{$ifdef WIN32}
+{$ifdef WINDOWS}
   PathDelim = '\';
 {$else}
   PathDelim = '/';
@@ -127,7 +127,7 @@ function Max(x, y: integer): integer;
 
 implementation
 
-{$ifdef WIN32}
+{$ifdef WINDOWS}
 uses
   Windows;
 {$endif}
@@ -153,7 +153,7 @@ end;
 
 function IsFullFilePath(const Path: string): Boolean; // full means not relative
 begin
-{$ifdef WIN32}
+{$ifdef WINDOWS}
   Result := Length(Path) > 1;
   if Result then
     // check for 'x:' or '\\' at start of path
@@ -324,7 +324,7 @@ end;
 
 function IncludeTrailingPathDelimiter(const Path: string): string;
 begin
-{$ifdef WIN32}
+{$ifdef WINDOWS}
   Result := IncludeTrailingBackslash(Path);
 {$else}
   Result := IncludeTrailingSlash(Path);
