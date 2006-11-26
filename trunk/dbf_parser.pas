@@ -227,15 +227,10 @@ type
   TStringFieldVar = class(TFieldVar)
   protected
     FFieldVal: PChar;
+    FRawStringField: boolean;
 
     function GetFieldVal: Pointer; override;
     function GetFieldType: TExpressionType; override;
-  end;
-
-  TAnsiStringFieldVar = class(TStringFieldVar)
-  protected
-    FRawStringField: boolean;
-
     procedure SetRawStringField(NewRaw: boolean);
   public
     constructor Create(UseFieldDef: TDbfFieldDef; ADbfFile: TDbfFile);
@@ -309,7 +304,20 @@ begin
   FFieldName := UseFieldDef.FieldName;
 end;
 
-//--TStringFieldVar-------------------------------------------------------------
+//--TStringFieldVar---------------------------------------------------------
+constructor TStringFieldVar.Create(UseFieldDef: TDbfFieldDef; ADbfFile: TDbfFile);
+begin
+  inherited;
+end;
+
+destructor TStringFieldVar.Destroy;
+begin
+  if not FRawStringField then
+    FreeMem(FFieldVal);
+
+  inherited;
+end;
+
 function TStringFieldVar.GetFieldVal: Pointer;
 begin
   Result := @FFieldVal;
@@ -320,45 +328,37 @@ begin
   Result := etString;
 end;
 
-//--TAnsiStringFieldVar---------------------------------------------------------
-constructor TAnsiStringFieldVar.Create(UseFieldDef: TDbfFieldDef; ADbfFile: TDbfFile);
-begin
-  inherited;
-
-  GetMem(FFieldVal, UseFieldDef.Size*3+1);
-end;
-
-destructor TAnsiStringFieldVar.Destroy;
-begin
-  FreeMem(FFieldVal);
-
-  inherited;
-end;
-
-procedure TAnsiStringFieldVar.Refresh(Buffer: PChar);
+procedure TStringFieldVar.Refresh(Buffer: PChar);
 var
   Len: Integer;
+  Src: PChar;
 begin
   // copy field data
   Len := FieldDef.Size;
+  Src := Buffer+FieldDef.Offset;
   // trim right side spaces by null-termination
   if not FRawStringField then
   begin
     while (Len >= 1) and (Buffer[Len-1] = ' ') do Dec(Len);
     FFieldVal[Len] := #0;
-  end;
-  // translate to ANSI
-  TranslateString(DbfFile.UseCodePage, GetACP, Buffer+FieldDef.Offset, FFieldVal, Len);
+    // translate to ANSI
+    TranslateString(DbfFile.UseCodePage, GetACP, Src, FFieldVal, Len);
+  end else
+    FFieldVal := Src;
 end;
 
-procedure TAnsiStringFieldVar.SetRawStringField(NewRaw: boolean);
+procedure TStringFieldVar.SetRawStringField(NewRaw: boolean);
 begin
   if NewRaw = FRawStringField then exit;
   FRawStringField := NewRaw;
   if NewRaw then
-    FExprWord.FixedLen := FieldDef.Size
-  else
+  begin
+    FExprWord.FixedLen := FieldDef.Size;
+    FreeMem(FFieldVal);
+  end else begin
     FExprWord.FixedLen := -1;
+    GetMem(FFieldVal, FieldDef.Size*3+1);
+  end;
 end;
 
 //--TFloatFieldVar-----------------------------------------------------------
@@ -1408,8 +1408,8 @@ begin
     // clear and regenerate functions, custom fields will be deleted too
     FRawStringFields := NewRawFields;
     for I := 0 to FFieldVarList.Count - 1 do
-      if FFieldVarList.Objects[I] is TAnsiStringFieldVar then
-        TAnsiStringFieldVar(FFieldVarList.Objects[I]).RawStringField := NewRawFields;
+      if FFieldVarList.Objects[I] is TStringFieldVar then
+        TStringFieldVar(FFieldVarList.Objects[I]).RawStringField := NewRawFields;
   end;
 end;
 
@@ -1462,9 +1462,9 @@ begin
   case FieldInfo.FieldType of
     ftString:
       begin
-        TempFieldVar := TAnsiStringFieldVar.Create(FieldInfo, TDbfFile(FDbfFile));
+        TempFieldVar := TStringFieldVar.Create(FieldInfo, TDbfFile(FDbfFile));
         TempFieldVar.FExprWord := DefineStringVariable(VarName, TempFieldVar.FieldVal);
-        TAnsiStringFieldVar(TempFieldVar).RawStringField := FRawStringFields;
+        TStringFieldVar(TempFieldVar).RawStringField := FRawStringFields;
       end;
     ftBoolean:
       begin
