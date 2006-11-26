@@ -33,7 +33,7 @@ BUGS & WARNINGS
 
 
 ------------------------
-V7.0
+V6.9.0
 
 - BDE compatible index collation: MDX/NDXes have to be rebuilt!
     (thx sstewart for generating collation tables)
@@ -50,6 +50,7 @@ V7.0
 - expression parser distinguishes between function() and variable, =no brackets
 - updated bcb 4 packages files from troy dalton
 - fix write blob B-type field for non-foxpro (thx leexgone)
+- fix win64 compatibility
 
 
 ------------------------

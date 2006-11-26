@@ -2940,7 +2940,8 @@ function TIndexFile.ExtractKeyFromBuffer(Buffer: PChar): PChar;
 begin
   // execute expression to get key
   Result := PrepareKey(FCurrentParser.ExtractFromBuffer(Buffer), FCurrentParser.ResultType);
-  TranslateString(GetACP, FCodePage, Result, Result, KeyLen);
+  if not FCurrentParser.RawStringFields then
+    TranslateString(GetACP, FCodePage, Result, Result, KeyLen);
 end;
 
 procedure TIndexFile.InsertKey(Buffer: PChar);
