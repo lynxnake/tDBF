@@ -33,6 +33,11 @@ BUGS & WARNINGS
 
 
 ------------------------
+V6.9.1
+
+- fix last memo field getting truncated (patch by dhdorrough)
+
+------------------------
 V6.9.0
 
 - BDE compatible index collation: MDX/NDXes have to be rebuilt!
