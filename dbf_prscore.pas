@@ -4,6 +4,18 @@ unit dbf_prscore;
 | TCustomExpressionParser
 |
 | - contains core expression parser
+|
+| This code is based on code from:
+|
+| Original author: Egbert van Nes
+| With contributions of: John Bultena and Ralf Junker
+| Homepage: http://www.slm.wau.nl/wkao/parseexpr.html
+|
+| see also: http://www.datalog.ro/delphi/parser.html
+|   (Renate Schaaf (schaaf at math.usu.edu), 1993
+|    Alin Flaider (aflaidar at datalog.ro), 1996
+|    Version 9-10: Stefan Hoffmeister, 1996-1997)
+|
 |---------------------------------------------------------------}
 
 interface
