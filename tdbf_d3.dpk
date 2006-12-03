@@ -31,6 +31,7 @@ requires
 
 contains
   dbf_reg,
+  dbf_collate,
   Dbf_Common,
   Dbf_Str,
   Dbf_Cursor,

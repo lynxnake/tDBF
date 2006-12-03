@@ -32,6 +32,7 @@ requires
   dataclx;
 
 contains
+  dbf_collate in 'dbf_collate.pas',
   dbf_common in 'dbf_common.pas',
   dbf_cursor in 'dbf_cursor.pas',
   dbf_dbffile in 'dbf_dbffile.pas',

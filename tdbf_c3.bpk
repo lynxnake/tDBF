@@ -17,7 +17,7 @@ PROJECT = tdbf_c3.bpl
 OBJFILES = dbf.obj dbf_common.obj dbf_cursor.obj dbf_dbffile.obj dbf_fields.obj \
   dbf_idxcur.obj dbf_idxfile.obj dbf_lang.obj dbf_memo.obj dbf_parser.obj \
   dbf_pgcfile.obj dbf_pgfile.obj dbf_prscore.obj dbf_prsdef.obj dbf_prssupp.obj \
-  dbf_reg.obj dbf_str.obj dbf_wtil.obj dbf_avl.obj tdbf_c3.obj
+  dbf_reg.obj dbf_str.obj dbf_wtil.obj dbf_avl.obj tdbf_c3.obj dbf_collate.obj
 RESFILES = tdbf_c3.res dbf.dcr
 DEFFILE =
 RESDEPEN = $(RESFILES)

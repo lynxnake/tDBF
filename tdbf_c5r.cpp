@@ -2,6 +2,7 @@
 #include <vcl.h>
 #pragma hdrstop
 
+USEUNIT("dbf_collate.pas");
 USEUNIT("Dbf_Common.pas");
 USEUNIT("Dbf_Cursor.pas");
 USEUNIT("Dbf_Fields.pas");

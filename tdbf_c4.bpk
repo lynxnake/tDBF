@@ -15,7 +15,7 @@ VERSION = BCB.04.04
 # ---------------------------------------------------------------------------
 PROJECT = tdbf_c4.bpl
 OBJFILES = dbf_wtil.obj dbf.obj dbf_avl.obj dbf_common.obj dbf_cursor.obj dbf_dbffile.obj dbf_fields.obj dbf_idxcur.obj dbf_idxfile.obj dbf_lang.obj \
-  dbf_memo.obj dbf_parser.obj dbf_pgcfile.obj dbf_pgfile.obj dbf_prscore.obj dbf_prsdef.obj dbf_prssupp.obj dbf_reg.obj dbf_str.obj tdbf_c4.obj
+  dbf_memo.obj dbf_parser.obj dbf_pgcfile.obj dbf_pgfile.obj dbf_prscore.obj dbf_prsdef.obj dbf_prssupp.obj dbf_reg.obj dbf_str.obj tdbf_c4.obj dbf_collate.obj
 RESFILES = tdbf_c4.res dbf.dcr
 RESDEPEN = $(RESFILES)
 LIBFILES =

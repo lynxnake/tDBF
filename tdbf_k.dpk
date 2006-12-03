@@ -32,6 +32,7 @@ requires
 contains
   dbf_reg in 'dbf_reg.pas' {DbfDesignTimeForm},
   dbf_wtil in 'dbf_wtil.pas',
+  dbf_collate in 'dbf_collate.pas',
   dbf_common in 'dbf_common.pas',
   dbf_str in 'dbf_str.pas',
   dbf_cursor in 'dbf_cursor.pas',
