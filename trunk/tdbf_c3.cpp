@@ -7,6 +7,7 @@ USEPACKAGE("vcldb35.bpi");
 USEPACKAGE("dclusr35.bpi");
 USEUNIT("dbf.pas");
 USERES("dbf.dcr");
+USEUNIT("dbf_collate.pas");
 USEUNIT("dbf_common.pas");
 USEUNIT("dbf_cursor.pas");
 USEUNIT("dbf_dbffile.pas");

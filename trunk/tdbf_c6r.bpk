@@ -7,7 +7,7 @@
     <OBJFILES value="tdbf_c6r.obj Dbf_Common.obj Dbf_Cursor.obj Dbf_Fields.obj Dbf_DbfFile.obj 
       Dbf_IdxCur.obj Dbf_IdxFile.obj Dbf_Memo.obj Dbf_PgFile.obj Dbf_Str.obj 
       Dbf.obj Dbf_PrsSupp.obj Dbf_PrsDef.obj Dbf_PrsCore.obj Dbf_Parser.obj 
-      Dbf_Lang.obj Dbf_Wtil.obj"/>
+      Dbf_Lang.obj Dbf_Wtil.obj dbf_collate.obj"/>
     <RESFILES value=""/>
     <IDLFILES value=""/>
     <IDLGENFILES value=""/>
