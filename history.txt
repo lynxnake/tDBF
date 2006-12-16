@@ -37,6 +37,7 @@ V6.9.1
 
 - fix last memo field getting truncated (patch by dhdorrough)
 - add dbf_collate unit to the packages
+- fix index result too long bug
 
 ------------------------
 V6.9.0

@@ -41,6 +41,7 @@ type
     function  CurrentExpression: string; override;
     procedure ValidateExpression(AExpression: string); virtual;
     function  GetResultType: TExpressionType; override;
+    function  GetResultLen: Integer;
 
     procedure SetCaseInsensitive(NewInsensitive: Boolean);
     procedure SetRawStringFields(NewRawFields: Boolean);
@@ -56,6 +57,7 @@ type
 
     property DbfFile: Pointer read FDbfFile write FDbfFile;
     property Expression: string read FCurrentExpression;
+    property ResultLen: Integer read GetResultLen;
 
     property CaseInsensitive: Boolean read FCaseInsensitive write SetCaseInsensitive;
     property RawStringFields: Boolean read FRawStringFields write SetRawStringFields;
@@ -354,6 +356,26 @@ begin
     Result := inherited GetResultType
   else
     Result := FFieldType;
+end;
+
+function TDbfParser.GetResultLen: Integer;
+begin
+  // set result len for fixed length expressions / fields
+  case ResultType of
+    etBoolean:  Result := 1;
+    etInteger:  Result := 4;
+    etFloat:    Result := 8;
+    etDateTime: Result := 8;
+    etString:
+    begin
+      if not FIsExpression and (TStringFieldVar(FFieldVarList.Objects[0]).RawStringField) then
+        Result := TStringFieldVar(FFieldVarList.Objects[0]).FieldDef.Size
+      else
+        Result := -1;
+    end;
+  else
+    Result := -1;
+  end;
 end;
 
 procedure TDbfParser.SetCaseInsensitive(NewInsensitive: Boolean);
