@@ -1688,22 +1688,17 @@ procedure TDbfIndexParser.ValidateExpression(AExpression: string);
 var
   TempBuffer: pchar;
 begin
-  // set result len for fixed length expressions / fields
-  case ResultType of
-    etBoolean:  FResultLen := 1;
-    etInteger:  FResultLen := 4;
-    etFloat:    FResultLen := 8;
-    etDateTime: FResultLen := 8;
-    etString:
-    begin
-      // make empty record
-      GetMem(TempBuffer, TDbfFile(DbfFile).RecordSize);
-      try
-        TDbfFile(DbfFile).InitRecord(TempBuffer);
-        FResultLen := StrLen(ExtractFromBuffer(TempBuffer));
-      finally
-        FreeMem(TempBuffer);
-      end;
+  FResultLen := inherited ResultLen;
+
+  if FResultLen = -1 then
+  begin
+    // make empty record
+    GetMem(TempBuffer, TDbfFile(DbfFile).RecordSize);
+    try
+      TDbfFile(DbfFile).InitRecord(TempBuffer);
+      FResultLen := StrLen(ExtractFromBuffer(TempBuffer));
+    finally
+      FreeMem(TempBuffer);
     end;
   end;
 
