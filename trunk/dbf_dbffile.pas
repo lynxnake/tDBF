@@ -199,7 +199,7 @@ uses
 {$ifdef SUPPORT_MATH_UNIT}
   Math,
 {$endif}
-  dbf_str, dbf_lang;
+  dbf_str, dbf_lang, dbf_prssupp, dbf_prsdef;
 
 const
   sDBF_DEC_SEP = '.';
