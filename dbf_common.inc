@@ -210,10 +210,6 @@
   {$undef USE_ASSEMBLER_486_UP}
 {$endif}
 
-{$ifndef FPC_LITTLE_ENDIAN}
-  {$message error TDbf is not compatible with non little-endian CPUs. Please contact the author.}
-{$endif}
-
 {$ifdef USE_ASSEMBLER_486_UP}
   {$asmmode intel}
 {$endif}

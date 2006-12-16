@@ -4,6 +4,13 @@ interface
 
 {$I dbf_common.inc}
 
+{$ifdef FPC}
+ {$ifndef FPC_LITTLE_ENDIAN}
+  {$message error TDbf is not compatible with non little-endian CPUs. Please contact the author.}
+ {$endif}
+{$endif}
+
+
 uses
   SysUtils, Classes, DB
 {$ifndef WINDOWS}
@@ -38,15 +45,7 @@ type
 //-------------------------------------
 
   PDateTime = ^TDateTime;
-{$ifdef FPC_VERSION}
-  TDateTimeAlias = type TDateTime;
-  TDateTimeRec = record
-    case TFieldType of
-      ftDate: (Date: Longint);
-      ftTime: (Time: Longint);
-      ftDateTime: (DateTime: TDateTimeAlias);
-  end;
-{$else}
+{$ifndef FPC_VERSION}
   PtrInt = Longint;
 {$endif}
 
@@ -54,11 +53,6 @@ type
   PCardinal = ^Cardinal;
   PDouble = ^Double;
   PString = ^String;
-  PDateTimeRec = ^TDateTimeRec;
-
-{$ifdef SUPPORT_INT64}
-  PLargeInt = ^Int64;
-{$endif}
 
 {$ifdef DELPHI_3}
   dword = cardinal;
@@ -94,12 +88,6 @@ function GetCompleteFileName(const Base, FileName: string): string;
 function IsFullFilePath(const Path: string): Boolean; // full means not relative
 function DateTimeToBDETimeStamp(aDT: TDateTime): double;
 function BDETimeStampToDateTime(aBT: double): TDateTime;
-function  GetStrFromInt(Val: Integer; const Dst: PChar): Integer;
-procedure GetStrFromInt_Width(Val: Integer; const Width: Integer; const Dst: PChar; const PadChar: Char);
-{$ifdef SUPPORT_INT64}
-function  GetStrFromInt64(Val: Int64; const Dst: PChar): Integer;
-procedure GetStrFromInt64_Width(Val: Int64; const Width: Integer; const Dst: PChar; const PadChar: Char);
-{$endif}
 procedure FindNextName(BaseName: string; var OutName: string; var Modifier: Integer);
 {$ifdef USE_CACHE}
 function GetFreeMemory: Integer;
@@ -178,89 +166,6 @@ begin
   lpath := lpath + lfile;
   result := lpath;
 end;
-
-// it seems there is no pascal function to convert an integer into a PChar???
-
-procedure GetStrFromInt_Width(Val: Integer; const Width: Integer; const Dst: PChar; const PadChar: Char);
-var
-  Temp: array[0..10] of Char;
-  I, J: Integer;
-  NegSign: boolean;
-begin
-  {$I getstrfromint.inc}
-end;
-
-{$ifdef SUPPORT_INT64}
-
-procedure GetStrFromInt64_Width(Val: Int64; const Width: Integer; const Dst: PChar; const PadChar: Char);
-var
-  Temp: array[0..19] of Char;
-  I, J: Integer;
-  NegSign: boolean;
-begin
-  {$I getstrfromint.inc}
-end;
-
-{$endif}
-
-// it seems there is no pascal function to convert an integer into a PChar???
-// NOTE: in dbf_dbffile.pas there is also a convert routine, but is slightly different
-
-function GetStrFromInt(Val: Integer; const Dst: PChar): Integer;
-var
-  Temp: array[0..10] of Char;
-  I, J: Integer;
-begin
-  Val := Abs(Val);
-  // we'll have to store characters backwards first
-  I := 0;
-  J := 0;
-  repeat
-    Temp[I] := Chr((Val mod 10) + Ord('0'));
-    Val := Val div 10;
-    Inc(I);
-  until Val = 0;
-
-  // remember number of digits
-  Result := I;
-  // copy value, remember: stored backwards
-  repeat
-    Dst[J] := Temp[I-1];
-    Inc(J);
-    Dec(I);
-  until I = 0;
-  // done!
-end;
-
-{$ifdef SUPPORT_INT64}
-
-function GetStrFromInt64(Val: Int64; const Dst: PChar): Integer;
-var
-  Temp: array[0..19] of Char;
-  I, J: Integer;
-begin
-  Val := Abs(Val);
-  // we'll have to store characters backwards first
-  I := 0;
-  J := 0;
-  repeat
-    Temp[I] := Chr((Val mod 10) + Ord('0'));
-    Val := Val div 10;
-    Inc(I);
-  until Val = 0;
-
-  // remember number of digits
-  Result := I;
-  // copy value, remember: stored backwards
-  repeat
-    Dst[J] := Temp[I-1];
-    inc(J);
-    dec(I);
-  until I = 0;
-  // done!
-end;
-
-{$endif}
 
 function DateTimeToBDETimeStamp(aDT: TDateTime): double;
 var
