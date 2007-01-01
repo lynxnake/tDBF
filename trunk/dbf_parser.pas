@@ -209,16 +209,15 @@ var
   Len: Integer;
   Src: PChar;
 begin
-  // copy field data
-  Len := FieldDef.Size;
   Src := Buffer+FieldDef.Offset;
-  // trim right side spaces by null-termination
   if not FRawStringField then
   begin
-    while (Len >= 1) and (Buffer[Len-1] = ' ') do Dec(Len);
-    FFieldVal[Len] := #0;
+    // copy field data
+    Len := FieldDef.Size;
+    while (Len >= 1) and (Src[Len-1] = ' ') do Dec(Len);
     // translate to ANSI
-    TranslateString(DbfFile.UseCodePage, GetACP, Src, FFieldVal, Len);
+    Len := TranslateString(DbfFile.UseCodePage, GetACP, Src, FFieldVal, Len);
+    FFieldVal[Len] := #0;
   end else
     FFieldVal := Src;
 end;
