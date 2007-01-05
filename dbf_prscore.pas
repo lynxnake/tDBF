@@ -117,7 +117,9 @@ type
 procedure FuncFloatToStr(Param: PExpressionRec);
 procedure FuncIntToStr_Gen(Param: PExpressionRec; Val: {$ifdef SUPPORT_INT64}Int64{$else}Integer{$endif});
 procedure FuncIntToStr(Param: PExpressionRec);
+{$ifdef SUPPORT_INT64}
 procedure FuncInt64ToStr(Param: PExpressionRec);
+{$endif}
 procedure FuncDateToStr(Param: PExpressionRec);
 procedure FuncSubString(Param: PExpressionRec);
 procedure FuncUppercase(Param: PExpressionRec);
