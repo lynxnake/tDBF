@@ -1565,7 +1565,9 @@ begin
       lPhysFieldDefs.Assign(TDbf(DataSet).DbfFieldDefs);
       IndexDefs.Assign(TDbf(DataSet).IndexDefs);
     end else begin
+{$ifdef SUPPORT_FIELDDEF_TPERSISTENT}
       lPhysFieldDefs.Assign(DataSet.FieldDefs);
+{$endif}      
       IndexDefs.Clear;
     end;
     // convert list of tfields into a list of tdbffielddefs
