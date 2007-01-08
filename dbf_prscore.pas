@@ -256,12 +256,8 @@ begin
     begin
       // copy pointer to variable
       Args[0] := ExprWord.AsPointer;
-      // is this a fixed length string variable?
-      if ExprWord.FixedLen >= 0 then
-      begin
-        // store length as second parameter
-        Args[1] := PChar(ExprWord.LenAsPointer);
-      end;
+      // store length as second parameter
+      Args[1] := PChar(ExprWord.LenAsPointer);
     end;
   end;
 end;
