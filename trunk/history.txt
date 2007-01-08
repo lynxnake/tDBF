@@ -39,6 +39,7 @@ V6.9.1
 - add dbf_collate unit to the packages
 - fix index result too long bug
 - add support for big endian
+- fix non-raw string field filter
 
 ------------------------
 V6.9.0
