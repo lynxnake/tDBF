@@ -633,7 +633,7 @@ end;
 
 procedure IncIntLE(var AVariable: Integer; Amount: Integer);
 begin
-  AVariable := SwapIntLE(SwapIntLE(AVariable) + Amount);
+  AVariable := SwapIntLE(DWord(Integer(SwapIntLE(AVariable)) + Amount));
 end;
 
 //==========================================================
