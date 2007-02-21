@@ -117,7 +117,6 @@ type
     FParser: TDbfParser;
     FFieldNames: string;
     FValidExpression: Boolean;
-    FKeyTranslation: boolean;
     FOnMasterChange: TNotifyEvent;
     FOnMasterDisable: TNotifyEvent;
 
@@ -135,7 +134,6 @@ type
     destructor Destroy; override;
 
     property FieldNames: string read FFieldNames write SetFieldNames;
-    property KeyTranslation: boolean read FKeyTranslation;
     property ValidExpression: Boolean read FValidExpression write FValidExpression;
     property FieldsVal: PChar read GetFieldsVal;
     property Parser: TDbfParser read FParser;
@@ -289,7 +287,7 @@ type
     destructor Destroy; override;
 
     { abstract methods }
-    function GetFieldData(Field: TField; Buffer: Pointer): Boolean; 
+    function GetFieldData(Field: TField; Buffer: Pointer): Boolean;
       {$ifdef SUPPORT_OVERLOAD} overload; {$endif} override; {virtual abstract}
     { virtual methods (mostly optionnal) }
     procedure Resync(Mode: TResyncMode); override;
@@ -441,6 +439,8 @@ type
     property AfterCancel;
     property BeforeDelete;
     property AfterDelete;
+    property BeforeRefresh;
+    property AfterRefresh;
     property BeforeScroll;
     property AfterScroll;
     property OnCalcFields;
@@ -1267,7 +1267,10 @@ begin
 // SetIndexName will have made the cursor for us if no index selected :-)
 //  if FCursor = nil then FCursor := TDbfCursor.Create(FDbfFile);
 
-  InternalFirst;
+  if FMasterLink.Active then
+    CheckMasterRange
+  else
+    InternalFirst;
 
 //  FDbfFile.SetIndex(FIndexName);
 //  FDbfFile.FIsCursorOpen := true;
@@ -2798,7 +2801,7 @@ var
   tempBuffer: array[0..300] of char;
 begin
   fieldsVal := FMasterLink.FieldsVal;
-  if FMasterLink.KeyTranslation then
+  if TDbf(FMasterLink.DataSet).DbfFile.UseCodePage <> FDbfFile.UseCodePage then
   begin
     FMasterLink.DataSet.Translate(fieldsVal, @tempBuffer[0], false);
     fieldsVal := @tempBuffer[0];
@@ -2807,7 +2810,7 @@ begin
   fieldsVal := TIndexCursor(FCursor).IndexFile.PrepareKey(fieldsVal, FMasterLink.Parser.ResultType);
   SetRangeBuffer(fieldsVal, fieldsVal);
 end;
-    
+
 procedure TDbf.MasterChanged(Sender: TObject);
 begin
   CheckBrowseMode;
@@ -2835,7 +2838,7 @@ begin
     DatabaseError(SCircularDataLink);
 {$endif}
   end;
-{$endif}  
+{$endif}
   FMasterLink.DataSource := Value;
 end;
 
@@ -2950,8 +2953,6 @@ begin
     FValidExpression := false;
     FParser.DbfFile := (DataSet as TDbf).DbfFile;
     FParser.ParseExpression(FFieldNames);
-    FKeyTranslation := TDbfFile(FParser.DbfFile).UseCodePage <> 
-      FDetailDataSet.DbfFile.UseCodePage;
     FValidExpression := true;
   end else begin
     FParser.ClearExpressions;
