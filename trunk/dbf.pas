@@ -2801,7 +2801,8 @@ var
   tempBuffer: array[0..300] of char;
 begin
   fieldsVal := FMasterLink.FieldsVal;
-  if TDbf(FMasterLink.DataSet).DbfFile.UseCodePage <> FDbfFile.UseCodePage then
+  if (TDbf(FMasterLink.DataSet).DbfFile.UseCodePage <> FDbfFile.UseCodePage)
+        and (FMasterLink.Parser.ResultType = etString) then
   begin
     FMasterLink.DataSet.Translate(fieldsVal, @tempBuffer[0], false);
     fieldsVal := @tempBuffer[0];
