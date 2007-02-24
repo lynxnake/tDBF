@@ -1267,10 +1267,9 @@ begin
 // SetIndexName will have made the cursor for us if no index selected :-)
 //  if FCursor = nil then FCursor := TDbfCursor.Create(FDbfFile);
 
-  if FMasterLink.Active then
-    CheckMasterRange
-  else
-    InternalFirst;
+  if FMasterLink.Active and Assigned(FIndexFile) then
+    CheckMasterRange;
+  InternalFirst;
 
 //  FDbfFile.SetIndex(FIndexName);
 //  FDbfFile.FIsCursorOpen := true;
