@@ -221,6 +221,7 @@ type
     function  ParseIndexName(const AIndexName: string): string;
     procedure ParseFilter(const AFilter: string);
     function  GetDbfFieldDefs: TDbfFieldDefs;
+    function  ReadCurrentRecord(Buffer: PChar; var Acceptable: Boolean): TGetResult;
     function  SearchKeyBuffer(Buffer: PChar; SearchType: TSearchKeyType): Boolean;
     procedure SetRangeBuffer(LowRange: PChar; HighRange: PChar);
 
@@ -794,12 +795,29 @@ begin
     OnFilterRecord(Self, Acceptable);
 end;
 
+function TDbf.ReadCurrentRecord(Buffer: PChar; var Acceptable: Boolean): TGetResult;
+var
+  lPhysicalRecNo: Integer;
+  pRecord: pDbfRecord;
+begin
+  lPhysicalRecNo := FCursor.PhysicalRecNo;
+  if (lPhysicalRecNo = 0) or not FDbfFile.IsRecordPresent(lPhysicalRecNo) then
+  begin
+    Result := grError;
+    Acceptable := false;
+  end else begin
+    Result := grOK;
+    pRecord := pDbfRecord(Buffer);
+    FDbfFile.ReadRecord(lPhysicalRecNo, @pRecord^.DeletedFlag);
+    Acceptable := (FShowDeleted or (pRecord^.DeletedFlag <> '*'))
+  end;
+end;
+
 function TDbf.GetRecord(Buffer: PChar; GetMode: TGetMode; DoCheck: Boolean): TGetResult; {override virtual abstract from TDataset}
 var
-  pRecord: pDBFRecord;
+  pRecord: pDbfRecord;
   acceptable: Boolean;
   SaveState: TDataSetState;
-  lPhysicalRecNo: Integer;
 //  s: string;
 begin
   if FCursor = nil then
@@ -808,7 +826,7 @@ begin
     exit;
   end;
 
-  pRecord := pDBFRecord(Buffer);
+  pRecord := pDbfRecord(Buffer);
   acceptable := false;
   repeat
     Result := grOK;
@@ -834,16 +852,7 @@ begin
     end;
 
     if (Result = grOK) then
-    begin
-      lPhysicalRecNo := FCursor.PhysicalRecNo;
-      if (lPhysicalRecNo = 0) or not FDbfFile.IsRecordPresent(lPhysicalRecNo) then
-      begin
-        Result := grError;
-      end else begin
-        FDbfFile.ReadRecord(lPhysicalRecNo, @pRecord^.DeletedFlag);
-        acceptable := (FShowDeleted or (pRecord^.DeletedFlag <> '*'))
-      end;
-    end;
+      Result := ReadCurrentRecord(Buffer, acceptable);
 
     if (Result = grOK) and acceptable then
     begin
@@ -1829,6 +1838,7 @@ var
   searchFlag: TSearchKeyType;
   matchRes: Integer;
   lTempBuffer: array [0..100] of Char;
+  acceptable, checkmatch: boolean;
 begin
   if loPartialKey in Options then
     searchFlag := stGreaterEqual
@@ -1837,23 +1847,31 @@ begin
   if TIndexCursor(FCursor).VariantToBuffer(KeyValues, @lTempBuffer[0]) = etString then
     Translate(@lTempBuffer[0], @lTempBuffer[0], true);
   Result := FIndexFile.SearchKey(@lTempBuffer[0], searchFlag);
-  if Result then
-  begin
-    Result := GetRecord(TempBuffer, gmCurrent, false) = grOK;
-    if not Result then
+  if not Result then
+    exit;
+
+  checkmatch := false;
+  repeat
+    if ReadCurrentRecord(TempBuffer, acceptable) = grError then
     begin
-      Result := GetRecord(TempBuffer, gmNext, false) = grOK;
-      if Result then
-      begin
-        matchRes := TIndexCursor(FCursor).IndexFile.MatchKey(@lTempBuffer[0]);
-        if loPartialKey in Options then
-          Result := matchRes <= 0
-        else
-          Result := matchRes =  0;
-      end;
+      Result := false;
+      exit;
     end;
-    FFilterBuffer := TempBuffer;
+    if acceptable then break;
+    checkmatch := true;
+    FCursor.Next;
+  until false;
+
+  if checkmatch then
+  begin
+    matchRes := TIndexCursor(FCursor).IndexFile.MatchKey(@lTempBuffer[0]);
+    if loPartialKey in Options then
+      Result := matchRes <= 0
+    else
+      Result := matchRes =  0;
   end;
+
+  FFilterBuffer := TempBuffer;
 end;
 
 function TDbf.LocateRecord(const KeyFields: String; const KeyValues: Variant;
