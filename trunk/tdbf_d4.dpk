@@ -31,8 +31,8 @@ requires
   VCLDB40;
 
 contains
-  dbf_reg in 'dbf_reg.pas',
-  dbf_collate in 'dbf_collate.pas',
+  Dbf_Reg in 'Dbf_Reg.pas',
+  Dbf_Collate in 'Dbf_Collate.pas',
   Dbf_Common in 'Dbf_Common.pas',
   Dbf_Str in 'Dbf_Str.pas',
   Dbf_Cursor in 'Dbf_Cursor.pas',

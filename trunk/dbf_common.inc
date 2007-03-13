@@ -186,6 +186,7 @@
 
   {$define SUPPORT_BACKWARD_FIELDDATA}
   {$define SUPPORT_INITDEFSFROMFIELDS}
+  {$define SUPPORT_REFRESHEVENTS}
   {$define SUPPORT_DEF_DELETE}
   {$define SUPPORT_FREEANDNIL}
 
@@ -227,6 +228,7 @@
   {$define SUPPORT_MATH_UNIT}
   {$define SUPPORT_VARIANTS}
   {$define SUPPORT_SEPARATE_VARIANTS_UNIT}
+  {$define SUPPORT_REFRESHEVENTS}
 
   // FPC 2.0.x improvements
   {$ifdef VER2}

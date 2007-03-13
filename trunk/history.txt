@@ -33,6 +33,11 @@ BUGS & WARNINGS
 
 
 ------------------------
+V6.9.2
+
+- compile fixes for delphi 4, 5 (pdouble)
+
+------------------------
 V6.9.1
 
 - fix last memo field getting truncated (patch by dhdorrough)
