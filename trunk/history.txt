@@ -36,6 +36,7 @@ BUGS & WARNINGS
 V6.9.2
 
 - compile fixes for delphi 4, 5 (pdouble)
+- fix indexes to work properly with ansi upper/lower casing
 
 ------------------------
 V6.9.1
