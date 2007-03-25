@@ -2225,7 +2225,7 @@ begin
     begin
       FParser := TDbfParser.Create(FDbfFile);
       // we need truncated, translated (to ANSI) strings
-      FParser.RawStringFields := false;
+      FParser.StringFieldMode := smAnsiTrim;
     end;
     // have a parser now?
     if FParser <> nil then
