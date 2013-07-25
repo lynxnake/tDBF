@@ -6,7 +6,7 @@ interface
 
 uses
   SysUtils, Classes, DB
-{$ifndef WINDOWS}
+{$ifndef MSWINDOWS}
   , Types, dbf_wtil
 {$ifdef KYLIX}
   , Libc
@@ -18,17 +18,25 @@ uses
 const
   TDBF_MAJOR_VERSION      = 6;
   TDBF_MINOR_VERSION      = 9;
-  TDBF_SUB_MINOR_VERSION  = 2;
+  TDBF_SUB_MINOR_VERSION  = 1;
 
   TDBF_TABLELEVEL_FOXPRO = 25;
 
   JulianDateDelta = 1721425; { number of days between 1.1.4714 BC and "0" }
 
 type
-  EDbfError = class (EDatabaseError);
-  EDbfWriteError = class (EDbfError);
+  EDbfError = class (EDatabaseError)
+  end;
+  EDbfWriteError = class (EDbfError)
+  end;
 
-  TDbfFieldType = char;
+{$ifdef SUPPORT_TRECORDBUFFER}
+  TDbfRecordBuffer = TRecordBuffer;
+{$else}
+  TDbfRecordBuffer = PAnsiChar;
+{$endif}
+
+  TDbfFieldType = AnsiChar;
 
   TXBaseVersion   = (xUnknown, xClipper, xBaseIII, xBaseIV, xBaseV, xFoxPro, xBaseVII);
   TSearchKeyType = (stEqual, stGreaterEqual, stGreater);
@@ -38,15 +46,27 @@ type
 //-------------------------------------
 
   PDateTime = ^TDateTime;
-{$ifndef FPC_VERSION}
+{$ifdef FPC_VERSION}
+  TDateTimeAlias = type TDateTime;
+  TDateTimeRec = record
+    case TFieldType of
+      ftDate: (Date: Longint);
+      ftTime: (Time: Longint);
+      ftDateTime: (DateTime: TDateTimeAlias);
+  end;
+{$else}
   PtrInt = Longint;
 {$endif}
 
   PSmallInt = ^SmallInt;
   PCardinal = ^Cardinal;
-  PDouble = ^Double;
+//  PDouble = ^Double;
   PString = ^String;
+  PDateTimeRec = ^TDateTimeRec;
 
+{$ifdef SUPPORT_INT64}
+  PLargeInt = ^Int64;
+{$endif}
 {$ifdef DELPHI_3}
   dword = cardinal;
 {$endif}
@@ -59,11 +79,15 @@ procedure FreeAndNil(var v);
 {$endif}
 procedure FreeMemAndNil(var P: Pointer);
 
+{$ifndef SUPPORT_CHARINSET}
+function CharInSet(C: AnsiChar; const CharSet: TSysCharSet): Boolean;
+{$endif SUPPORT_CHARINSET}
+
 //-------------------------------------
 
 {$ifndef SUPPORT_PATHDELIM}
 const
-{$ifdef WINDOWS}
+{$ifdef MSWINDOWS}
   PathDelim = '\';
 {$else}
   PathDelim = '/';
@@ -72,7 +96,12 @@ const
 
 {$ifndef SUPPORT_INCLTRAILPATHDELIM}
 function IncludeTrailingPathDelimiter(const Path: string): string;
-{$endif}
+{$endif SUPPORT_INCLTRAILPATHDELIM}
+
+{$ifdef SUPPORT_FORMATSETTINGS}
+function TwoDigitYearCenturyWindow: word;
+function DecimalSeparator: char;
+{$endif SUPPORT_FORMATSETTINGS}
 
 //-------------------------------------
 
@@ -81,6 +110,12 @@ function GetCompleteFileName(const Base, FileName: string): string;
 function IsFullFilePath(const Path: string): Boolean; // full means not relative
 function DateTimeToBDETimeStamp(aDT: TDateTime): double;
 function BDETimeStampToDateTime(aBT: double): TDateTime;
+function  GetStrFromInt(Val: Integer; const Dst: PAnsiChar): Integer; // Was PChar
+procedure GetStrFromInt_Width(Val: Integer; const Width: Integer; const Dst: PAnsiChar; const PadChar: AnsiChar); // Was Char
+{$ifdef SUPPORT_INT64}
+function  GetStrFromInt64(Val: Int64; const Dst: PAnsiChar): Integer; // Was PChar
+procedure GetStrFromInt64_Width(Val: Int64; const Width: Integer; const Dst: PAnsiChar; const PadChar: AnsiChar); // Was Char
+{$endif}
 procedure FindNextName(BaseName: string; var OutName: string; var Modifier: Integer);
 {$ifdef USE_CACHE}
 function GetFreeMemory: Integer;
@@ -95,7 +130,7 @@ procedure SwapInt64BE(Value, Result: Pointer); register;
 procedure SwapInt64LE(Value, Result: Pointer); register;
 {$endif}
 
-function TranslateString(FromCP, ToCP: Cardinal; Src, Dest: PChar; Length: Integer): Integer;
+function TranslateString(FromCP, ToCP: Cardinal; Src, Dest: PAnsiChar; Length: Integer): Integer;
 
 // Returns a pointer to the first occurence of Chr in Str within the first Length characters
 // Does not stop at null (#0) terminator!
@@ -111,7 +146,7 @@ function Max(x, y: integer): integer;
 
 implementation
 
-{$ifdef WINDOWS}
+{$ifdef MSWINDOWS}
 uses
   Windows;
 {$endif}
@@ -137,11 +172,11 @@ end;
 
 function IsFullFilePath(const Path: string): Boolean; // full means not relative
 begin
-{$ifdef WINDOWS}
+{$ifdef MSWINDOWS}
   Result := Length(Path) > 1;
   if Result then
     // check for 'x:' or '\\' at start of path
-    Result := ((Path[2]=':') and (upcase(Path[1]) in ['A'..'Z']))
+    Result := ((Path[2]=':') and CharInSet(UpCase(Path[1]), ['A'..'Z']))
       or ((Path[1]='\') and (Path[2]='\'));
 {$else}  // Linux
   Result := Length(Path) > 0;
@@ -162,6 +197,89 @@ begin
   lpath := lpath + lfile;
   result := lpath;
 end;
+
+// it seems there is no pascal function to convert an integer into a PAnsiChar???
+
+procedure GetStrFromInt_Width(Val: Integer; const Width: Integer; const Dst: PAnsiChar; const PadChar: AnsiChar); // Was Char
+var
+  Temp: array[0..10] of AnsiChar;
+  I, J: Integer;
+  NegSign: boolean;
+begin
+  {$I getstrfromint.inc}
+end;
+
+{$ifdef SUPPORT_INT64}
+
+procedure GetStrFromInt64_Width(Val: Int64; const Width: Integer; const Dst: PAnsiChar; const PadChar: AnsiChar); // Was Char
+var            
+  Temp: array[0..19] of AnsiChar;
+  I, J: Integer;
+  NegSign: boolean;
+begin
+  {$I getstrfromint.inc}
+end;
+
+{$endif}
+
+// it seems there is no pascal function to convert an integer into a PAnsiChar???
+// NOTE: in dbf_dbffile.pas there is also a convert routine, but is slightly different
+
+function GetStrFromInt(Val: Integer; const Dst: PAnsiChar): Integer; // Was PChar
+var
+  Temp: array[0..10] of AnsiChar; // Was Char
+  I, J: Integer;
+begin
+  Val := Abs(Val);
+  // we'll have to store characters backwards first
+  I := 0;
+  J := 0;
+  repeat
+    Temp[I] := AnsiChar((Val mod 10) + Ord('0')); // Was Chr
+    Val := Val div 10;
+    Inc(I);
+  until Val = 0;
+
+  // remember number of digits
+  Result := I;
+  // copy value, remember: stored backwards
+  repeat
+    Dst[J] := Temp[I-1];
+    Inc(J);
+    Dec(I);
+  until I = 0;
+  // done!
+end;
+
+{$ifdef SUPPORT_INT64}
+
+function GetStrFromInt64(Val: Int64; const Dst: PAnsiChar): Integer; // Was PChar
+var
+  Temp: array[0..19] of AnsiChar; // Was Char
+  I, J: Integer;
+begin
+  Val := Abs(Val);
+  // we'll have to store characters backwards first
+  I := 0;
+  J := 0;
+  repeat
+    Temp[I] := AnsiChar((Val mod 10) + Ord('0')); // Was Chr
+    Val := Val div 10;
+    Inc(I);
+  until Val = 0;
+
+  // remember number of digits
+  Result := I;
+  // copy value, remember: stored backwards
+  repeat
+    Dst[J] := Temp[I-1];
+    inc(J);
+    dec(I);
+  until I = 0;
+  // done!
+end;
+
+{$endif}
 
 function DateTimeToBDETimeStamp(aDT: TDateTime): double;
 var
@@ -203,10 +321,28 @@ begin
   FreeMem(Temp);
 end;
 
+{$ifndef SUPPORT_CHARINSET}
+function CharInSet(C: AnsiChar; const CharSet: TSysCharSet): Boolean;
+begin
+  Result := (c in charset)
+end;
+{$endif SUPPORT_CHARINSET}
+
 //====================================================================
 
 {$ifndef SUPPORT_INCLTRAILPATHDELIM}
-{$ifndef SUPPORT_INCLTRAILBACKSLASH}
+{$ifdef SUPPORT_INCLTRAILBACKSLASH}
+
+function IncludeTrailingPathDelimiter(const Path: string): string;
+begin
+{$ifdef MSWINDOWS}
+  Result := IncludeTrailingBackslash(Path);
+{$else}
+  Result := IncludeTrailingSlash(Path);
+{$endif}
+end;
+
+{$else}
 
 function IncludeTrailingPathDelimiter(const Path: string): string;
 var
@@ -221,19 +357,21 @@ begin
     Result := Result + PathDelim;
 end;
 
-{$else}
-
-function IncludeTrailingPathDelimiter(const Path: string): string;
-begin
-{$ifdef WINDOWS}
-  Result := IncludeTrailingBackslash(Path);
-{$else}
-  Result := IncludeTrailingSlash(Path);
 {$endif}
+{$endif}
+
+{$ifdef SUPPORT_FORMATSETTINGS}
+function TwoDigitYearCenturyWindow: word;
+begin
+  Result := FormatSettings.TwoDigitYearCenturyWindow;
 end;
 
-{$endif}
-{$endif}
+function DecimalSeparator: char;
+begin
+  Result := FormatSettings.DecimalSeparator;
+end;
+
+{$endif SUPPORT_FORMATSETTINGS}
 
 {$ifdef USE_CACHE}
 
@@ -355,7 +493,7 @@ end;
 
 {$endif}
 
-function TranslateString(FromCP, ToCP: Cardinal; Src, Dest: PChar; Length: Integer): Integer;
+function TranslateString(FromCP, ToCP: Cardinal; Src, Dest: PAnsiChar; Length: Integer): Integer;
 var
   WideCharStr: array[0..1023] of WideChar;
   wideBytes: Cardinal;
@@ -363,14 +501,24 @@ begin
   if Length = -1 then
     Length := StrLen(Src);
   Result := Length;
-{$ifndef WINCE}
   if (FromCP = GetOEMCP) and (ToCP = GetACP) then
+  begin
+    {$IFDEF WINAPI_IS_UNICODE}   // Rafal Chlopek (14-03-2010):  I've commented DELPHI_2010
+    OemToCharBuffA(Src, Dest, Length) // Was OemToCharBuff with PChar(Dest) cast
+    {$ELSE}
     OemToCharBuff(Src, Dest, Length)
+    {$ENDIF}
+  end
   else
   if (FromCP = GetACP) and (ToCP = GetOEMCP) then
+  begin
+    {$IFDEF WINAPI_IS_UNICODE}
+    CharToOemBuffA(Src, Dest, Length) // Was OemToCharBuff with PChar(Src) cast
+    {$ELSE}
     CharToOemBuff(Src, Dest, Length)
+    {$ENDIF}
+  end
   else
-{$endif}
   if FromCP = ToCP then
   begin
     if Src <> Dest then
@@ -409,6 +557,8 @@ end;
 
 {$else}
 
+{$ifdef USE_ASSEMBLER_486_UP}
+
 function MemScan(const Buffer: Pointer; Chr: Byte; Length: Integer): Pointer;
 asm
         PUSH    EDI
@@ -422,8 +572,31 @@ asm
         DEC     EAX
 @@1:    POP     EDI
 end;
+{$else}
 
-{$endif}
+// lsp: Pure Pascal implementation for x64 on Delphi XE2 and up
+function MemScan(const Buffer: Pointer; Chr: Byte; Length: Integer): Pointer;
+var
+  p: PByte;
+begin
+  p := Buffer;
+
+  while ( (Length>0) and (p^ <> Chr) ) do
+  begin
+    Inc(p);
+    Dec(Length);
+  end;
+
+  if Length>0 then
+    Result := p
+  else
+    Result := nil;
+end;
+
+{$ENDIF USE_ASSEMBLER_486_UP}
+
+{$endif FPC}
+
 
 {$ifdef DELPHI_3}
 {$ifndef DELPHI_4}

@@ -21,7 +21,7 @@ type
   TPageInfo = record
     TimeStamp: Cardinal;
     Modified: Boolean;
-    Data: Char;
+    Data: AnsiChar;
   end;
 
   TCachedFile = class(TPagedFile)
@@ -111,7 +111,7 @@ begin
   Flush;
 
   // calculate size of extra data of pagetree
-  FPageInfoSize := SizeOf(TPageInfo) - SizeOf(Char) + RecordSize;
+  FPageInfoSize := SizeOf(TPageInfo) - SizeOf(AnsiChar) + RecordSize; // Was Char
   UpdateMaxPages;
 end;
 

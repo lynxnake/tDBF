@@ -1,4 +1,4 @@
-unit dbf_collate;
+unit Dbf_Collate;
 
 {$i dbf_common.inc}
 
@@ -29,7 +29,7 @@ const
 
 
 function GetCollationTable( DbfLangId :integer ) :PCollationTable;
-function DbfCompareString( CollationTable :PCollationTable; String1 :PChar; nLength1 :integer; String2 :PChar; nLength2 :integer ) :integer;
+function DbfCompareString( CollationTable :PCollationTable; String1 :PAnsiChar; nLength1 :integer; String2 :PAnsiChar; nLength2 :integer ) :integer;
 function RegisterCollation( DbfLangId :integer; CollationTable :PCollationTable; BDEName :TCollationBDEName ) :Boolean;
 
 
@@ -64,7 +64,7 @@ begin
     end;
 end;
 
-function DbfCompareString( CollationTable :PCollationTable; String1 :PChar; nLength1 :integer; String2 :PChar; nLength2 :integer ) :integer;
+function DbfCompareString( CollationTable :PCollationTable; String1 :PAnsiChar; nLength1 :integer; String2 :PAnsiChar; nLength2 :integer ) :integer;
 var
   nCnt, nMax, nVal1, nVal2 :integer;
 const
@@ -763,7 +763,7 @@ const
   db866ru0 :PCollationTable = @_db866ru0;
 
 
-{$ifdef USE_BORLAND_COLLATION_TABLES}
+
 
   // BLLT1DA0    64770
 
@@ -926,7 +926,7 @@ const
   );
   BLLT1NO0 :PCollationTable = @_BLLT1NO0;
 
-{$endif}
+
 
 
   // DB850US0      Checksum: 43413
@@ -954,7 +954,7 @@ const
 
 
 
-{$ifdef USE_PARADOX_COLLATIONS}
+  {$IFDEF PARADOX_COLLATIONS}
 
   // intl850    43039
 
@@ -978,6 +978,12 @@ const
   );
   intl850 :PCollationTable = @_intl850;
 
+  {$ENDIF}
+
+
+
+
+  {$IFDEF PARADOX_COLLATIONS}
 
   // SPANISH    20109
 
@@ -1001,10 +1007,12 @@ const
   );
   SPANISH :PCollationTable = @_SPANISH;
 
+  {$ENDIF}
 
 
 
 
+  {$IFDEF PARADOX_COLLATIONS}
 
   // iceland    23936
 
@@ -1028,10 +1036,12 @@ const
   );
   iceland :PCollationTable = @_iceland;
 
+  {$ENDIF}
 
 
 
 
+  {$IFDEF PARADOX_COLLATIONS}
 
   // ANSIINTL    58462
 
@@ -1055,10 +1065,12 @@ const
   );
   ANSIINTL :PCollationTable = @_ANSIINTL;
 
+  {$ENDIF}
 
 
 
 
+  {$IFDEF PARADOX_COLLATIONS}
 
   // ANSII850    29000
 
@@ -1082,10 +1094,12 @@ const
   );
   ANSII850 :PCollationTable = @_ANSII850;
 
+  {$ENDIF}
 
 
 
 
+  {$IFDEF PARADOX_COLLATIONS}
 
   // ANSISPAN    33308
 
@@ -1109,10 +1123,12 @@ const
   );
   ANSISPAN :PCollationTable = @_ANSISPAN;
 
+  {$ENDIF}
 
 
 
 
+  {$IFDEF PARADOX_COLLATIONS}
 
   // ANSISWFN    44782
 
@@ -1136,10 +1152,12 @@ const
   );
   ANSISWFN :PCollationTable = @_ANSISWFN;
 
+  {$ENDIF}
 
 
 
 
+  {$IFDEF PARADOX_COLLATIONS}
 
   // ANSINOR4    55290
 
@@ -1163,7 +1181,7 @@ const
   );
   ANSINOR4 :PCollationTable = @_ANSINOR4;
 
-{$endif}
+  {$ENDIF}
 
 
 
@@ -1188,6 +1206,11 @@ const
     096, 097, 098, 099, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111,
     112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127
   );
+  china :PCollationTable = @_china;
+
+  korea :PCollationTable = @_china;
+
+  taiwan :PCollationTable = @_china;
 
   DB936CN0 :PCollationTable = @_china;
 
@@ -1218,16 +1241,7 @@ const
     247, 248, 249, 250, 251, 195, 196, 176, 177, 178, 179, 180, 181, 182, 197, 198, 
     199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 252, 253, 254, 255
   );
-
-{$ifdef USE_PARADOX_COLLATIONS}
-  china :PCollationTable = @_china;
-
-  korea :PCollationTable = @_china;
-
-  taiwan :PCollationTable = @_china;
-
   thai :PCollationTable = @_thai;
-{$endif}
 
   db874th0 :PCollationTable = @_thai;
 
@@ -1284,7 +1298,7 @@ const
   DBWINES0 :PCollationTable = @_DBWINWE0;
 
 
-{$ifdef USE_ACCESS_COLLATIONS}
+
 
   // ACCGEN    19621
 
@@ -1358,7 +1372,7 @@ const
   );
   ACCSWFIN :PCollationTable = @_ACCSWFIN;
 
-{$endif}
+
 
 
   // FOXDE437      Checksum: 21075
@@ -1486,7 +1500,7 @@ const
 
 
 
-{$ifdef USE_PARADOX_COLLATIONS}
+  {$IFDEF PARADOX_COLLATIONS}
 
   // czech    30844
 
@@ -1517,6 +1531,7 @@ const
 
   czechw :PCollationTable = @_czech;
 
+  {$ENDIF}
 
 
 
@@ -1546,6 +1561,7 @@ const
 
 
 
+  {$IFDEF PARADOX_COLLATIONS}
 
   // polish    59020
 
@@ -1569,10 +1585,12 @@ const
   );
   polish :PCollationTable = @_polish;
 
+  {$ENDIF}
 
 
 
 
+  {$IFDEF PARADOX_COLLATIONS}
 
   // cyrr    20081
 
@@ -1596,10 +1614,12 @@ const
   );
   cyrr :PCollationTable = @_cyrr;
 
+  {$ENDIF}
 
 
 
 
+  {$IFDEF PARADOX_COLLATIONS}
 
   // hun852dc    62898
 
@@ -1623,7 +1643,7 @@ const
   );
   hun852dc :PCollationTable = @_hun852dc;
 
-{$endif}
+  {$ENDIF}
 
 
 
@@ -1648,6 +1668,7 @@ const
     180, 149, 154, 157, 160, 161, 168, 176, 175, 181, 118, 123, 126, 129, 136, 142, 
     147, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255
   );
+  grcp437 :PCollationTable = @_grcp437;
 
   db437gr0 :PCollationTable = @_grcp437;
 
@@ -1676,6 +1697,7 @@ const
   );
   dbhebrew :PCollationTable = @_dbhebrew;
 
+  Hebrew :PCollationTable = @_dbhebrew;
 
 
 
@@ -1700,15 +1722,10 @@ const
     142, 158, 143, 133, 130, 131, 163, 162, 153, 177, 150, 178, 187, 189, 166, 242, 
     243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 173, 154, 151, 254, 255
   );
+  slovene :PCollationTable = @_slovene;
+
   db852sl0 :PCollationTable = @_slovene;
 
-{$ifdef USE_PARADOX_COLLATIONS}
-  grcp437 :PCollationTable = @_grcp437;
-
-  hebrew :PCollationTable = @_dbhebrew;
-
-  slovene :PCollationTable = @_slovene;
-{$endif}
 
 
 
@@ -1773,7 +1790,6 @@ const
 
 
 
-  {$IFDEF PARADOX_COLLATIONS}
 
   // cskamenw    40577
 
@@ -1798,8 +1814,6 @@ const
   cskamenw :PCollationTable = @_cskamenw;
 
   cskamen :PCollationTable = @_cskamenw;
-
-  {$ENDIF}
 
 
 
@@ -1890,7 +1904,6 @@ const
 
 
 
-  {$IFDEF PARADOX_COLLATIONS}
 
   // angreek1    39126
 
@@ -1916,9 +1929,8 @@ const
 
   ACCGREEK :PCollationTable = @_angreek1;
 
-  {$ENDIF}
 
-  {$IFDEF PARADOX_COLLATIONS}
+
 
   // ansislov    61480
 
@@ -1942,11 +1954,8 @@ const
   );
   ansislov :PCollationTable = @_ansislov;
 
-  {$ENDIF}
 
 
-
-  {$IFDEF USE_PARADOX_COLLATIONS}
 
   // ANTURK    24004
 
@@ -1970,7 +1979,6 @@ const
   );
   ANTURK :PCollationTable = @_ANTURK;
 
-  {$ENDIF}
 
 
 
@@ -2048,7 +2056,6 @@ const
 
 
 
-  {$IFDEF USE_ACCESS_COLLATIONS}
 
   // BLROM800    28847
 
@@ -2072,10 +2079,8 @@ const
   );
   BLROM800 :PCollationTable = @_BLROM800;
 
-  {$ENDIF}
 
 
-  {$IFDEF USE_ORACLE_COLLATIONS}
 
   // ORAWE850    31378
 
@@ -2099,11 +2104,8 @@ const
   );
   ORAWE850 :PCollationTable = @_ORAWE850 ;
 
-  {$ENDIF}
 
 
-
-  {$IFDEF USE_SYBASE_COLLATIONS}
 
   // SYDC850    46023
 
@@ -2152,10 +2154,8 @@ const
   );
   SYDC437 :PCollationTable = @_SYDC437;
 
-  {$ENDIF}
 
 
-  {$IFDEF USE_DB2_COLLATIONS}
 
   // db2andeu    8683
 
@@ -2178,8 +2178,6 @@ const
     186, 123, 129, 131, 127, 198, 128, 218, 201, 147, 149, 146, 145, 208, 203, 158
   );
   db2andeu :PCollationTable = @_db2andeu;
-
-  {$ENDIF}
 
 initialization
 

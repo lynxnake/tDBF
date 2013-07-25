@@ -53,6 +53,9 @@
   #ERROR tDbf needs Delphi or C++ Builder 3 minimum.
 {$endif}
 
+// DELPHI_X is defined if the compiler is at least that version of Delphi
+// e.g. DELPHI_5 means, it's Delphi 5 or newer
+
 {$ifdef VER100}         // Delphi 3
   {$define DELPHI_3}
 {$endif}
@@ -144,9 +147,109 @@
   {$define DELPHI_3}
 {$endif}
 
-{$ifdef VER185} // Delphi 2007
+{$ifdef VER190} // Delphi 2007
   {$define DELPHI_2007}
-  { Delphi 2007 also defines VER180, so other DELPHI defines already done }
+  {$define DELPHI_2006}
+  {$define DELPHI_2005}
+  {$define DELPHI_8}
+  {$define DELPHI_7}
+  {$define DELPHI_6}
+  {$define DELPHI_5}
+  {$define DELPHI_4}
+  {$define DELPHI_3}
+{$endif}
+
+{$ifdef VER200} // Delphi 2009
+  {$define DELPHI_2009}
+  {$define DELPHI_2007}
+  {$define DELPHI_2006}
+  {$define DELPHI_2005}
+  {$define DELPHI_8}
+  {$define DELPHI_7}
+  {$define DELPHI_6}
+  {$define DELPHI_5}
+  {$define DELPHI_4}
+  {$define DELPHI_3}
+{$endif}
+
+{$ifdef VER210} // Delphi 2010
+  {$define DELPHI_2010}
+  {$define DELPHI_2009}
+  {$define DELPHI_2007}
+  {$define DELPHI_2006}
+  {$define DELPHI_2005}
+  {$define DELPHI_8}
+  {$define DELPHI_7}
+  {$define DELPHI_6}
+  {$define DELPHI_5}
+  {$define DELPHI_4}
+  {$define DELPHI_3}
+{$endif}
+
+{$ifdef VER220} // Delphi XE
+  {$define DELPHI_XE}
+  {$define DELPHI_2010}
+  {$define DELPHI_2009}
+  {$define DELPHI_2007}
+  {$define DELPHI_2006}
+  {$define DELPHI_2005}
+  {$define DELPHI_8}
+  {$define DELPHI_7}
+  {$define DELPHI_6}
+  {$define DELPHI_5}
+  {$define DELPHI_4}
+  {$define DELPHI_3}
+{$endif}
+
+{$ifdef VER230} // Delphi XE2
+  {$define DELPHI_XE2}
+  {$define DELPHI_XE}
+  {$define DELPHI_2010}
+  {$define DELPHI_2009}
+  {$define DELPHI_2007}
+  {$define DELPHI_2006}
+  {$define DELPHI_2005}
+  {$define DELPHI_8}
+  {$define DELPHI_7}
+  {$define DELPHI_6}
+  {$define DELPHI_5}
+  {$define DELPHI_4}
+  {$define DELPHI_3}
+{$endif}
+
+{$ifdef VER240} // Delphi XE3 (not tested)
+  {$define DELPHI_XE3}
+  {$define DELPHI_XE2}
+  {$define DELPHI_XE}
+  {$define DELPHI_2010}
+  {$define DELPHI_2009}
+  {$define DELPHI_2007}
+  {$define DELPHI_2006}
+  {$define DELPHI_2005}
+  {$define DELPHI_8}
+  {$define DELPHI_7}
+  {$define DELPHI_6}
+  {$define DELPHI_5}
+  {$define DELPHI_4}
+  {$define DELPHI_3}
+{$endif}
+
+{$ifdef VER250} // Delphi XE4 (not tested)
+  {$define DELPHI_XE4}
+  {$define DELPHI_XE3}
+  {$define DELPHI_XE2}
+  {$define DELPHI_XE}
+  {$define DELPHI_2010}
+  {$define DELPHI_2009}
+  {$define DELPHI_2007}
+  {$define DELPHI_2006}
+  {$define DELPHI_2005}
+  {$define DELPHI_8}
+  {$define DELPHI_7}
+  {$define DELPHI_6}
+  {$define DELPHI_5}
+  {$define DELPHI_4}
+  {$define DELPHI_3}
 {$endif}
 
 //-------------------------------------------------------
@@ -154,13 +257,12 @@
 //-------------------------------------------------------
 
 {$ifdef DELPHI_3}
-
   {$define SUPPORT_VARIANTS}
   {$define WINDOWS}
   {$define ENDIAN_LITTLE}
+{$endif}
 
 {$ifdef DELPHI_4}
-
   {$define SUPPORT_DEFCHANGED}
   {$define SUPPORT_DEFAULT_PARAMS}
   {$define SUPPORT_OVERLOAD}
@@ -174,23 +276,29 @@
   {$define SUPPORT_FIELDTYPES_V4}
   {$define SUPPORT_UINT32_CARDINAL}
   {$define SUPPORT_MATH_UNIT}
+{$endif}
 
 {$ifdef DELPHI_5}
-
   {$define SUPPORT_BACKWARD_FIELDDATA}
   {$define SUPPORT_INITDEFSFROMFIELDS}
-  {$define SUPPORT_REFRESHEVENTS}
   {$define SUPPORT_DEF_DELETE}
   {$define SUPPORT_FREEANDNIL}
+{$endif}
 
 {$ifdef DELPHI_6}
-
   {$define SUPPORT_PATHDELIM}
   {$define SUPPORT_SEPARATE_VARIANTS_UNIT}
 
+  {$define SUPPORT_INCLTRAILPATHDELIM} // Was missing 20130529
+  {$define SUPPORT_INCLTRAILBACKSLASH} // Was missing 20130529
 {$endif}
-{$endif}
-{$endif}
+
+{$ifdef Delphi_2009}
+  {$define WINAPI_IS_UNICODE}
+  {$define SUPPORT_TRECORDBUFFER}
+  {$define SUPPORT_CHARINSET}
+  {$define SUPPORT_MAXLISTSIZEDEPRECATED}
+  {$define SUPPORT_FORMATSETTINGS}
 {$endif}
 
 //------------------------------------------------------
@@ -221,7 +329,6 @@
   {$define SUPPORT_MATH_UNIT}
   {$define SUPPORT_VARIANTS}
   {$define SUPPORT_SEPARATE_VARIANTS_UNIT}
-  {$define SUPPORT_REFRESHEVENTS}
 
   // FPC 2.0.x improvements
   {$ifdef VER2}

@@ -6,7 +6,7 @@
   // we'll have to store characters backwards first
   I := 0;
   repeat
-    Temp[I] := Chr((Val mod 10) + Ord('0'));
+    Temp[I] := AnsiChar((Val mod 10) + Ord('0'));
     Val := Val div 10;
     Inc(I);
   until (Val = 0) or (I = Width);
