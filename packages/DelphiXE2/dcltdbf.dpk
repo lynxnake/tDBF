@@ -32,7 +32,7 @@ package dcltdbf;
 
 requires
   designide,
-  tdbf_dXE2r;
+  tdbf;
 
 contains
   dbf_reg in '..\..\src\dbf_reg.pas';
