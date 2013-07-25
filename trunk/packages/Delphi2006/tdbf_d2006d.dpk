@@ -31,6 +31,6 @@ requires
   tdbf_d2006r;
 
 contains
-  dbf_reg in 'dbf_reg.pas' {dbfdesigntimeform};
+  dbf_reg in '..\..\src\dbf_reg.pas';
 
 end.

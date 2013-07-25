@@ -34,6 +34,6 @@ requires
   tdbf_d2005r;
 
 contains
-  dbf_reg in 'dbf_reg.pas';
+  dbf_reg in '..\..\src\dbf_reg.pas';
 
 end.

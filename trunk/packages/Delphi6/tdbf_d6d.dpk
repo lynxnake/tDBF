@@ -31,6 +31,6 @@ requires
   tdbf_d6r;
 
 contains
-  Dbf_Reg in 'Dbf_Reg.pas' {DbfDesignTimeForm};
+  dbf_reg in '..\..\src\dbf_reg.pas';
 
 end.
