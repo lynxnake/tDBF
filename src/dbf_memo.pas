@@ -18,7 +18,7 @@ type
     FDbfVersion: TXBaseVersion;
     FMemoRecordSize: Integer;
     FOpened: Boolean;
-    FBuffer: PChar;
+    FBuffer: PAnsiChar;
   protected
     function  GetBlockLen: Integer; virtual; abstract;
     function  GetMemoSize: Integer; virtual; abstract;
@@ -221,8 +221,8 @@ procedure TMemoFile.ReadMemo(BlockNo: Integer; DestStream: TStream);
 var
   bytesLeft,numBytes,dataStart: Integer;
   done: Boolean;
-  lastc: char;
-  endMemo: PChar;
+  lastc: AnsiChar;
+  endMemo: PAnsiChar;
 begin
   // clear dest
   DestStream.Position := 0;

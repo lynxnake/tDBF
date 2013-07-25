@@ -16,12 +16,12 @@ type
 
   TDbfFieldDef = class(TCollectionItem)
   private
-    FFieldName: string;
+    FFieldName: AnsiString;
     FFieldType: TFieldType;
     FNativeFieldType: TDbfFieldType;
-    FDefaultBuf: PChar;
-    FMinBuf: PChar;
-    FMaxBuf: PChar;
+    FDefaultBuf: PAnsiChar;
+    FMinBuf: PAnsiChar;
+    FMaxBuf: PAnsiChar;
     FSize: Integer;
     FPrecision: Integer;
     FHasDefault: Boolean;
@@ -60,9 +60,9 @@ type
     procedure AllocBuffers;
     function  IsBlob: Boolean;
 
-    property DefaultBuf: PChar read FDefaultBuf;
-    property MinBuf: PChar read FMinBuf;
-    property MaxBuf: PChar read FMaxBuf;
+    property DefaultBuf: PAnsiChar read FDefaultBuf;
+    property MinBuf: PAnsiChar read FMinBuf;
+    property MaxBuf: PAnsiChar read FMaxBuf;
     property HasDefault: Boolean read FHasDefault write FHasDefault;
     property HasMin: Boolean read FHasMin write FHasMin;
     property HasMax: Boolean read FHasMax write FHasMax;
@@ -71,7 +71,7 @@ type
     property IsLockField: Boolean read FIsLockField write FIsLockField;
     property CopyFrom: Integer read FCopyFrom write FCopyFrom;
   published
-    property FieldName: string     read FFieldName write FFieldName;
+    property FieldName: AnsiString read FFieldName write FFieldName;
     property FieldType: TFieldType read FFieldType write SetFieldType;
     property NativeFieldType: TDbfFieldType read FNativeFieldType write SetNativeFieldType;
     property NullPosition: integer read FNullPosition write FNullPosition;
@@ -92,9 +92,9 @@ type
     constructor Create(Owner: TPersistent);
 
 {$ifdef SUPPORT_DEFAULT_PARAMS}
-    procedure Add(const Name: string; DataType: TFieldType; Size: Integer = 0; Required: Boolean = False);
+    procedure Add(const Name: AnsiString; DataType: TFieldType; Size: Integer = 0; Required: Boolean = False);
 {$else}
-    procedure Add(const Name: string; DataType: TFieldType; Size: Integer; Required: Boolean);
+    procedure Add(const Name: AnsiString; DataType: TFieldType; Size: Integer; Required: Boolean);
 {$endif}
     function AddFieldDef: TDbfFieldDef;
 
@@ -169,7 +169,7 @@ begin
   Result := FOwner;
 end;
 
-procedure TDbfFieldDefs.Add(const Name: string; DataType: TFieldType; Size: Integer; Required: Boolean);
+procedure TDbfFieldDefs.Add(const Name: AnsiString; DataType: TFieldType; Size: Integer; Required: Boolean);
 var
   FieldDef: TDbfFieldDef;
 begin
@@ -244,7 +244,7 @@ end;
 procedure TDbfFieldDef.AssignDb(DbSource: TFieldDef);
 begin
   // copy from Db.TFieldDef
-  FFieldName := DbSource.Name;
+  FFieldName := AnsiString(DbSource.Name);
   FFieldType := DbSource.DataType;
   FSize := DbSource.Size;
   FPrecision := DbSource.Precision;
@@ -286,7 +286,7 @@ begin
     DbDest.DataType := FFieldType;
     DbDest.Required := FRequired;
     DbDest.Size := FSize;
-    DbDest.Name := FFieldName;
+    DbDest.Name := string(FFieldName);
 {$endif}
   end else
 {$endif}
@@ -309,7 +309,7 @@ procedure TDbfFieldDef.SetNativeFieldType(lFieldType: tDbfFieldType);
 begin
   // get uppercase field type
   if (lFieldType >= 'a') and (lFieldType <= 'z') then
-    lFieldType := Chr(Ord(lFieldType)-32);
+    lFieldType := AnsiChar(Chr(Ord(lFieldType)-32));
   FNativeFieldType := lFieldType;
   NativeToVCL;
   CheckSizePrecision;
@@ -457,11 +457,12 @@ begin
         FPrecision := 0;
       end;
 {$endif}
-    ftString {$ifdef SUPPORT_FIELDTYPES_V4}, ftFixedChar, ftWideString{$endif}:
-      begin
-        FSize := 30;
-        FPrecision := 0;
-      end;
+    // VB: Removed... all this has ever done, was kill off data after 30 chars 
+    //ftString {$ifdef SUPPORT_FIELDTYPES_V4}, ftFixedChar, ftWideString{$endif}:
+    //  begin
+    //    FSize := 30;
+    //    FPrecision := 0;
+    //  end;
   end; // case fieldtype
 
   // set sizes for fields that are restricted to single size/precision
@@ -551,7 +552,7 @@ end;
 
 function TDbfFieldDef.GetDisplayName: string; {override;}
 begin
-  Result := FieldName;
+  Result := string(FieldName);
 end;
 
 function TDbfFieldDef.IsBlob: Boolean; {override;}

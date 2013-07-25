@@ -7,7 +7,8 @@ interface
 uses
   SysUtils,
   Classes,
-  Db,
+  db,
+  dbf_common,
   dbf_prssupp;
 
 const
@@ -26,7 +27,6 @@ type
   PExpressionRec = ^TExpressionRec;
   PDynamicType = ^TDynamicType;
   PDateTimeRec = ^TDateTimeRec;
-  PDouble = ^Double;
 {$ifdef SUPPORT_INT64}
   PLargeInt = ^Int64;
 {$endif}
@@ -39,20 +39,20 @@ type
 
   TDynamicType = class(TObject)
   private
-    FMemory: PPChar;
-    FMemoryPos: PPChar;
+    FMemory: PPAnsiChar; // Was PPChar
+    FMemoryPos: PPAnsiChar; // Was PPChar
     FSize: PInteger;
   public
-    constructor Create(DestMem, DestPos: PPChar; ASize: PInteger);
+    constructor Create(DestMem, DestPos: PPAnsiChar; ASize: PInteger); // Was PPChar
 
     procedure AssureSpace(ASize: Integer);
     procedure Resize(NewSize: Integer; Exact: Boolean);
     procedure Rewind;
-    procedure Append(Source: PChar; Length: Integer);
+    procedure Append(Source: PAnsiChar; Length: Integer); // Was PChar
     procedure AppendInteger(Source: Integer);
 
-    property Memory: PPChar read FMemory;
-    property MemoryPos: PPChar read FMemoryPos;
+    property Memory: PPAnsiChar read FMemory; // Was: PPChar
+    property MemoryPos: PPAnsiChar read FMemoryPos; // Was PPChar
     property Size: PInteger read FSize;
   end;
 
@@ -65,8 +65,8 @@ type
     AuxData: pointer;
     ResetDest: boolean;
     WantsFunction: boolean;
-    Args: array[0..MaxArg-1] of PChar;
-    ArgsPos: array[0..MaxArg-1] of PChar;
+    Args: array[0..MaxArg-1] of PAnsiChar; // Was PChar
+    ArgsPos: array[0..MaxArg-1] of PAnsiChar; // Was PChar
     ArgsSize: array[0..MaxArg-1] of Integer;
     ArgsType: array[0..MaxArg-1] of TExpressionType;
     ArgList: array[0..MaxArg-1] of PExpressionRec;
@@ -79,8 +79,8 @@ type
   end;
 
   TExprWordRec = record
-    Name: PChar;
-    ShortName: PChar;
+    Name: PAnsiChar;
+    ShortName: PAnsiChar;
     IsOperator: Boolean;
     IsVariable: Boolean;
     IsFunction: Boolean;
@@ -90,8 +90,8 @@ type
     ResultType: TExpressionType;
     MinArg: Integer;
     MaxArg: Integer;
-    TypeSpec: PChar;
-    Description: PChar;
+    TypeSpec: PAnsiChar;
+    Description: PAnsiChar;
     ExprFunc: TExprFunc;
   end;
 
@@ -118,7 +118,7 @@ type
     constructor Create(AName: string; AExprFunc: TExprFunc);
 
     function LenAsPointer: PInteger; virtual;
-    function AsPointer: PChar; virtual;
+    function AsPointer: PAnsiChar; virtual; // Was PChar
     function IsFunction: Boolean; virtual;
 
     property ExprFunc: TExprFunc read FExprFunc;
@@ -173,7 +173,7 @@ type
     constructor Create(AName: string; AValue: string);
     constructor CreateAsDouble(AName: string; AValue: Double);
 
-    function AsPointer: PChar; override;
+    function AsPointer: PAnsiChar; override; // Was PChar
 
     property Value: Double read FValue write FValue;
   end;
@@ -189,11 +189,11 @@ type
 
   TStringConstant = class(TConstant)
   private
-    FValue: string;
+    FValue: AnsiString; // Was string
   public
     constructor Create(AValue: string);
 
-    function AsPointer: PChar; override;
+    function AsPointer: PAnsiChar; override; // Was PChar
   end;
 
   TIntegerConstant = class(TConstant)
@@ -202,7 +202,7 @@ type
   public
     constructor Create(AValue: Integer);
 
-    function AsPointer: PChar; override;
+    function AsPointer: PAnsiChar; override; // Was PChar
   end;
 
   TBooleanConstant = class(TConstant)
@@ -212,7 +212,7 @@ type
     // not overloaded to support older Delphi versions
     constructor Create(AName: string; AValue: Boolean);
 
-    function AsPointer: PChar; override;
+    function AsPointer: PAnsiChar; override; // Was PChar
 
     property Value: Boolean read FValue write FValue;
   end;
@@ -233,21 +233,21 @@ type
   public
     constructor Create(AName: string; AValue: PDouble);
 
-    function AsPointer: PChar; override;
+    function AsPointer: PAnsiChar; override; // Was PChar
   end;
 
   TStringVariable = class(TVariable)
   private
-    FValue: PPChar;
+    FValue: PPAnsiChar; // lsp: was PPChar
     FFixedLen: Integer;
   protected
     function GetFixedLen: Integer; override;
     procedure SetFixedLen(NewLen: integer); override;
   public
-    constructor Create(AName: string; AValue: PPChar);
+    constructor Create(AName: string; AValue: PPAnsiChar); // Was PPChar
 
     function LenAsPointer: PInteger; override;
-    function AsPointer: PChar; override;
+    function AsPointer: PAnsiChar; override; // Was PChar
 
     property FixedLen: Integer read FFixedLen;
   end;
@@ -258,7 +258,7 @@ type
   public
     constructor Create(AName: string; AValue: PDateTimeRec);
 
-    function AsPointer: PChar; override;
+    function AsPointer: PAnsiChar; override; // Was PChar
   end;
 
   TIntegerVariable = class(TVariable)
@@ -267,7 +267,7 @@ type
   public
     constructor Create(AName: string; AValue: PInteger);
 
-    function AsPointer: PChar; override;
+    function AsPointer: PAnsiChar; override; // Was PChar
   end;
 
 {$ifdef SUPPORT_INT64}
@@ -278,7 +278,7 @@ type
   public
     constructor Create(AName: string; AValue: PLargeInt);
 
-    function AsPointer: PChar; override;
+    function AsPointer: PAnsiChar; override; // Was PChar
   end;
 
 {$endif}
@@ -289,7 +289,7 @@ type
   public
     constructor Create(AName: string; AValue: PBoolean);
 
-    function AsPointer: PChar; override;
+    function AsPointer: PAnsiChar; override; // Was PChar
   end;
 
   TLeftBracket = class(TExprWord)
@@ -390,13 +390,13 @@ procedure _StringVariable(Param: PExpressionRec);
 var
   length: integer;
 begin
-  with Param^ do
-  begin
-    length := PInteger(Args[1])^;
-    if length = -1 then
-      length := StrLen(PPChar(Args[0])^);
-    Res.Append(PPChar(Args[0])^, length);
-  end;
+  if Assigned(Param^.Args[1]) then // lsp, not set for ExprRec^.ExprWord.FixedLen<0!!!!
+    length := PInteger(Param^.Args[1])^
+  else
+    length := -1;
+  if length = -1 then
+    length := StrLen(PPAnsiChar(Param^.Args[0])^); // Was PPChar
+  Param^.Res.Append(PPAnsiChar(Param^.Args[0])^, length); // Was PPChar
 end;
 
 procedure _DateTimeVariable(Param: PExpressionRec);
@@ -517,7 +517,7 @@ begin
   Result := EmptyStr;
 end;
 
-function TExprWord.AsPointer: PChar;
+function TExprWord.AsPointer: PAnsiChar; // Was PChar
 begin
   Result := nil;
 end;
@@ -569,9 +569,9 @@ begin
   FValue := AValue;
 end;
 
-function TFloatConstant.AsPointer: PChar;
+function TFloatConstant.AsPointer: PAnsiChar; // Was PChar
 begin
-  Result := PChar(@FValue);
+  Result := PAnsiChar(@FValue); // Was PChar
 end;
 
 { TUserConstant }
@@ -599,14 +599,14 @@ begin
   firstChar := AValue[1];
   lastChar := AValue[Length(AValue)];
   if (firstChar = lastChar) and ((firstChar = '''') or (firstChar = '"')) then
-    FValue := Copy(AValue, 2, Length(AValue) - 2)
+    FValue := AnsiString(Copy(AValue, 2, Length(AValue) - 2)) // AnsiString cast added
   else
-    FValue := AValue;
+    FValue := AnsiString(AValue); // AnsiString cast added
 end;
 
-function TStringConstant.AsPointer: PChar;
+function TStringConstant.AsPointer: PAnsiChar; // Was PChar
 begin
-  Result := PChar(FValue);
+  Result := PAnsiChar(FValue); // Was PChar
 end;
 
 { TBooleanConstant }
@@ -618,9 +618,9 @@ begin
   FValue := AValue;
 end;
 
-function TBooleanConstant.AsPointer: PChar;
+function TBooleanConstant.AsPointer: PAnsiChar; // Was PChar
 begin
-  Result := PChar(@FValue);
+  Result := PAnsiChar(@FValue); // Was PChar
 end;
 
 { TIntegerConstant }
@@ -632,9 +632,9 @@ begin
   FValue := AValue;
 end;
 
-function TIntegerConstant.AsPointer: PChar;
+function TIntegerConstant.AsPointer: PAnsiChar; // Was PChar
 begin
-  Result := PChar(@FValue);
+  Result := PAnsiChar(@FValue); // Was PChar
 end;
 
 { TVariable }
@@ -664,14 +664,14 @@ begin
   FValue := AValue;
 end;
 
-function TFloatVariable.AsPointer: PChar;
+function TFloatVariable.AsPointer: PAnsiChar; // Was PChar
 begin
-  Result := PChar(FValue);
+  Result := PAnsiChar(FValue); // Was PChar
 end;
 
 { TStringVariable }
 
-constructor TStringVariable.Create(AName: string; AValue: PPChar);
+constructor TStringVariable.Create(AName: string; AValue: PPAnsiChar); // Was PPChar
 begin
   // variable or fixed length?
   inherited Create(AName, etString, _StringVariable);
@@ -681,9 +681,9 @@ begin
   FFixedLen := -1;
 end;
 
-function TStringVariable.AsPointer: PChar;
+function TStringVariable.AsPointer: PAnsiChar; // Was PChar
 begin
-  Result := PChar(FValue);
+  Result := PAnsiChar(FValue); // Was PChar
 end;
 
 function TStringVariable.GetFixedLen: Integer;
@@ -709,9 +709,9 @@ begin
   FValue := AValue;
 end;
 
-function TDateTimeVariable.AsPointer: PChar;
+function TDateTimeVariable.AsPointer: PAnsiChar; // Was PChar
 begin
-  Result := PChar(FValue);
+  Result := PAnsiChar(FValue); // Was PChar
 end;
 
 { TIntegerVariable }
@@ -722,9 +722,9 @@ begin
   FValue := AValue;
 end;
 
-function TIntegerVariable.AsPointer: PChar;
+function TIntegerVariable.AsPointer: PAnsiChar; // Was PChar
 begin
-  Result := PChar(FValue);
+  Result := PAnsiChar(FValue); // Was PChar
 end;
 
 {$ifdef SUPPORT_INT64}
@@ -737,9 +737,9 @@ begin
   FValue := AValue;
 end;
 
-function TLargeIntVariable.AsPointer: PChar;
+function TLargeIntVariable.AsPointer: PAnsiChar; // Was PChar
 begin
-  Result := PChar(FValue);
+  Result := PAnsiChar(FValue); // Was PChar
 end;
 
 {$endif}
@@ -752,9 +752,9 @@ begin
   FValue := AValue;
 end;
 
-function TBooleanVariable.AsPointer: PChar;
+function TBooleanVariable.AsPointer: PAnsiChar; // Was PChar
 begin
-  Result := PChar(FValue);
+  Result := PAnsiChar(FValue); // Was PChar
 end;
 
 { TLeftBracket }
@@ -986,7 +986,7 @@ end;
 
 { TDynamicType }
 
-constructor TDynamicType.Create(DestMem, DestPos: PPChar; ASize: PInteger);
+constructor TDynamicType.Create(DestMem, DestPos: PPAnsiChar; ASize: PInteger); // Was PPChar
 begin
   inherited Create;
 
@@ -1001,15 +1001,18 @@ begin
 end;
 
 procedure TDynamicType.AssureSpace(ASize: Integer);
+var
+  CurrentAmount: NativeInt;
 begin
   // need more memory?
-  if ((FMemoryPos^) - (FMemory^) + ASize) > (FSize^) then
-    Resize((FMemoryPos^) - (FMemory^) + ASize, False);
+  CurrentAmount := (FMemoryPos^) - (FMemory^);
+  if (CurrentAmount + ASize) > (FSize^) then
+    Resize(CurrentAmount + ASize, False);
 end;
 
 procedure TDynamicType.Resize(NewSize: Integer; Exact: Boolean);
 var
-  tempBuf: PChar;
+  tempBuf: PAnsiChar; // was PChar;
   bytesCopy, pos: Integer;
 begin
   // if not exact requested make newlength a multiple of ArgAllocSize
@@ -1033,7 +1036,7 @@ begin
   FMemoryPos^ := FMemory^ + pos;
 end;
 
-procedure TDynamicType.Append(Source: PChar; Length: Integer);
+procedure TDynamicType.Append(Source: PAnsiChar; Length: Integer); // Was PChar
 begin
   // make room for string plus null-terminator
   AssureSpace(Length+4);

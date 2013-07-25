@@ -22,8 +22,6 @@ uses
 
 type
 
-  TStringFieldMode = (smRaw, smAnsi, smAnsiTrim);
-
   TDbfParser = class(TCustomExpressionParser)
   private
     FDbfFile: Pointer;
@@ -31,7 +29,7 @@ type
     FIsExpression: Boolean;       // expression or simple field?
     FFieldType: TExpressionType;
     FCaseInsensitive: Boolean;
-    FStringFieldMode: TStringFieldMode;
+    FRawStringFields: Boolean;
     FPartialMatch: boolean;
 
   protected
@@ -39,14 +37,14 @@ type
 
     procedure FillExpressList; override;
     procedure HandleUnknownVariable(VarName: string); override;
-    function  GetVariableInfo(VarName: string): TDbfFieldDef;
+    function  GetVariableInfo(VarName: AnsiString): TDbfFieldDef;
     function  CurrentExpression: string; override;
     procedure ValidateExpression(AExpression: string); virtual;
     function  GetResultType: TExpressionType; override;
     function  GetResultLen: Integer;
 
     procedure SetCaseInsensitive(NewInsensitive: Boolean);
-    procedure SetStringFieldMode(NewMode: TStringFieldMode);
+    procedure SetRawStringFields(NewRawFields: Boolean);
     procedure SetPartialMatch(NewPartialMatch: boolean);
   public
     constructor Create(ADbfFile: Pointer);
@@ -55,14 +53,14 @@ type
     procedure ClearExpressions; override;
 
     procedure ParseExpression(AExpression: string); virtual;
-    function ExtractFromBuffer(Buffer: PChar): PChar; virtual;
+    function ExtractFromBuffer(Buffer: PAnsiChar): PAnsiChar; virtual;
 
     property DbfFile: Pointer read FDbfFile write FDbfFile;
     property Expression: string read FCurrentExpression;
     property ResultLen: Integer read GetResultLen;
 
     property CaseInsensitive: Boolean read FCaseInsensitive write SetCaseInsensitive;
-    property StringFieldMode: TStringFieldMode read FStringFieldMode write SetStringFieldMode;
+    property RawStringFields: Boolean read FRawStringFields write SetRawStringFields;
     property PartialMatch: boolean read FPartialMatch write SetPartialMatch;
   end;
 
@@ -85,7 +83,7 @@ type
   private
     FFieldDef: TDbfFieldDef;
     FDbfFile: TDbfFile;
-    FFieldName: string;
+    FFieldName: AnsiString;
     FExprWord: TExprWord;
   protected
     function GetFieldVal: Pointer; virtual; abstract;
@@ -96,31 +94,32 @@ type
   public
     constructor Create(UseFieldDef: TDbfFieldDef; ADbfFile: TDbfFile);
 
-    procedure Refresh(Buffer: PChar); virtual; abstract;
+    procedure Refresh(Buffer: PAnsiChar); virtual; abstract;
 
     property FieldVal: Pointer read GetFieldVal;
     property FieldDef: TDbfFieldDef read FFieldDef;
     property FieldType: TExpressionType read GetFieldType;
     property DbfFile: TDbfFile read FDbfFile;
-    property FieldName: string read FFieldName;
+    property FieldName: AnsiString read FFieldName;
   end;
 
   TStringFieldVar = class(TFieldVar)
   protected
-    FFieldVal: PChar;
-    FMode: TStringFieldMode;
+    FFieldVal: PAnsiChar;
+    FRawStringField: boolean;
 
     function GetFieldVal: Pointer; override;
     function GetFieldType: TExpressionType; override;
     procedure SetExprWord(NewExprWord: TExprWord); override;
-    procedure SetMode(NewMode: TStringFieldMode);
+    procedure SetRawStringField(NewRaw: boolean);
     procedure UpdateExprWord;
   public
+    constructor Create(UseFieldDef: TDbfFieldDef; ADbfFile: TDbfFile);
     destructor Destroy; override;
 
-    procedure Refresh(Buffer: PChar); override;
+    procedure Refresh(Buffer: PAnsiChar); override;
 
-    property Mode: TStringFieldMode read FMode write SetMode;
+    property RawStringField: boolean read FRawStringField write SetRawStringField;
   end;
 
   TFloatFieldVar = class(TFieldVar)
@@ -130,7 +129,7 @@ type
     function GetFieldVal: Pointer; override;
     function GetFieldType: TExpressionType; override;
   public
-    procedure Refresh(Buffer: PChar); override;
+    procedure Refresh(Buffer: PAnsiChar); override;
   end;
 
   TIntegerFieldVar = class(TFieldVar)
@@ -140,7 +139,7 @@ type
     function GetFieldVal: Pointer; override;
     function GetFieldType: TExpressionType; override;
   public
-    procedure Refresh(Buffer: PChar); override;
+    procedure Refresh(Buffer: PAnsiChar); override;
   end;
 
 {$ifdef SUPPORT_INT64}
@@ -151,7 +150,7 @@ type
     function GetFieldVal: Pointer; override;
     function GetFieldType: TExpressionType; override;
   public
-    procedure Refresh(Buffer: PChar); override;
+    procedure Refresh(Buffer: PAnsiChar); override;
   end;
 {$endif}
 
@@ -162,7 +161,7 @@ type
   protected
     function GetFieldVal: Pointer; override;
   public
-    procedure Refresh(Buffer: PChar); override;
+    procedure Refresh(Buffer: PAnsiChar); override;
   end;
 
   TBooleanFieldVar = class(TFieldVar)
@@ -172,7 +171,7 @@ type
   protected
     function GetFieldVal: Pointer; override;
   public
-    procedure Refresh(Buffer: PChar); override;
+    procedure Refresh(Buffer: PAnsiChar); override;
   end;
 
 { TFieldVar }
@@ -194,9 +193,15 @@ end;
 
 { TStringFieldVar }
 
+constructor TStringFieldVar.Create(UseFieldDef: TDbfFieldDef; ADbfFile: TDbfFile);
+begin
+  inherited;
+  FRawStringField := true;
+end;
+
 destructor TStringFieldVar.Destroy;
 begin
-  if FMode <> smRaw then
+  if not FRawStringField then
     FreeMem(FFieldVal);
 
   inherited;
@@ -212,18 +217,17 @@ begin
   Result := etString;
 end;
 
-procedure TStringFieldVar.Refresh(Buffer: PChar);
+procedure TStringFieldVar.Refresh(Buffer: PAnsiChar);
 var
   Len: Integer;
-  Src: PChar;
+  Src: PAnsiChar;
 begin
   Src := Buffer+FieldDef.Offset;
-  if FMode <> smRaw then
+  if not FRawStringField then
   begin
     // copy field data
     Len := FieldDef.Size;
-    if FMode = smAnsiTrim then
-      while (Len >= 1) and (Src[Len-1] = ' ') do Dec(Len);
+    while (Len >= 1) and (Src[Len-1] = ' ') do Dec(Len);
     // translate to ANSI
     Len := TranslateString(DbfFile.UseCodePage, GetACP, Src, FFieldVal, Len);
     FFieldVal[Len] := #0;
@@ -239,21 +243,19 @@ end;
 
 procedure TStringFieldVar.UpdateExprWord;
 begin
-  if FMode <> smAnsiTrim then
+  if FRawStringField then
     FExprWord.FixedLen := FieldDef.Size
   else
     FExprWord.FixedLen := -1;
 end;
 
-procedure TStringFieldVar.SetMode(NewMode: TStringFieldMode);
+procedure TStringFieldVar.SetRawStringField(NewRaw: boolean);
 begin
-  if NewMode = FMode then exit;
-  FMode := NewMode;
-  if NewMode = smRaw then
-  begin
-    FreeMem(FFieldVal);
-    FFieldVal := nil;
-  end else
+  if NewRaw = FRawStringField then exit;
+  FRawStringField := NewRaw;
+  if NewRaw then
+    FreeMem(FFieldVal)
+  else
     GetMem(FFieldVal, FieldDef.Size*3+1);
   UpdateExprWord;
 end;
@@ -269,7 +271,7 @@ begin
   Result := etFloat;
 end;
 
-procedure TFloatFieldVar.Refresh(Buffer: PChar);
+procedure TFloatFieldVar.Refresh(Buffer: PAnsiChar);
 begin
   // database width is default 64-bit double
   if not FDbfFile.GetFieldDataFromDef(FieldDef, FieldDef.FieldType, Buffer, @FFieldVal, false) then
@@ -287,7 +289,7 @@ begin
   Result := etInteger;
 end;
 
-procedure TIntegerFieldVar.Refresh(Buffer: PChar);
+procedure TIntegerFieldVar.Refresh(Buffer: PAnsiChar);
 begin
   FFieldVal := 0;
   FDbfFile.GetFieldDataFromDef(FieldDef, FieldDef.FieldType, Buffer, @FFieldVal, false);
@@ -306,7 +308,7 @@ begin
   Result := etLargeInt;
 end;
 
-procedure TLargeIntFieldVar.Refresh(Buffer: PChar);
+procedure TLargeIntFieldVar.Refresh(Buffer: PAnsiChar);
 begin
   if not FDbfFile.GetFieldDataFromDef(FieldDef, FieldDef.FieldType, Buffer, @FFieldVal, false) then
     FFieldVal := 0;
@@ -325,7 +327,7 @@ begin
   Result := etDateTime;
 end;
 
-procedure TDateTimeFieldVar.Refresh(Buffer: PChar);
+procedure TDateTimeFieldVar.Refresh(Buffer: PAnsiChar);
 begin
   if not FDbfFile.GetFieldDataFromDef(FieldDef, ftDateTime, Buffer, @FFieldVal, false) then
     FFieldVal.DateTime := 0.0;
@@ -342,7 +344,7 @@ begin
   Result := etBoolean;
 end;
 
-procedure TBooleanFieldVar.Refresh(Buffer: PChar);
+procedure TBooleanFieldVar.Refresh(Buffer: PAnsiChar);
 var
   lFieldVal: word;
 begin
@@ -359,6 +361,7 @@ begin
   FDbfFile := ADbfFile;
   FFieldVarList := TStringList.Create;
   FCaseInsensitive := true;
+  FRawStringFields := true;
   inherited Create;
 end;
 
@@ -388,7 +391,7 @@ begin
     etDateTime: Result := 8;
     etString:
     begin
-      if not FIsExpression and (TStringFieldVar(FFieldVarList.Objects[0]).Mode <> smAnsiTrim) then
+      if not FIsExpression and (TStringFieldVar(FFieldVarList.Objects[0]).RawStringField) then
         Result := TStringFieldVar(FFieldVarList.Objects[0]).FieldDef.Size
       else
         Result := -1;
@@ -418,17 +421,17 @@ begin
   end;
 end;
 
-procedure TDbfParser.SetStringFieldMode(NewMode: TStringFieldMode);
+procedure TDbfParser.SetRawStringFields(NewRawFields: Boolean);
 var
   I: integer;
 begin
-  if FStringFieldMode <> NewMode then
+  if FRawStringFields <> NewRawFields then
   begin
     // clear and regenerate functions, custom fields will be deleted too
-    FStringFieldMode := NewMode;
+    FRawStringFields := NewRawFields;
     for I := 0 to FFieldVarList.Count - 1 do
       if FFieldVarList.Objects[I] is TStringFieldVar then
-        TStringFieldVar(FFieldVarList.Objects[I]).Mode := NewMode;
+        TStringFieldVar(FFieldVarList.Objects[I]).RawStringField := NewRawFields;
   end;
 end;
 
@@ -462,7 +465,7 @@ begin
     ParseExpression(lExpression);
 end;
 
-function TDbfParser.GetVariableInfo(VarName: string): TDbfFieldDef;
+function TDbfParser.GetVariableInfo(VarName: AnsiString): TDbfFieldDef;
 begin
   Result := TDbfFile(FDbfFile).GetFieldInfo(VarName);
 end;
@@ -473,7 +476,7 @@ var
   TempFieldVar: TFieldVar;
 begin
   // is this variable a fieldname?
-  FieldInfo := GetVariableInfo(VarName);
+  FieldInfo := GetVariableInfo(AnsiString(VarName));
   if FieldInfo = nil then
     raise EDbfError.CreateFmt(STRING_INDEX_BASED_ON_UNKNOWN_FIELD, [VarName]);
 
@@ -482,8 +485,9 @@ begin
     ftString:
       begin
         TempFieldVar := TStringFieldVar.Create(FieldInfo, TDbfFile(FDbfFile));
-        TempFieldVar.ExprWord := DefineStringVariable(VarName, TempFieldVar.FieldVal);
-        TStringFieldVar(TempFieldVar).Mode := FStringFieldMode;
+        TempFieldVar.FExprWord := DefineStringVariable(VarName, TempFieldVar.FieldVal);
+        TStringFieldVar(TempFieldVar).FRawStringField := not FRawStringFields; // lsp, force update !!!
+        TStringFieldVar(TempFieldVar).RawStringField := FRawStringFields;
       end;
     ftBoolean:
       begin
@@ -558,7 +562,7 @@ begin
   ClearExpressions;
 
   // is this a simple field or complex expression?
-  FIsExpression := GetVariableInfo(AExpression) = nil;
+  FIsExpression := (GetVariableInfo(AnsiString(AExpression)) = nil);
   if FIsExpression then
   begin
     // parse requested
@@ -575,7 +579,7 @@ begin
   FCurrentExpression := AExpression;
 end;
 
-function TDbfParser.ExtractFromBuffer(Buffer: PChar): PChar;
+function TDbfParser.ExtractFromBuffer(Buffer: PAnsiChar): PAnsiChar;
 var
   I: Integer;
 begin
@@ -588,13 +592,13 @@ begin
   begin
     // execute expression
     EvaluateCurrent;
-    Result := ExpResult;
+    Result := PAnsiChar(ExpResult);
   end else begin
     // simple field, get field result
     Result := TFieldVar(FFieldVarList.Objects[0]).FieldVal;
     // if string then dereference
     if FFieldType = etString then
-      Result := PPChar(Result)^;
+      Result := PAnsiChar(PPAnsiChar(Result)^); // Was PPChar
   end;
 end;
 

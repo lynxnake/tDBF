@@ -465,11 +465,11 @@ const
 // reverse convert routines
 //*************************************************************************//
 
-function ConstructLangName(CodePage: Integer; Locale: LCID; IsFoxPro: Boolean): string;
+function ConstructLangName(CodePage: Integer; Locale: LCID; IsFoxPro: Boolean): AnsiString;
 
 function ConstructLangId(CodePage: Integer; Locale: LCID; IsFoxPro: Boolean): Byte;
 
-function GetLangId_From_LangName(LocaleStr: string): Byte;
+function GetLangId_From_LangName(LocaleStr: AnsiString): Byte;
 
 implementation
 
@@ -479,7 +479,7 @@ uses
 type
   PCardinal = ^Cardinal;
 
-function ConstructLangName(CodePage: Integer; Locale: LCID; IsFoxPro: Boolean): string;
+function ConstructLangName(CodePage: Integer; Locale: LCID; IsFoxPro: Boolean): AnsiString;
 var
   SubType: Cardinal;
 begin
@@ -491,11 +491,11 @@ begin
     // foxpro or dbase?
     if IsFoxPro then
     begin
-      Result := 'FOX' + PChar(@SubType);
+      Result := AnsiString('FOX') + PAnsiChar(@SubType);
       if CodePage = 1252 then
-        Result := Result + 'WIN'
+        Result := Result + AnsiString('WIN')
       else
-        Result := Result + IntToStr(CodePage);
+        Result := Result + AnsiString(IntToStr(CodePage));
     end else begin
       if SubType = DbfLocale_Bul868 then
       begin
@@ -508,9 +508,9 @@ begin
         if CodePage = 1252 then
           Result := Result + 'WIN'
         else
-          Result := Result + IntToStr(CodePage);
+          Result := Result + AnsiString(IntToStr(CodePage));
         // add subtype
-        Result := Result + PChar(@SubType);
+        Result := Result + PAnsiChar(@SubType);
       end;
     end;
   end;
@@ -542,7 +542,7 @@ begin
         Inc(Region, 2);
     // it seems delphi does not properly understand pointers?
     // what a mess :-(
-    if ((LangId_To_CodePage[I] = CodePage) or (CodePage = 0)) and (PCardinal(PChar(Info2Table)+(I*4))^ = Info2) then
+    if ((LangId_To_CodePage[I] = CodePage) or (CodePage = 0)) and (PCardinal(PAnsiChar(Info2Table)+(I*4))^ = Info2) then // Was PChar
       if I <= dBase_Regions[Region+1] then
         DbfRes := Byte(I)
       else
@@ -607,14 +607,14 @@ begin
     Result := FindLangId(0, Locale, @LangId_To_Locale[0], IsFoxPro);
 end;
 
-function GetLangId_From_LangName(LocaleStr: string): Byte;
+function GetLangId_From_LangName(LocaleStr: AnsiString): Byte;
 var
   CodePage, SubType: Integer;
   IsFoxPro: Boolean;
-  CodePageStr: string;
+  CodePageStr: AnsiString;
 begin
   // determine foxpro/dbase
-  IsFoxPro := CompareMem(PChar('FOX'), PChar(LocaleStr), 3);
+  IsFoxPro := CompareMem(PAnsiChar('FOX'), PAnsiChar(LocaleStr), 3); // was PChar, PAnsiChar('literal') is allowed
   // get codepage/locale subtype
   if IsFoxPro then
   begin
@@ -630,7 +630,7 @@ begin
   else if CodePageStr = 'REW' then    // hebrew
     CodePage := 1255
   else
-    CodePage := StrToInt(CodePageStr);
+    CodePage := StrToIntDef(String(CodePageStr), 0); // Based on comment by Michael Hummel ("Miggi")
   // find lang id
   Result := FindLangId(CodePage, SubType, @LangId_To_LocaleStr[0], IsFoxPro);
 end;
