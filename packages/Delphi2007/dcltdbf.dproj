@@ -83,16 +83,14 @@
     <DelphiCompile Include="dcltdbf.dpk">
       <MainSource>MainSource</MainSource>
     </DelphiCompile>
-    <DCCReference Include="$(SystemRoot)\System32\designide.dcp" />
-    <DCCReference Include="$(SystemRoot)\System32\tdbf.dcp" />
+    <DCCReference Include="$(SystemRoot)\system32\designide.dcp" />
+    <DCCReference Include="$(SystemRoot)\system32\tdbf.dcp" />
     <DCCReference Include="$(SystemRoot)\System32\tdbf_.dcp" />
     <DCCReference Include="$(SystemRoot)\System32\tdbf_d.dcp" />
     <DCCReference Include="$(SystemRoot)\System32\tdbf_d2.dcp" />
     <DCCReference Include="$(SystemRoot)\System32\tdbf_d20.dcp" />
     <DCCReference Include="$(SystemRoot)\System32\tdbf_d200.dcp" />
     <DCCReference Include="$(SystemRoot)\System32\tdbf_d2007.dcp" />
-    <DCCReference Include="..\..\src\dbf_reg.pas">
-      <Form>dbfdesigntimeform</Form>
-    </DCCReference>
+    <DCCReference Include="..\..\src\dbf_reg.pas" />
   </ItemGroup>
 </Project>
