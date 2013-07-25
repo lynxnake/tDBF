@@ -70,7 +70,6 @@
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
 			<DCC_DcuOutput>.\dcu</DCC_DcuOutput>
-			<DCC_Namespace>VCL;$(DCC_Namespace)</DCC_Namespace>
 			<VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
 			<VerInfo_Locale>1033</VerInfo_Locale>
 		</PropertyGroup>
@@ -79,7 +78,7 @@
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
 			<DCCReference Include="designide.dcp"/>
-			<DCCReference Include="tdbf_dXE2r.dcp"/>
+			<DCCReference Include="tdbf.dcp"/>
 			<DCCReference Include="..\..\src\dbf_reg.pas"/>
 			<BuildConfiguration Include="Debug">
 				<Key>Cfg_2</Key>
