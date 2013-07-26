@@ -301,6 +301,15 @@
   {$define SUPPORT_FORMATSETTINGS}
 {$endif}
 
+{$ifdef DELPHI_XE3}
+  {$define FLOATREC_DIGITS_IS_BYTE}
+{$endif}
+
+{$ifdef DELPHI_XE4}
+  {$define SUPPORT_TRECBUF}
+  {$define SUPPORT_ANSISTRINGS_UNIT}
+{$endif}
+
 //------------------------------------------------------
 //--- Conclude supported features in FreePascal      ---
 //------------------------------------------------------

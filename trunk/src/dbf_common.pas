@@ -36,6 +36,19 @@ type
   TDbfRecordBuffer = PAnsiChar;
 {$endif}
 
+{$ifdef SUPPORT_TRECBUF}
+type
+  TDbfRecBuf = DB.TRecBuf;
+const
+  DBfRecBufNil = 0;
+{$else}
+type
+  TDbfRecBuf = TDbfRecordBuffer;
+const
+  DBfRecBufNil = nil;
+{$endif}
+
+type
   TDbfFieldType = AnsiChar;
 
   TXBaseVersion   = (xUnknown, xClipper, xBaseIII, xBaseIV, xBaseV, xFoxPro, xBaseVII);

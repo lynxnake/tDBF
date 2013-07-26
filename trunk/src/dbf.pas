@@ -238,7 +238,7 @@ type
     procedure FreeRecordBuffer(var Buffer: TDbfRecordBuffer); override; {virtual abstract}
     procedure GetBookmarkData(Buffer: TDbfRecordBuffer; Data: Pointer); override; {virtual abstract}
     function  GetBookmarkFlag(Buffer: TDbfRecordBuffer): TBookmarkFlag; override; {virtual abstract}
-    function  GetRecord(Buffer: TDbfRecordBuffer; GetMode: TGetMode; DoCheck: Boolean): TGetResult; override; {virtual abstract}
+    function  GetRecord(Buffer: TDbfRecBuf; GetMode: TGetMode; DoCheck: Boolean): TGetResult; override; {virtual abstract}
     function  GetRecordSize: Word; override; {virtual abstract}
     procedure InternalAddRecord(Buffer: Pointer; AAppend: Boolean); override; {virtual abstract}
     procedure InternalClose; override; {virtual abstract}
@@ -481,13 +481,16 @@ uses
 {$else}
 {$ifdef KYLIX}
   Libc,
-{$endif}  
+{$endif}
   Types,
   dbf_wtil,
 {$endif}
 {$ifdef SUPPORT_SEPARATE_VARIANTS_UNIT}
   Variants,
 {$endif}
+{$ifdef SUPPORT_ANSISTRINGS_UNIT}
+  AnsiStrings,
+{$ENDIF}
   dbf_idxcur,
   dbf_memo,
   dbf_str;
@@ -497,6 +500,18 @@ const
   // TODO: move these to DBConsts
   SNotEditing = 'Dataset not in edit or insert mode';
   SCircularDataLink = 'Circular datalinks are not allowed';
+{$endif}
+
+{$ifdef SUPPORT_ANSISTRINGS_UNIT}
+function StrLen(Str: PAnsiChar): integer; inline;
+begin
+  Result := AnsiStrings.StrLen(Str);
+end;
+
+function StrCopy(Dest, Source: PAnsiChar): PAnsiChar;
+begin
+  Result := AnsiStrings.StrCopy(Dest, Source)
+end;
 {$endif}
 
 function TableLevelToDbfVersion(TableLevel: integer): TXBaseVersion;
@@ -700,15 +715,15 @@ end;
 function TDbf.GetCurrentBuffer: TDbfRecordBuffer;
 begin
   case State of
-    dsFilter:     Result := FFilterBuffer;
-    dsCalcFields: Result := CalcBuffer;
+    dsFilter:     Result := TDbfRecordBuffer(FFilterBuffer);
+    dsCalcFields: Result := TDbfRecordBuffer(CalcBuffer);
 //    dsSetKey:     Result := FKeyBuffer;     // TO BE Implemented
   else
     if IsEmpty then
     begin
       Result := nil;
     end else begin
-      Result := ActiveBuffer;
+      Result := TDbfRecordBuffer(ActiveBuffer);
     end;
   end;
   if Result <> nil then
@@ -827,7 +842,7 @@ begin
   end;
 end;
 
-function TDbf.GetRecord(Buffer: TDbfRecordBuffer; GetMode: TGetMode; DoCheck: Boolean): TGetResult; {override virtual abstract from TDataset}
+function TDbf.GetRecord(Buffer: TDbfRecBuf; GetMode: TGetMode; DoCheck: Boolean): TGetResult; {override virtual abstract from TDataset}
 var
   pRecord: pDbfRecord;
   acceptable: Boolean;
@@ -883,11 +898,11 @@ begin
       pRecord^.BookmarkData.PhysicalRecNo := FCursor.PhysicalRecNo;
       pRecord^.BookmarkFlag := bfCurrent;
       pRecord^.SequentialRecNo := FCursor.SequentialRecNo;
-      GetCalcFields(Buffer);
+      GetCalcFields(TDbfRecBuf(Buffer));
 
       if Filtered or FFindRecordFilter then
       begin
-        FFilterBuffer := Buffer;
+        FFilterBuffer := TDbfRecordBuffer(Buffer);
         SaveState := SetTempState(dsFilter);
         DoFilterRecord(acceptable);
         RestoreState(SaveState);
@@ -961,7 +976,7 @@ begin
       FBlobStreams^[I].Free;
     FreeMemAndNil(Pointer(FBlobStreams));
   end;
-  FreeRecordBuffer(FTempBuffer);
+  FreeRecordBuffer(TdbfRecordBuffer(FTempBuffer));
   // disconnect field objects
   BindFields(false);
   // Destroy field object (if not persistent)
@@ -1819,7 +1834,7 @@ begin
   Result := false;
   bVarIsArray := false;
   lstKeys := TList.Create;
-  FFilterBuffer := TempBuffer;
+  FFilterBuffer := TDbfRecordBuffer(TempBuffer);
   SaveState := SetTempState(dsFilter);
   try
     GetFieldList(lstKeys, KeyFields);
@@ -1884,7 +1899,7 @@ begin
 
   checkmatch := false;
   repeat
-    if ReadCurrentRecord(TempBuffer, acceptable) = grError then
+    if ReadCurrentRecord(TDbfRecordBuffer(TempBuffer), acceptable) = grError then
     begin
       Result := false;
       exit;
@@ -1903,7 +1918,7 @@ begin
       Result := matchRes =  0;
   end;
 
-  FFilterBuffer := TempBuffer;
+  FFilterBuffer := TDbfRecordBuffer(TempBuffer);
 end;
 
 function TDbf.LocateRecord(const KeyFields: String; const KeyValues: Variant;
@@ -2208,9 +2223,9 @@ begin
   if FCursor <> nil then
   begin
     if State = dsCalcFields then
-      pBuffer := CalcBuffer
+      pBuffer := TDbfRecordBuffer(CalcBuffer)
     else
-      pBuffer := ActiveBuffer;
+      pBuffer := TDbfRecordBuffer(ActiveBuffer);
     Result := pDbfRecord(pBuffer)^.SequentialRecNo;
   end else
     Result := 0;
@@ -2599,9 +2614,9 @@ begin
   if (FCursor <> nil) and (State <> dsInsert) then
   begin
     if State = dsCalcFields then
-      pBuffer := CalcBuffer
+      pBuffer := TDbfRecordBuffer(CalcBuffer)
     else
-      pBuffer := ActiveBuffer;
+      pBuffer := TDbfRecordBuffer(ActiveBuffer);
     Result := pDbfRecord(pBuffer)^.BookmarkData.PhysicalRecNo;
   end else
     Result := -1;
