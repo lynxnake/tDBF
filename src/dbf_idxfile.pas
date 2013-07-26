@@ -2863,6 +2863,14 @@ begin
 end;
 
 function TIndexFile.PrepareKey(Buffer: TDbfRecordBuffer; ResultType: TExpressionType): TDbfRecordBuffer;
+const
+{$ifdef FLOATREC_DIGITS_IS_BYTE}
+  ZERO_CHAR = Ord('0');
+  NULL_TERMINATOR = 0;
+{$else}
+  ZERO_CHAR = '0';
+  NULL_TERMINATOR = #0;
+{$endif}
 var
   FloatRec: TFloatRec;
   I, IntSrc, NumDecimals: Integer;
@@ -2937,10 +2945,10 @@ begin
           begin
             FloatRec.Exponent := NumDecimals;
             // MDX-BCD does not count ending zeroes as `data' space length
-            while (NumDecimals > 0) and (FloatRec.Digits[NumDecimals-1] = '0') do
+            while (NumDecimals > 0) and (FloatRec.Digits[NumDecimals-1] = ZERO_CHAR) do
               Dec(NumDecimals);
             // null-terminate string
-            FloatRec.Digits[NumDecimals] := #0;
+            FloatRec.Digits[NumDecimals] := NULL_TERMINATOR;
           end;
       end;
 
@@ -2959,7 +2967,7 @@ begin
       while I < NumDecimals do
       begin
         // only one byte left?
-        if FloatRec.Digits[I+1] = #0 then
+        if FloatRec.Digits[I+1] = ZERO_CHAR then
           BCDdigit := 0
         else
           BCDdigit := Byte(FloatRec.Digits[I+1]) - Byte('0');
