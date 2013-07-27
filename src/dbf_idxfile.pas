@@ -2891,13 +2891,13 @@ begin
         etInteger:
           begin
             FUserNumeric := PInteger(Result)^;
-            Result := @FUserNumeric;
+            Result := TDbfRecordBuffer(@FUserNumeric);
           end;
 {$ifdef SUPPORT_INT64}
         etLargeInt:
           begin
             FUserNumeric := PLargeInt(Result)^;
-            Result := @FUserNumeric;
+            Result := TDbfRecordBuffer(@FUserNumeric);
           end;
 {$endif}
       end;
@@ -2978,7 +2978,7 @@ begin
       end;
 
       // set result pointer to BCD
-      Result := @FUserBCD[0];
+      Result := TDbfRecordBuffer(@FUserBCD[0]);
     end;
   end;
 end;
