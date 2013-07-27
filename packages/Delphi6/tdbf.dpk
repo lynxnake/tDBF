@@ -1,4 +1,4 @@
-package tdbf_d6r;
+package tdbf;
 
 {$R *.res}
 {$ALIGN 8}
@@ -23,6 +23,7 @@ package tdbf_d6r;
 {$MINENUMSIZE 1}
 {$IMAGEBASE $400000}
 {$DESCRIPTION 'TDbf for Delphi 6 -runtime-'}
+{$LIBSUFFIX '60'}
 {$RUNONLY}
 {$IMPLICITBUILD OFF}
 
