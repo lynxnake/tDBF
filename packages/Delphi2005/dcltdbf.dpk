@@ -1,4 +1,4 @@
-package tdbf_d2005d;
+package dcltdbf;
 
 {$R *.res}
 {$ALIGN 8}
@@ -22,6 +22,9 @@ package tdbf_d2005d;
 {$WRITEABLECONST OFF}
 {$MINENUMSIZE 1}
 {$IMAGEBASE $400000}
+{$DESCRIPTION 'tdbf for Delphi 2005 designtime package'}
+{$LIBSUFFIX '90'}
+{$DESIGNONLY}
 {$IMPLICITBUILD OFF}
 
 requires
@@ -31,7 +34,8 @@ requires
   vclactnband,
   vclx,
   vcl,
-  tdbf_d2005r;
+  dbrtl,
+  tdbf;
 
 contains
   dbf_reg in '..\..\src\dbf_reg.pas';
