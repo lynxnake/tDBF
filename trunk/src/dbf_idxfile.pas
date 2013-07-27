@@ -405,11 +405,18 @@ type
 implementation
 
 uses
+{$ifdef SUPPORT_ANSISTRINGS_UNIT}
+  AnsiStrings,
+{$ENDIF}
   dbf_dbffile,
   dbf_fields,
   dbf_str,
   dbf_prssupp,
   dbf_lang;
+
+{$ifdef SUPPORT_ANSISTRINGS_UNIT}
+{$include 'ansistrings.inc'}
+{$endif}
 
 const
   RecBOF = 0;

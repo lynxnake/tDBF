@@ -55,6 +55,15 @@ type
 //====================================================================
 implementation
 
+{$ifdef SUPPORT_ANSISTRINGS_UNIT}
+uses
+  AnsiStrings;
+{$ENDIF}
+
+{$ifdef SUPPORT_ANSISTRINGS_UNIT}
+{$include 'ansistrings.inc'}
+{$endif}
+
 //==========================================================
 //============ TIndexCursor
 //==========================================================
