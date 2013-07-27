@@ -30,6 +30,11 @@ type
   EDbfWriteError = class (EDbfError)
   end;
 
+{$ifndef SUPPORT_NATIVEINT}
+type
+  NativeInt = integer;
+{$endif}
+
 {$ifdef SUPPORT_TRECORDBUFFER}
   TDbfRecordBuffer = TRecordBuffer;
 {$else}
