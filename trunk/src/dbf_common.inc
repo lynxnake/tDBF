@@ -291,6 +291,14 @@
 
   {$define SUPPORT_INCLTRAILPATHDELIM} // Was missing 20130529
   {$define SUPPORT_INCLTRAILBACKSLASH} // Was missing 20130529
+
+  {$warn UNSAFE_TYPE off}
+  {$warn UNSAFE_CODE off}
+  {$warn UNSAFE_CAST off}
+{$endif}
+
+{$ifdef Delphi_7}
+  {$define SUPPORT_NATIVEINT}
 {$endif}
 
 {$ifdef Delphi_2009}
