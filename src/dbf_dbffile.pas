@@ -199,10 +199,18 @@ uses
 {$ifdef SUPPORT_MATH_UNIT}
   Math,
 {$endif}
+{$ifdef SUPPORT_ANSISTRINGS_UNIT}
+  AnsiStrings,
+{$ENDIF}
   dbf_str, dbf_lang, dbf_prssupp, dbf_prsdef;
 
 const
   sDBF_DEC_SEP = '.';
+
+{$ifdef SUPPORT_ANSISTRINGS_UNIT}
+{$include 'ansistrings.inc'}
+{$endif}
+
 
 {$I dbf_struct.inc}
 

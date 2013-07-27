@@ -249,6 +249,15 @@ var
 
 implementation
 
+{$ifdef SUPPORT_ANSISTRINGS_UNIT}
+uses
+  AnsiStrings;
+{$ENDIF}
+
+{$ifdef SUPPORT_ANSISTRINGS_UNIT}
+{$include 'ansistrings.inc'}
+{$endif}
+
 procedure LinkVariable(ExprRec: PExpressionRec);
 begin
   ///with ExprRec^ do

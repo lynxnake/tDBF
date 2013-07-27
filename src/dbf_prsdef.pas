@@ -354,6 +354,15 @@ function ExprCharToExprType(ExprChar: Char): TExpressionType;
 
 implementation
 
+{$ifdef SUPPORT_ANSISTRINGS_UNIT}
+uses
+  AnsiStrings;
+{$endif}
+
+{$ifdef SUPPORT_ANSISTRINGS_UNIT}
+{$include 'ansistrings.inc'}
+{$endif}
+
 function ExprCharToExprType(ExprChar: Char): TExpressionType;
 begin
   case ExprChar of

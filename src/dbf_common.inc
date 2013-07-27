@@ -14,8 +14,9 @@
 {.$define HUNGARIAN}
 
 // enables assembler routines, 486+ only
-
+{$ifndef Win64}
 {$define USE_ASSEMBLER_486_UP}
+{$endif}
 
 // test compatibility
 
@@ -306,6 +307,9 @@
   {$define SUPPORT_TRECORDBUFFER}
   {$define SUPPORT_CHARINSET}
   {$define SUPPORT_MAXLISTSIZEDEPRECATED}
+{$endif}
+
+{$ifdef Delphi_XE}
   {$define SUPPORT_FORMATSETTINGS}
 {$endif}
 

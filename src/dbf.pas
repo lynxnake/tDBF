@@ -503,15 +503,7 @@ const
 {$endif}
 
 {$ifdef SUPPORT_ANSISTRINGS_UNIT}
-function StrLen(Str: PAnsiChar): integer; inline;
-begin
-  Result := AnsiStrings.StrLen(Str);
-end;
-
-function StrCopy(Dest, Source: PAnsiChar): PAnsiChar;
-begin
-  Result := AnsiStrings.StrCopy(Dest, Source)
-end;
+{$include 'ansistrings.inc'}
 {$endif}
 
 function TableLevelToDbfVersion(TableLevel: integer): TXBaseVersion;

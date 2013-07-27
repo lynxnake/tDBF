@@ -166,8 +166,21 @@ implementation
 
 {$ifdef MSWINDOWS}
 uses
+{$ifdef SUPPORT_ANSISTRINGS_UNIT}
+  AnsiStrings,
+{$ENDIF}
   Windows;
+{$else}
+{$ifdef SUPPORT_ANSISTRINGS_UNIT}
+uses
+  AnsiStrings;
+{$ENDIF}
 {$endif}
+
+{$ifdef SUPPORT_ANSISTRINGS_UNIT}
+{$include 'ansistrings.inc'}
+{$endif}
+
 
 //====================================================================
 
