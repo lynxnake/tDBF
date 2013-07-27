@@ -1,7 +1,6 @@
-package tdbf_d2005r;
+package tdbf;
 
 {$R *.res}
-{$R 'dbf.dcr'}
 {$ALIGN 8}
 {$ASSERTIONS ON}
 {$BOOLEVAL OFF}
@@ -23,6 +22,9 @@ package tdbf_d2005r;
 {$WRITEABLECONST OFF}
 {$MINENUMSIZE 1}
 {$IMAGEBASE $400000}
+{$DESCRIPTION 'tdbf for Delphi 2005 runtime package'}
+{$LIBSUFFIX '90'}
+{$RUNONLY}
 {$IMPLICITBUILD OFF}
 
 requires

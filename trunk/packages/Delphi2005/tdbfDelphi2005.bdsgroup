@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<PersonalityInfo>
+		<Option>
+			<Option Name="Personality">Default.Personality</Option>
+			<Option Name="ProjectType"></Option>
+			<Option Name="Version">1.0</Option>
+			<Option Name="GUID">{461450A2-4147-4DB5-8CBA-1B561F31821B}</Option>
+		</Option>
+	</PersonalityInfo>
+	<Default.Personality>  <Projects>
+      <Projects Name="tdbf90.bpl">tdbf.bdsproj</Projects>
+      <Projects Name="dcltdbf90.bpl">dcltdbf.bdsproj</Projects>
+      <Projects Name="Targets">tdbf90.bpl dcltdbf90.bpl</Projects>
+    </Projects>
+    <Dependencies/>
+  </Default.Personality>
+</BorlandProject>
