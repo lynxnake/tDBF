@@ -1,7 +1,6 @@
-package tdbf_d7d;
+package dcltdbf;
 
 {$R *.res}
-
 {$ALIGN 8}
 {$ASSERTIONS ON}
 {$BOOLEVAL OFF}
@@ -12,23 +11,25 @@ package tdbf_d7d;
 {$LOCALSYMBOLS ON}
 {$LONGSTRINGS ON}
 {$OPENSTRINGS ON}
-{$OPTIMIZATION ON}
+{$OPTIMIZATION OFF}
 {$OVERFLOWCHECKS OFF}
 {$RANGECHECKS OFF}
 {$REFERENCEINFO ON}
 {$SAFEDIVIDE OFF}
-{$STACKFRAMES OFF}
+{$STACKFRAMES ON}
 {$TYPEDADDRESS OFF}
 {$VARSTRINGCHECKS ON}
 {$WRITEABLECONST OFF}
 {$MINENUMSIZE 1}
 {$IMAGEBASE $400000}
-{$DESCRIPTION 'TDbf for Delphi 7'}
+{$DESCRIPTION 'TDbf for Delphi 7 Designtime'}
+{$LIBSUFFIX '70'}
+{$DESIGNONLY}
 {$IMPLICITBUILD OFF}
 
 requires
   designide,
-  tdbf_d7r;
+  tdbf;
 
 contains
   dbf_reg in '..\..\src\dbf_reg.pas';

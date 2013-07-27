@@ -20,12 +20,12 @@ P=1
 Q=0
 R=0
 S=0
-T=0
+T=1
 U=0
 V=1
 W=0
 X=1
-Y=1
+Y=0
 Z=1
 ShowHints=1
 ShowWarnings=1
@@ -76,39 +76,35 @@ LocaleToUnicode=1
 ImagebaseMultiple=1
 SuspiciousTypecast=1
 PrivatePropAccessor=1
-UnsafeType=0
-UnsafeCode=0
-UnsafeCast=0
+UnsafeType=1
+UnsafeCode=1
+UnsafeCast=1
 [Linker]
 MapFile=0
 OutputObjs=0
 ConsoleApp=1
-DebugInfo=0
+DebugInfo=1
 RemoteSymbols=0
 MinStackSize=16384
 MaxStackSize=1048576
 ImageBase=4194304
-ExeDescription=TDbf for Delphi 7 RunTime
+ExeDescription=TDbf for Delphi 7 -runtime-
 [Directories]
 OutputDir=
-UnitOutputDir=
+UnitOutputDir=.\dcu
 PackageDLLOutputDir=
 PackageDCPOutputDir=
 SearchPath=
-Packages=vclx;vcl;rtl;dbrtl;vcldb;bdertl;vclactnband
+Packages=vcl;rtl;xmlide;xmlrtl;vclx;corbaide;proide;dsnapcrba;dsnap;dbrtl;vcldb;bdertl;delphicorba;vclie;stride;direct
 Conditionals=
 DebugSourceDirs=
 UsePackages=0
 [Parameters]
 RunParams=
-HostApplication=
+HostApplication=C:\Program Files\Borland\Delphi7\Bin\delphi32.exe
 Launcher=
 UseLauncher=0
 DebugCWD=
-[Language]
-ActiveLang=
-ProjectLang=
-RootDir=H:\WinProgs\Borland\Delphi7\Bin\
 [Version Info]
 IncludeVerInfo=1
 AutoIncBuild=0
@@ -121,7 +117,7 @@ PreRelease=0
 Special=0
 Private=0
 DLL=0
-Locale=2057
+Locale=1043
 CodePage=1252
 [Version Info Keys]
 CompanyName=
@@ -137,3 +133,9 @@ Comments=
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
+[HistoryLists\hlSearchPath]
+Count=1
+Item0=$(DELPHI)\Lib\Debug
+[HistoryLists\hlUnitOutputDirectory]
+Count=1
+Item0=.\dcu
