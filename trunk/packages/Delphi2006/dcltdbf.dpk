@@ -1,7 +1,6 @@
-package tdbf_d2006d;
+package dcltdbf;
 
 {$R *.res}
-
 {$ALIGN 8}
 {$ASSERTIONS ON}
 {$BOOLEVAL OFF}
@@ -24,11 +23,13 @@ package tdbf_d2006d;
 {$MINENUMSIZE 1}
 {$IMAGEBASE $400000}
 {$DESCRIPTION 'TDbf for Delphi 2006'}
+{$LIBSUFFIX '100'}
+{$DESIGNONLY}
 {$IMPLICITBUILD OFF}
 
 requires
   designide,
-  tdbf_d2006r;
+  tdbf;
 
 contains
   dbf_reg in '..\..\src\dbf_reg.pas';
