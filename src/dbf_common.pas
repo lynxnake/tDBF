@@ -41,6 +41,12 @@ type
   TDbfRecordBuffer = PAnsiChar;
 {$endif}
 
+{$ifdef SUPPORT_TVALUEBUFFER}
+  TDbfValueBuffer = TValueBuffer;
+{$else}
+  TDbfValueBuffer = pointer;
+{$endif}
+
 {$ifdef SUPPORT_TRECBUF}
 type
   TDbfRecBuf = DB.TRecBuf;

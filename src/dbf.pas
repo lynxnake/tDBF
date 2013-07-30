@@ -263,7 +263,7 @@ type
     function  IsCursorOpen: Boolean; override; {virtual abstract}
     procedure SetBookmarkFlag(Buffer: TDbfRecordBuffer; Value: TBookmarkFlag); override; {virtual abstract}
     procedure SetBookmarkData(Buffer: TDbfRecordBuffer; Data: Pointer); override; {virtual abstract}
-    procedure SetFieldData(Field: TField; Buffer: Pointer);
+    procedure SetFieldData(Field: TField; Buffer: TDbfValueBuffer);
 	  {$ifdef SUPPORT_OVERLOAD}overload;{$ENDIF} override; {virtual abstract}
 
     { virtual methods (mostly optionnal) }
@@ -294,7 +294,7 @@ type
     destructor Destroy; override;
 
     { abstract methods }
-    function GetFieldData(Field: TField; Buffer: Pointer): Boolean;
+    function GetFieldData(Field: TField; Buffer: TDbfValueBuffer): Boolean;
       {$ifdef SUPPORT_OVERLOAD} overload; {$endif} override; {virtual abstract}
     { virtual methods (mostly optionnal) }
     procedure Resync(Mode: TResyncMode); override;
@@ -306,9 +306,9 @@ type
 {$endif}
 
 {$ifdef SUPPORT_OVERLOAD}
-    function  GetFieldData(Field: TField; Buffer: Pointer; NativeFormat: Boolean): Boolean; overload;
+    function  GetFieldData(Field: TField; Buffer: TDbfValueBuffer; NativeFormat: Boolean): Boolean; overload;
       {$ifdef SUPPORT_BACKWARD_FIELDDATA} override; {$endif}
-    procedure SetFieldData(Field: TField; Buffer: Pointer; NativeFormat: Boolean); overload;
+    procedure SetFieldData(Field: TField; Buffer: TDbfValueBuffer; NativeFormat: Boolean); overload;
       {$ifdef SUPPORT_BACKWARD_FIELDDATA} override; {$endif}
 {$endif}
 
@@ -729,14 +729,14 @@ end;
 //  ftBCD:
 // ftDateTime is more difficult though
 
-function TDbf.GetFieldData(Field: TField; Buffer: Pointer): Boolean; {override virtual abstract from TDataset}
+function TDbf.GetFieldData(Field: TField; Buffer: TDbfValueBuffer): Boolean; {override virtual abstract from TDataset}
 {$ifdef SUPPORT_OVERLOAD}
 begin
   { calling through 'old' delphi 3 interface, use compatible/'native' format }
   Result := GetFieldData(Field, Buffer, true);
 end;
 
-function TDbf.GetFieldData(Field: TField; Buffer: Pointer; NativeFormat: Boolean): Boolean; {overload; override;}
+function TDbf.GetFieldData(Field: TField; Buffer: TDbfValueBuffer; NativeFormat: Boolean): Boolean; {overload; override;}
 {$else}
 const
   { no overload => delphi 3 => use compatible/'native' format }
@@ -758,19 +758,24 @@ begin
   end else begin { weird calculated fields voodoo (from dbtables).... }
     Inc(Src, Field.Offset + GetRecordSize); // Was PChar(Src)
     Result := Boolean(Src[0]);
-    if Result and (Buffer <> nil) then
+    if Result and (Buffer <> nil) then begin
+{$ifdef SUPPORT_TVALUEBUFFER}
+      Move(Src[1], Buffer[0], Field.DataSize);
+{$else}
       Move(Src[1], Buffer^, Field.DataSize);
+{$endif}
+    end;
   end;
 end;
 
-procedure TDbf.SetFieldData(Field: TField; Buffer: Pointer); {override virtual abstract from TDataset}
+procedure TDbf.SetFieldData(Field: TField; Buffer: TDbfValueBuffer); {override virtual abstract from TDataset}
 {$ifdef SUPPORT_OVERLOAD}
 begin
   { calling through 'old' delphi 3 interface, use compatible/'native' format }
   SetFieldData(Field, Buffer, true);
 end;
 
-procedure TDbf.SetFieldData(Field: TField; Buffer: Pointer; NativeFormat: Boolean); {overload; override;}
+procedure TDbf.SetFieldData(Field: TField; Buffer: TDbfValueBuffer; NativeFormat: Boolean); {overload; override;}
 {$else}
 const
   { no overload => delphi 3 => use compatible/'native' format }
@@ -788,7 +793,11 @@ begin
     Inc(Dst, RecordSize + Field.Offset); // Was PChar(Dst)
     if Buffer <> nil then begin
       Dst[0] := #1;
+{$ifdef SUPPORT_TVALUEBUFFER}
+      Move(Buffer[0], Dst[1], Field.DataSize);
+{$else}
       Move(Buffer^, Dst[1], Field.DataSize);
+{$endif}
 	end else
       Dst[0] := #0;
   end;     { end of ***** fkCalculated, fkLookup ***** }
