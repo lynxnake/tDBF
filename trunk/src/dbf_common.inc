@@ -315,6 +315,7 @@
 
 {$ifdef DELPHI_XE3}
   {$define FLOATREC_DIGITS_IS_BYTE}
+  {$define SUPPORT_TVALUEBUFFER}
 {$endif}
 
 {$ifdef DELPHI_XE4}
