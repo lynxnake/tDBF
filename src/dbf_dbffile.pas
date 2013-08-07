@@ -220,6 +220,34 @@ const
 // thanks to Bruno Depero from Italy
 // and Andreas Wöllenstein from Denmark
 //====================================================================
+
+{$ifdef SUPPORT_FORMATSETTINGSTYPE}
+// if we have the overloaded FloatToText versions that take a TFormatSettings parameter,
+// we use them with this variable (initialized in the inialization section).
+// Otherwise the code is more complex.
+var
+  FORMAT_SETTIGS_DECIMAL_POINT: TFormatSettings;
+{$endif SUPPORT_FORMATSETTINGSTYPE}
+
+
+{$ifdef SUPPORT_FORMATSETTINGSTYPE}
+function DbfStrToFloat(const Src: PAnsiChar; const Size: Integer): Extended; // Was PChar
+var
+  eValue: extended;
+  endChar: AnsiChar;
+begin
+  // temp null-term string
+  endChar := (PAnsiChar(Src) + Size)^;
+  (PAnsiChar(Src) + Size)^ := #0;
+  // convert to double
+  if TextToFloat(PAnsiChar(Src), eValue, fvExtended, FORMAT_SETTIGS_DECIMAL_POINT) then
+    Result := eValue
+  else
+    Result := 0;
+  // restore Char of null-term
+  (PAnsiChar(Src) + Size)^ := endChar;
+end;
+{$else SUPPORT_FORMATSETTINGSTYPE}
 function DbfStrToFloat(const Src: PAnsiChar; const Size: Integer): Extended; // Was PChar
 var
   iPos: PAnsiChar;
@@ -250,29 +278,33 @@ begin
   // restore Char of null-term
   (PAnsiChar(Src) + Size)^ := endChar;
 end;
+{$endif SUPPORT_FORMATSETTINGS}
 
-//-------------------------------------------------------------------------------
-// Rev. 2010-02-23 : Rafal Chlopek - shorter conversion
-//-------------------------------------------------------------------------------
+{$ifdef SUPPORT_FORMATSETTINGSTYPE}
 procedure FloatToDbfStr(const Val: Extended; const Size, Precision: Integer; const Dest: PAnsiChar);
-var B : PAnsiChar;
-    s : AnsiString;
-    resLen: Integer;
-{var
-  Buffer: array [0..24] of AnsiChar;
+var
+  Buffer: array[0..63] of char;
+  B : PAnsiChar;
+  s : AnsiString;
   resLen: Integer;
-  iPos: PAnsiChar;}
 begin
-  s := AnsiString(Format('%*.*f', [Size, Precision, Val]));
-  resLen := Length(s);
+  resLen := FloatToText(@Buffer, Val, fvExtended, ffFixed, Size, Precision, FORMAT_SETTIGS_DECIMAL_POINT);
+  SetString(s, PChar(@Buffer), resLen);
   B := PAnsiChar(s);
 
   // fill destination with spaces
   FillChar(Dest^, Size, ' ');
   // now copy right-aligned to destination
   Move(B^, Dest[Size-resLen], resLen);
-
-  (*
+end;
+{$else SUPPORT_FORMATSETTINGSTYPE}
+procedure FloatToDbfStr(const Val: Extended; const Size, Precision: Integer; const Dest: PAnsiChar);
+var
+  Buffer: array[0..63] of char;
+  B : PAnsiChar;
+  s : AnsiString;
+  resLen: Integer;
+begin
   // convert to temporary buffer
   resLen := FloatToText(PWideChar(@Buffer[0]), Val, {$ifndef FPC_VERSION}fvExtended,{$endif} ffFixed, Size, Precision);
   // prevent overflow in destination buffer
@@ -290,8 +322,9 @@ begin
   // fill destination with spaces
   FillChar(Dest^, Size, ' ');
   // now copy right-aligned to destination
-  Move(Buffer[0], Dest[Size-resLen], resLen);    *)
+  Move(Buffer[0], Dest[Size-resLen], resLen);
 end;
+{$endif SUPPORT_FORMATSETTINGS}
 
 //-------------------------------------------------------------------------------
 // Rev. 2010-02-23 : Rafal Chlopek - shorter conversion
@@ -1464,13 +1497,8 @@ var
 {$endif}
 
   procedure CorrectYear(var wYear: Integer);
-  var wD, wM, wY, CenturyBase: Word;
-
-{$ifndef DELPHI_5}
-  // Delphi 3 standard-behavior no change possible
-  const TwoDigitYearCenturyWindow= 0;
-{$endif}
-
+  var
+    wD, wM, wY, CenturyBase: Word;
   begin
      if wYear >= 100 then
        Exit;
@@ -2804,7 +2832,21 @@ begin
   Result := FCodePages.IndexOf(Pointer(ACodePage)) >= 0;
 end;
 
+function GetUserDefaultLocaleSettings: TFormatSettings;
+begin
+{$IFDEF RTL220_UP}
+  Result := TFormatSettings.Create(GetUserDefaultLCID);
+{$ELSE}
+  GetLocaleFormatSettings(GetUserDefaultLCID, Result);
+{$ENDIF}
+end;
+
 initialization
+{$ifdef SUPPORT_FORMATSETTINGSTYPE}
+  FORMAT_SETTIGS_DECIMAL_POINT := GetUserDefaultLocaleSettings;
+  FORMAT_SETTIGS_DECIMAL_POINT.DecimalSeparator := '.';
+  FORMAT_SETTIGS_DECIMAL_POINT.ThousandSeparator := #0;
+{$endif SUPPORT_FORMATSETTINGSTYPE}
 finalization
   FreeAndNil(DbfGlobals);
 

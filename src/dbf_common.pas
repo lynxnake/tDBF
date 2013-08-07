@@ -397,18 +397,28 @@ end;
 {$endif}
 {$endif}
 
-{$ifdef SUPPORT_FORMATSETTINGS}
 function TwoDigitYearCenturyWindow: word;
 begin
+{$ifdef SUPPORT_FORMATSETTINGS}
   Result := FormatSettings.TwoDigitYearCenturyWindow;
+{$else SUPPORT_FORMATSETTINGS}
+  {$ifdef SUPPORT_TWODIGITYEARCENTURYWINDOW}
+    Result := SysUtils.TwoDigitYearCenturyWindow;
+  {$else SUPPORT_TWODIGITYEARCENTURYWINDOW}
+    // Delphi 3 standard-behavior no change possible
+    Result := 0;
+  {$endif SUPPORT_TWODIGITYEARCENTURYWINDOW}
+{$endif SUPPORT_FORMATSETTINGS}
 end;
 
 function DecimalSeparator: char;
 begin
+{$ifdef SUPPORT_FORMATSETTINGS}
   Result := FormatSettings.DecimalSeparator;
-end;
-
+{$else SUPPORT_FORMATSETTINGS}
+  Result := SysUtils.DecimalSeparator;
 {$endif SUPPORT_FORMATSETTINGS}
+end;
 
 {$ifdef USE_CACHE}
 
