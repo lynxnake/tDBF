@@ -322,6 +322,7 @@
 
 {$ifdef Delphi_XE}
   {$define SUPPORT_FORMATSETTINGS}
+  {$define SUPPORT_FORMATSETTINGS_CREATE}
 {$endif}
 
 {$ifdef DELPHI_XE3}
@@ -332,6 +333,7 @@
 {$ifdef DELPHI_XE4}
   {$define SUPPORT_TRECBUF}
   {$define SUPPORT_ANSISTRINGS_UNIT}
+  {$define SUPPORT_TVALUEBUFFER_VAR}
 {$endif}
 
 //------------------------------------------------------

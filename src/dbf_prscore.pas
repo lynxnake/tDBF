@@ -249,14 +249,8 @@ var
 
 implementation
 
-{$ifdef SUPPORT_ANSISTRINGS_UNIT}
 uses
-  AnsiStrings;
-{$ENDIF}
-
-{$ifdef SUPPORT_ANSISTRINGS_UNIT}
-{$include 'ansistrings.inc'}
-{$endif}
+  dbf_AnsiStrings;
 
 procedure LinkVariable(ExprRec: PExpressionRec);
 begin
@@ -1285,7 +1279,7 @@ begin
   // convert to string
   Param^.Res.AssureSpace(width);
   extVal := PDouble(Param^.Args[0])^;
-  resWidth := FloatToText(Param^.Res.MemoryPos^, extVal, {$ifndef FPC_VERSION}fvExtended,{$endif} ffFixed, 18, numDigits);
+  resWidth := dbfFloatToText(Param^.Res.MemoryPos^, extVal, {$ifndef FPC_VERSION}fvExtended,{$endif} ffFixed, 18, numDigits);
   // always use dot as decimal separator
   if numDigits > 0 then
     Param^.Res.MemoryPos^[resWidth-numDigits-1] := '.';
@@ -1382,7 +1376,7 @@ procedure FuncSubString(Param: PExpressionRec);
 var
   srcLen, index, count: Integer;
 begin
-  srcLen := StrLen(Param^.Args[0]);
+  srcLen := dbfStrLen(Param^.Args[0]);
   index := PInteger(Param^.Args[1])^ - 1;
   if Param^.Args[2] <> nil then
   begin
@@ -1398,7 +1392,7 @@ procedure FuncLeftString(Param: PExpressionRec);
 var
   srcLen, index, count: Integer;
 begin
-  srcLen := StrLen(Param^.Args[0]);
+  srcLen := dbfStrLen(Param^.Args[0]);
   index := 0;
   count := PInteger(Param^.Args[1])^;
   if index + count > srcLen then
@@ -1413,7 +1407,7 @@ var
 begin
   // first copy
   Arg0 := Param^.Args[0];
-  Len := StrLen(Arg0);
+  Len := dbfStrLen(Arg0);
   Param^.Res.Append(Arg0, Len);
   // Append may have reallocated memory,
   // but correct for "Inc(FMemoryPos^, Length);"
@@ -1430,7 +1424,7 @@ var
 begin
   // first copy
   Arg0 := Param^.Args[0];
-  Len := StrLen(Arg0);
+  Len := dbfStrLen(Arg0);
   Param^.Res.Append(Arg0, Len);
   // Append may have reallocated memory,
   // but correct for "Inc(FMemoryPos^, Length);"
@@ -1647,7 +1641,7 @@ var
   match: boolean;
   str0, str1: AnsiString; // Was string
 begin
-  arg1len := StrLen(Param^.Args[1]);
+  arg1len := dbfStrLen(Param^.Args[1]);
   if Param^.Args[1][0] = '*' then
   begin
     if Param^.Args[1][arg1len-1] = '*' then
@@ -1657,7 +1651,7 @@ begin
       setlength(str1, arg1len-2);
       match := Pos(str1, str0)>0; // Was AnsiPos(str0, str1) = 0
     end else begin
-      arg0len := StrLen(Param^.Args[0]);
+      arg0len := dbfStrLen(Param^.Args[0]);
       // at least length without asterisk
       match := arg0len >= arg1len - 1;
       if match then
@@ -1666,7 +1660,7 @@ begin
   end else
   if Param^.Args[1][arg1len-1] = '*' then
   begin
-    arg0len := StrLen(Param^.Args[0]);
+    arg0len := dbfStrLen(Param^.Args[0]);
     match := arg0len >= arg1len - 1;
     if match then
       match := AnsiStrLIComp(Param^.Args[0], Param^.Args[1], arg1len-1) = 0;
@@ -1706,7 +1700,7 @@ var
   arg0len, arg1len: integer;
   match: boolean;
 begin
-  arg1len := StrLen(Param^.Args[1]);
+  arg1len := dbfStrLen(Param^.Args[1]);
   if Param^.Args[1][0] = '*' then
   begin
     if Param^.Args[1][arg1len-1] = '*' then
@@ -1715,7 +1709,7 @@ begin
       match := AnsiStrPos(Param^.Args[0], Param^.Args[1]+1) <> nil;
       Param^.Args[1][arg1len-1] := '*';
     end else begin
-      arg0len := StrLen(Param^.Args[0]);
+      arg0len := dbfStrLen(Param^.Args[0]);
       // at least length without asterisk
       match := arg0len >= arg1len - 1;
       if match then
@@ -1724,7 +1718,7 @@ begin
   end else
   if Param^.Args[1][arg1len-1] = '*' then
   begin
-    arg0len := StrLen(Param^.Args[0]);
+    arg0len := dbfStrLen(Param^.Args[0]);
     match := arg0len >= arg1len - 1;
     if match then
       match := AnsiStrLComp(Param^.Args[0], Param^.Args[1], arg1len-1) = 0;
@@ -1761,7 +1755,7 @@ end;
 
 procedure FuncStr_GTE(Param: PExpressionRec);
 begin
-  Param^.Res.MemoryPos^^ := AnsiChar(AnsiStrComp(Param^.Args[0], Param^.Args[1]) >= 0); // Was Char
+  Param^.Res.MemoryPos^^ := AnsiChar(dbfStrComp(Param^.Args[0], Param^.Args[1]) >= 0); // Was Char
 end;
 
 procedure Func_FF_EQ(Param: PExpressionRec);

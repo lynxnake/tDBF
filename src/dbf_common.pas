@@ -172,21 +172,12 @@ implementation
 
 {$ifdef MSWINDOWS}
 uses
-{$ifdef SUPPORT_ANSISTRINGS_UNIT}
-  AnsiStrings,
-{$ENDIF}
+  dbf_AnsiStrings,
   Windows;
 {$else}
-{$ifdef SUPPORT_ANSISTRINGS_UNIT}
 uses
-  AnsiStrings;
-{$ENDIF}
+  dbf_AnsiStrings;
 {$endif}
-
-{$ifdef SUPPORT_ANSISTRINGS_UNIT}
-{$include 'ansistrings.inc'}
-{$endif}
-
 
 //====================================================================
 
@@ -546,7 +537,7 @@ var
   wideBytes: Cardinal;
 begin
   if Length = -1 then
-    Length := StrLen(Src);
+    Length := dbfStrLen(Src);
   Result := Length;
   if (FromCP = GetOEMCP) and (ToCP = GetACP) then
   begin

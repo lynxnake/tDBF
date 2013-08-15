@@ -199,18 +199,11 @@ uses
 {$ifdef SUPPORT_MATH_UNIT}
   Math,
 {$endif}
-{$ifdef SUPPORT_ANSISTRINGS_UNIT}
-  AnsiStrings,
-{$ENDIF}
+  dbf_AnsiStrings,
   dbf_str, dbf_lang, dbf_prssupp, dbf_prsdef;
 
 const
   sDBF_DEC_SEP = '.';
-
-{$ifdef SUPPORT_ANSISTRINGS_UNIT}
-{$include 'ansistrings.inc'}
-{$endif}
-
 
 {$I dbf_struct.inc}
 
@@ -226,7 +219,7 @@ const
 // we use them with this variable (initialized in the inialization section).
 // Otherwise the code is more complex.
 var
-  FORMAT_SETTIGS_DECIMAL_POINT: TFormatSettings;
+  FORMAT_SETTINGS_DECIMAL_POINT: TFormatSettings;
 {$endif SUPPORT_FORMATSETTINGSTYPE}
 
 
@@ -240,7 +233,7 @@ begin
   endChar := (PAnsiChar(Src) + Size)^;
   (PAnsiChar(Src) + Size)^ := #0;
   // convert to double
-  if TextToFloat(PAnsiChar(Src), eValue, fvExtended, FORMAT_SETTIGS_DECIMAL_POINT) then
+  if dbfTextToFloatFmt(PAnsiChar(Src), eValue, fvExtended, FORMAT_SETTINGS_DECIMAL_POINT) then
     Result := eValue
   else
     Result := 0;
@@ -261,14 +254,14 @@ begin
   if DecimalSeparator <> sDBF_DEC_SEP then
   begin
     // search dec sep
-    iPos := StrScan(PAnsiChar(Src), AnsiChar(sDBF_DEC_SEP));
+    iPos := dbfStrScan(Src, AnsiChar(sDBF_DEC_SEP));
     // replace
     if iPos <> nil then
       iPos^ := AnsiChar(DecimalSeparator);
   end else
     iPos := nil;
   // convert to double
-  if TextToFloat(PAnsiChar(Src), eValue {$ifndef VER1_0}, fvExtended{$endif}) then
+  if dbfTextToFloat(Src, eValue {$ifndef VER1_0}, fvExtended{$endif}) then
     Result := eValue
   else
     Result := 0;
@@ -288,7 +281,7 @@ var
   s : AnsiString;
   resLen: Integer;
 begin
-  resLen := FloatToText(@Buffer, Val, fvExtended, ffFixed, Size, Precision, FORMAT_SETTIGS_DECIMAL_POINT);
+  resLen := dbfFloatToTextFmt(PAnsiChar(@Buffer), Val, fvExtended, ffFixed, Size, Precision, FORMAT_SETTINGS_DECIMAL_POINT);
   SetString(s, PChar(@Buffer), resLen);
   B := PAnsiChar(s);
 
@@ -306,7 +299,7 @@ var
   resLen: Integer;
 begin
   // convert to temporary buffer
-  resLen := FloatToText(PWideChar(@Buffer[0]), Val, {$ifndef FPC_VERSION}fvExtended,{$endif} ffFixed, Size, Precision);
+  resLen := dbfFloatToText(PWideChar(@Buffer[0]), Val, {$ifndef FPC_VERSION}fvExtended,{$endif} ffFixed, Size, Precision);
   // prevent overflow in destination buffer
   if resLen > Size then
     resLen := Size;
@@ -315,7 +308,7 @@ begin
   // we only have to convert if decimal separator different
   if DecimalSeparator <> sDBF_DEC_SEP then
   begin
-    iPos := StrScan(@Buffer[0], AnsiChar(DecimalSeparator));
+    iPos := dbfStrScan(PAnsiChar(@Buffer[0]), AnsiChar(DecimalSeparator));
     if iPos <> nil then
       iPos^ := sDBF_DEC_SEP;
   end;
@@ -471,10 +464,10 @@ begin
         //  'FOX..WIN' -> Charset 1252 (ansi)
         if (LangStr[0] = 'D') and (LangStr[1] = 'B') then
         begin
-          if StrLComp(LangStr+2, 'WIN', 3) = 0 then
+          if dbfStrLComp(LangStr+2, 'WIN', 3) = 0 then
             FFileCodePage := 1252
           else
-          if StrLComp(LangStr+2, 'HEBREW', 6) = 0 then
+          if dbfStrLComp(LangStr+2, 'HEBREW', 6) = 0 then
           begin
             FFileCodePage := 1255;
           end else begin
@@ -483,9 +476,9 @@ begin
               FFileCodePage := FFileCodePage * 10 + Ord(LangStr[5]) - Ord('0');
           end;
         end else
-        if StrLComp(LangStr, 'FOX', 3) = 0 then
+        if dbfStrLComp(LangStr, 'FOX', 3) = 0 then
         begin
-          if StrLComp(LangStr+5, 'WIN', 3) = 0 then
+          if dbfStrLComp(LangStr+5, 'WIN', 3) = 0 then
             FFileCodePage := 1252
           else
             FFileCodePage := GetIntFromStrLength(LangStr+5, 3, 0)
@@ -664,7 +657,7 @@ begin
       FillChar(Header^, HeaderSize, #0);
       PDbfHdr(Header)^.VerDBF := $04;
       // write language string
-      StrPLCopy(
+      dbfStrPLCopy(
         @PAfterHdrVII(PAnsiChar(Header)+SizeOf(rDbfHdr))^.LanguageDriverName[32], // Was PChar!!!
         ConstructLangName(FFileCodePage, lLocaleID, false), 
         63-32);
@@ -726,7 +719,7 @@ begin
       if FDbfVersion = xBaseVII then
       begin
         FillChar(lFieldDescVII, SizeOf(lFieldDescVII), #0);
-        StrPLCopy(lFieldDescVII.FieldName, lFieldDef.FieldName, SizeOf(lFieldDescVII.FieldName)-1);
+        dbfStrPLCopy(lFieldDescVII.FieldName, lFieldDef.FieldName, SizeOf(lFieldDescVII.FieldName)-1);
         lFieldDescVII.FieldType := lFieldDef.NativeFieldType;
         lFieldDescVII.FieldSize := lSize;
         lFieldDescVII.FieldPrecision := lPrec;
@@ -734,7 +727,7 @@ begin
         //lFieldDescVII.MDXFlag := ???
       end else begin
         FillChar(lFieldDescIII, SizeOf(lFieldDescIII), #0);
-        StrPLCopy(lFieldDescIII.FieldName, lFieldDef.FieldName, SizeOf(lFieldDescIII.FieldName)-1);
+        dbfStrPLCopy(lFieldDescIII.FieldName, lFieldDef.FieldName, SizeOf(lFieldDescIII.FieldName)-1);
         lFieldDescIII.FieldType := lFieldDef.NativeFieldType;
         lFieldDescIII.FieldSize := lSize;
         lFieldDescIII.FieldPrecision := lPrec;
@@ -1722,7 +1715,7 @@ begin
           SaveDateToDst;
         end;
       ftString:
-        StrLCopy(PAnsiChar(Dst), PAnsiChar(Src), FieldSize);
+        dbfStrLCopy(PAnsiChar(Dst), PAnsiChar(Src), FieldSize);
     end else begin
       case DataType of
       ftString:
@@ -1960,7 +1953,7 @@ begin
         ftString:
           begin
             // copy data
-            Len := StrLen(PAnsiChar(Src));
+            Len := dbfStrLen(PAnsiChar(Src));
             if Len > FieldSize then
               Len := FieldSize;
             Move(Src^, Dst^, Len);
@@ -2761,7 +2754,7 @@ begin
 {$IFDEF WINAPI_IS_UNICODE}
   TempCodePageList.Add(Pointer(StrToIntDef(string(CodePageString), -1))); // Avoid conversion to AnsiString
 {$ELSE}
-  TempCodePageList.Add(Pointer(GetIntFromStrLength(CodePageString, StrLen(CodePageString), -1)));
+  TempCodePageList.Add(Pointer(GetIntFromStrLength(CodePageString, dbfStrLen(CodePageString), -1)));
 {$ENDIF}
 
   // continue enumeration
@@ -2832,20 +2825,23 @@ begin
   Result := FCodePages.IndexOf(Pointer(ACodePage)) >= 0;
 end;
 
+{$ifdef SUPPORT_FORMATSETTINGSTYPE}
 function GetUserDefaultLocaleSettings: TFormatSettings;
 begin
-{$IFDEF RTL220_UP}
-  Result := TFormatSettings.Create(GetUserDefaultLCID);
-{$ELSE}
+{$ifdef SUPPORT_FORMATSETTINGS_CREATE}
+  Result := TFormatSettings.Create('');
+{$else}
+//  Result := TFormatSettings.Create(GetUserDefaultLCID);
   GetLocaleFormatSettings(GetUserDefaultLCID, Result);
-{$ENDIF}
+{$endif}
 end;
+{$endif SUPPORT_FORMATSETTINGSTYPE}
 
 initialization
 {$ifdef SUPPORT_FORMATSETTINGSTYPE}
-  FORMAT_SETTIGS_DECIMAL_POINT := GetUserDefaultLocaleSettings;
-  FORMAT_SETTIGS_DECIMAL_POINT.DecimalSeparator := '.';
-  FORMAT_SETTIGS_DECIMAL_POINT.ThousandSeparator := #0;
+  FORMAT_SETTINGS_DECIMAL_POINT := GetUserDefaultLocaleSettings;
+  FORMAT_SETTINGS_DECIMAL_POINT.DecimalSeparator := '.';
+  FORMAT_SETTINGS_DECIMAL_POINT.ThousandSeparator := #0;
 {$endif SUPPORT_FORMATSETTINGSTYPE}
 finalization
   FreeAndNil(DbfGlobals);

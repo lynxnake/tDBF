@@ -294,8 +294,15 @@ type
     destructor Destroy; override;
 
     { abstract methods }
+
+    {$ifdef SUPPORT_TVALUEBUFFER_VAR}
+    function GetFieldData(Field: TField; var Buffer: TDbfValueBuffer): Boolean;
+      {$ifdef SUPPORT_OVERLOAD} overload; {$endif} override; {virtual abstract}
+    {$else SUPPORT_TVALUEBUFFER_VAR}
     function GetFieldData(Field: TField; Buffer: TDbfValueBuffer): Boolean;
       {$ifdef SUPPORT_OVERLOAD} overload; {$endif} override; {virtual abstract}
+    {$endif SUPPORT_TVALUEBUFFER_VAR}
+
     { virtual methods (mostly optionnal) }
     procedure Resync(Mode: TResyncMode); override;
     function CreateBlobStream(Field: TField; Mode: TBlobStreamMode): TStream; override; {virtual}
@@ -306,11 +313,16 @@ type
 {$endif}
 
 {$ifdef SUPPORT_OVERLOAD}
+    {$ifdef SUPPORT_TVALUEBUFFER_VAR}
+    function  GetFieldData(Field: TField; var Buffer: TDbfValueBuffer; NativeFormat: Boolean): Boolean; overload;
+      {$ifdef SUPPORT_BACKWARD_FIELDDATA} override; {$endif}
+    {$else SUPPORT_TVALUEBUFFER_VAR}
     function  GetFieldData(Field: TField; Buffer: TDbfValueBuffer; NativeFormat: Boolean): Boolean; overload;
       {$ifdef SUPPORT_BACKWARD_FIELDDATA} override; {$endif}
+    {$endif SUPPORT_TVALUEBUFFER_VAR}
     procedure SetFieldData(Field: TField; Buffer: TDbfValueBuffer; NativeFormat: Boolean); overload;
       {$ifdef SUPPORT_BACKWARD_FIELDDATA} override; {$endif}
-{$endif}
+{$endif SUPPORT_OVERLOAD}
 
     function CompareBookmarks(Bookmark1, Bookmark2: TBookmark): Integer; override;
     procedure CheckDbfFieldDefs(ADbfFieldDefs: TDbfFieldDefs);
@@ -488,9 +500,7 @@ uses
 {$ifdef SUPPORT_SEPARATE_VARIANTS_UNIT}
   Variants,
 {$endif}
-{$ifdef SUPPORT_ANSISTRINGS_UNIT}
-  AnsiStrings,
-{$ENDIF}
+  dbf_AnsiStrings,
   dbf_idxcur,
   dbf_memo,
   dbf_str;
@@ -500,10 +510,6 @@ const
   // TODO: move these to DBConsts
   SNotEditing = 'Dataset not in edit or insert mode';
   SCircularDataLink = 'Circular datalinks are not allowed';
-{$endif}
-
-{$ifdef SUPPORT_ANSISTRINGS_UNIT}
-{$include 'ansistrings.inc'}
 {$endif}
 
 function TableLevelToDbfVersion(TableLevel: integer): TXBaseVersion;
@@ -729,14 +735,22 @@ end;
 //  ftBCD:
 // ftDateTime is more difficult though
 
+{$ifdef SUPPORT_TVALUEBUFFER_VAR}
+function TDbf.GetFieldData(Field: TField; var Buffer: TDbfValueBuffer): Boolean; {override virtual abstract from TDataset}
+{$else SUPPORT_TVALUEBUFFER_VAR}
 function TDbf.GetFieldData(Field: TField; Buffer: TDbfValueBuffer): Boolean; {override virtual abstract from TDataset}
+{$endif SUPPORT_TVALUEBUFFER_VAR}
 {$ifdef SUPPORT_OVERLOAD}
 begin
   { calling through 'old' delphi 3 interface, use compatible/'native' format }
   Result := GetFieldData(Field, Buffer, true);
 end;
 
+{$ifdef SUPPORT_TVALUEBUFFER_VAR}
+function TDbf.GetFieldData(Field: TField; var Buffer: TDbfValueBuffer; NativeFormat: Boolean): Boolean; {overload; override;}
+{$else SUPPORT_TVALUEBUFFER_VAR}
 function TDbf.GetFieldData(Field: TField; Buffer: TDbfValueBuffer; NativeFormat: Boolean): Boolean; {overload; override;}
+{$endif SUPPORT_TVALUEBUFFER_VAR}
 {$else}
 const
   { no overload => delphi 3 => use compatible/'native' format }
@@ -2072,7 +2086,7 @@ begin
     begin
       Result := FOnTranslate(Self, Src, Dest, ToOem);
       if Result = -1 then
-        Result := StrLen(Dest);
+        Result := dbfStrLen(Dest);
     end else begin
       if FTranslationMode <> tmNoneNeeded then
       begin
@@ -2758,7 +2772,7 @@ end;
 procedure TDbf.ExtractKey(KeyBuffer: PAnsiChar);
 begin
   if FIndexFile <> nil then
-    StrCopy(FIndexFile.ExtractKeyFromBuffer(GetCurrentBuffer), KeyBuffer)
+    dbfStrCopy(FIndexFile.ExtractKeyFromBuffer(GetCurrentBuffer), KeyBuffer)
   else
     KeyBuffer[0] := #0;
 end;
