@@ -55,14 +55,8 @@ type
 //====================================================================
 implementation
 
-{$ifdef SUPPORT_ANSISTRINGS_UNIT}
 uses
-  AnsiStrings;
-{$ENDIF}
-
-{$ifdef SUPPORT_ANSISTRINGS_UNIT}
-{$include 'ansistrings.inc'}
-{$endif}
+  dbf_AnsiStrings;
 
 //==========================================================
 //============ TIndexCursor
@@ -152,9 +146,9 @@ begin
     end;
     Result := etInteger;
   end else begin
-    StrPLCopy(ABuffer, AnsiString(Key), TIndexFile(PagedFile).KeyLen); // PChar cast removed, AnsiString cast added
+    dbfStrPLCopy(ABuffer, AnsiString(Key), TIndexFile(PagedFile).KeyLen); // PChar cast removed, AnsiString cast added
     // we have null-terminated string, pad with spaces if string too short
-    currLen := StrLen(ABuffer);
+    currLen := dbfStrLen(ABuffer);
     FillChar(ABuffer[currLen], TIndexFile(PagedFile).KeyLen-currLen, ' ');
     Result := etString;
   end;
@@ -174,7 +168,7 @@ begin
     // nothing needs to be done
   end else begin
     // check if string long enough then no copying needed
-    userLen := StrLen(Key);
+    userLen := dbfStrLen(Key);
     keyLen := TIndexFile(PagedFile).KeyLen;
     if userLen < keyLen then
     begin

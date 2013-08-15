@@ -1,0 +1,44 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{e5761f12-aa14-4452-a83b-4d0ffba751b6}</ProjectGuid>
+  </PropertyGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <Projects Include="dcltdbf.dproj" />
+    <Projects Include="tdbf.dproj" />
+  </ItemGroup>
+  <ProjectExtensions>
+    <Borland.Personality>Default.Personality</Borland.Personality>
+    <Borland.ProjectType />
+    <BorlandProject>
+  <BorlandProject xmlns=""> <Default.Personality> </Default.Personality> </BorlandProject></BorlandProject>
+  </ProjectExtensions>
+  <Target Name="tdbf">
+    <MSBuild Projects="tdbf.dproj" Targets="" />
+  </Target>
+  <Target Name="tdbf:Clean">
+    <MSBuild Projects="tdbf.dproj" Targets="Clean" />
+  </Target>
+  <Target Name="tdbf:Make">
+    <MSBuild Projects="tdbf.dproj" Targets="Make" />
+  </Target>
+  <Target Name="dcltdbf">
+    <MSBuild Projects="dcltdbf.dproj" Targets="" />
+  </Target>
+  <Target Name="dcltdbf:Clean">
+    <MSBuild Projects="dcltdbf.dproj" Targets="Clean" />
+  </Target>
+  <Target Name="dcltdbf:Make">
+    <MSBuild Projects="dcltdbf.dproj" Targets="Make" />
+  </Target>
+  <Target Name="Build">
+    <CallTarget Targets="tdbf;dcltdbf" />
+  </Target>
+  <Target Name="Clean">
+    <CallTarget Targets="tdbf:Clean;dcltdbf:Clean" />
+  </Target>
+  <Target Name="Make">
+    <CallTarget Targets="tdbf:Make;dcltdbf:Make" />
+  </Target>
+  <Import Condition="Exists('$(MSBuildBinPath)\Borland.Group.Targets')" Project="$(MSBuildBinPath)\Borland.Group.Targets" />
+</Project>

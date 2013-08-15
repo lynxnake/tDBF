@@ -405,18 +405,12 @@ type
 implementation
 
 uses
-{$ifdef SUPPORT_ANSISTRINGS_UNIT}
-  AnsiStrings,
-{$ENDIF}
+  dbf_AnsiStrings,
   dbf_dbffile,
   dbf_fields,
   dbf_str,
   dbf_prssupp,
   dbf_lang;
-
-{$ifdef SUPPORT_ANSISTRINGS_UNIT}
-{$include 'ansistrings.inc'}
-{$endif}
 
 const
   RecBOF = 0;
@@ -1602,7 +1596,7 @@ end;
 
 procedure TMdx4Tag.SetTagName(NewName: string);
 begin
-  StrPLCopy(PMdx4Tag(Tag)^.TagName, AnsiString(NewName), 10); // Was PChar, AnsiString cast added
+  dbfStrPLCopy(PMdx4Tag(Tag)^.TagName, AnsiString(NewName), 10); // Was PChar, AnsiString cast added
   PMdx4Tag(Tag)^.TagName[10] := #0;
 end;
 
@@ -1687,7 +1681,7 @@ end;
 
 procedure TMdx7Tag.SetTagName(NewName: string);
 begin
-  StrPLCopy(PMdx7Tag(Tag)^.TagName, AnsiString(NewName), 10); // was PChar, AnsiString cast added
+  dbfStrPLCopy(PMdx7Tag(Tag)^.TagName, AnsiString(NewName), 10); // was PChar, AnsiString cast added
   PMdx7Tag(Tag)^.TagName[32] := #0;
 end;
 
@@ -1735,7 +1729,7 @@ begin
     GetMem(TempBuffer, TDbfFile(DbfFile).RecordSize);
     try
       TDbfFile(DbfFile).InitRecord(TempBuffer);
-      FResultLen := StrLen(ExtractFromBuffer(TempBuffer));
+      FResultLen := dbfStrLen(ExtractFromBuffer(TempBuffer));
     finally
       FreeMem(TempBuffer);
     end;
@@ -2264,7 +2258,7 @@ begin
     PIndexHdr(FIndexHeader)^.KeyLen := SwapWordLE(8);
   CalcKeyProperties;
   // key desc
-  StrPLCopy(PIndexHdr(FIndexHeader)^.KeyDesc, AnsiString(FieldDesc), 219); // Was PChar, AnsiString cast added
+  dbfStrPLCopy(PIndexHdr(FIndexHeader)^.KeyDesc, AnsiString(FieldDesc), 219); // Was PChar, AnsiString cast added
   PIndexHdr(FIndexHeader)^.KeyDesc[219] := #0;
 
   // init various
@@ -2938,7 +2932,7 @@ begin
             ExtValue := PDouble(Result)^;
             FloatToDecimal(FloatRec, ExtValue, {$ifndef FPC_VERSION}fvExtended,{$endif} 9999, 15);
             if ExtValue <> 0.0 then
-              NumDecimals := StrLen(PAnsiChar(@FloatRec.Digits[0]))
+              NumDecimals := dbfStrLen(PAnsiChar(@FloatRec.Digits[0]))
             else
               NumDecimals := 0;
             // maximum number of decimals possible to encode in BCD is 16

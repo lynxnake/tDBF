@@ -354,14 +354,8 @@ function ExprCharToExprType(ExprChar: Char): TExpressionType;
 
 implementation
 
-{$ifdef SUPPORT_ANSISTRINGS_UNIT}
 uses
-  AnsiStrings;
-{$endif}
-
-{$ifdef SUPPORT_ANSISTRINGS_UNIT}
-{$include 'ansistrings.inc'}
-{$endif}
+  dbf_AnsiStrings;
 
 function ExprCharToExprType(ExprChar: Char): TExpressionType;
 begin
@@ -392,7 +386,7 @@ end;
 procedure _StringConstant(Param: PExpressionRec);
 begin
   with Param^ do
-    Res.Append(Args[0], StrLen(Args[0]));
+    Res.Append(Args[0], dbfStrLen(Args[0]));
 end;
 
 procedure _StringVariable(Param: PExpressionRec);
@@ -404,7 +398,7 @@ begin
   else
     length := -1;
   if length = -1 then
-    length := StrLen(PPAnsiChar(Param^.Args[0])^); // Was PPChar
+    length := dbfStrLen(PPAnsiChar(Param^.Args[0])^); // Was PPChar
   Param^.Res.Append(PPAnsiChar(Param^.Args[0])^, length); // Was PPChar
 end;
 

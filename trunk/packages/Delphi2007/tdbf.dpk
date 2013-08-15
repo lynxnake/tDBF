@@ -51,6 +51,7 @@ contains
   dbf_avl in '..\..\src\dbf_avl.pas',
   dbf_pgcfile in '..\..\src\dbf_pgcfile.pas',
   dbf_wtil in '..\..\src\dbf_wtil.pas',
-  dbf in '..\..\src\dbf.pas';
+  dbf in '..\..\src\dbf.pas',
+  dbf_AnsiStrings in '..\..\src\dbf_AnsiStrings.pas';
 
 end.

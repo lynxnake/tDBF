@@ -105,6 +105,7 @@
     <DCCReference Include="$(SystemRoot)\System32\rtl.dcp" />
     <DCCReference Include="$(SystemRoot)\System32\vcl.dcp" />
     <DCCReference Include="..\..\src\dbf.pas" />
+    <DCCReference Include="..\..\src\dbf_AnsiStrings.pas" />
     <DCCReference Include="..\..\src\dbf_avl.pas" />
     <DCCReference Include="..\..\src\dbf_collate.pas" />
     <DCCReference Include="..\..\src\dbf_common.pas" />
