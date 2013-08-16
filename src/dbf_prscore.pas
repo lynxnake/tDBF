@@ -1414,7 +1414,7 @@ begin
   Arg0 := (Param^.Res.MemoryPos)^;
   Dec(Arg0, Len);
   // make uppercase
-  AnsiStrUpper(Arg0);
+  dbfStrUpper(Arg0);
 end;
 
 procedure FuncLowercase(Param: PExpressionRec);
@@ -1431,7 +1431,7 @@ begin
   Arg0 := (Param^.Res.MemoryPos)^;
   Dec(Arg0, Len);
   // make lowercase
-  AnsiStrLower(Arg0);
+  dbfStrLower(Arg0);
 end;
 
 procedure FuncAdd_F_FF(Param: PExpressionRec);
@@ -1632,7 +1632,7 @@ end;
 
 procedure FuncStrI_EQ(Param: PExpressionRec);
 begin
-  Param^.Res.MemoryPos^^ := AnsiChar(AnsiStrIComp(Param^.Args[0], Param^.Args[1]) = 0); // Was Char
+  Param^.Res.MemoryPos^^ := AnsiChar(dbfStrIComp(Param^.Args[0], Param^.Args[1]) = 0); // Was Char
 end;
 
 procedure FuncStrIP_EQ(Param: PExpressionRec);
@@ -1646,8 +1646,8 @@ begin
   begin
     if Param^.Args[1][arg1len-1] = '*' then
     begin
-      str0 := AnsiStrUpper(Param^.Args[0]);
-      str1 := AnsiStrUpper(Param^.Args[1]+1);
+      str0 := dbfStrUpper(Param^.Args[0]);
+      str1 := dbfStrUpper(Param^.Args[1]+1);
       setlength(str1, arg1len-2);
       match := Pos(str1, str0)>0; // Was AnsiPos(str0, str1) = 0
     end else begin
@@ -1655,7 +1655,7 @@ begin
       // at least length without asterisk
       match := arg0len >= arg1len - 1;
       if match then
-        match := AnsiStrLIComp(Param^.Args[0]+(arg0len-arg1len+1), Param^.Args[1]+1, arg1len-1) = 0;
+        match := dbfStrLIComp(Param^.Args[0]+(arg0len-arg1len+1), Param^.Args[1]+1, arg1len-1) = 0;
     end;
   end else
   if Param^.Args[1][arg1len-1] = '*' then
@@ -1663,36 +1663,36 @@ begin
     arg0len := dbfStrLen(Param^.Args[0]);
     match := arg0len >= arg1len - 1;
     if match then
-      match := AnsiStrLIComp(Param^.Args[0], Param^.Args[1], arg1len-1) = 0;
+      match := dbfStrLIComp(Param^.Args[0], Param^.Args[1], arg1len-1) = 0;
   end else begin
-    match := AnsiStrIComp(Param^.Args[0], Param^.Args[1]) = 0;
+    match := dbfStrIComp(Param^.Args[0], Param^.Args[1]) = 0;
   end;
   Param^.Res.MemoryPos^^ := AnsiChar(match); // Was Char
 end;
 
 procedure FuncStrI_NEQ(Param: PExpressionRec);
 begin
-  Param^.Res.MemoryPos^^ := AnsiChar(AnsiStrIComp(Param^.Args[0], Param^.Args[1]) <> 0); // Was Char
+  Param^.Res.MemoryPos^^ := AnsiChar(dbfStrIComp(Param^.Args[0], Param^.Args[1]) <> 0); // Was Char
 end;
 
 procedure FuncStrI_LT(Param: PExpressionRec);
 begin
-  Param^.Res.MemoryPos^^ := AnsiChar(AnsiStrIComp(Param^.Args[0], Param^.Args[1]) < 0); // Was Char
+  Param^.Res.MemoryPos^^ := AnsiChar(dbfStrIComp(Param^.Args[0], Param^.Args[1]) < 0); // Was Char
 end;
 
 procedure FuncStrI_GT(Param: PExpressionRec);
 begin
-  Param^.Res.MemoryPos^^ := AnsiChar(AnsiStrIComp(Param^.Args[0], Param^.Args[1]) > 0); // Was Char
+  Param^.Res.MemoryPos^^ := AnsiChar(dbfStrIComp(Param^.Args[0], Param^.Args[1]) > 0); // Was Char
 end;
 
 procedure FuncStrI_LTE(Param: PExpressionRec);
 begin
-  Param^.Res.MemoryPos^^ := AnsiChar(AnsiStrIComp(Param^.Args[0], Param^.Args[1]) <= 0); // Was Char
+  Param^.Res.MemoryPos^^ := AnsiChar(dbfStrIComp(Param^.Args[0], Param^.Args[1]) <= 0); // Was Char
 end;
 
 procedure FuncStrI_GTE(Param: PExpressionRec);
 begin
-  Param^.Res.MemoryPos^^ := AnsiChar(AnsiStrIComp(Param^.Args[0], Param^.Args[1]) >= 0); // Was Char
+  Param^.Res.MemoryPos^^ := AnsiChar(dbfStrIComp(Param^.Args[0], Param^.Args[1]) >= 0); // Was Char
 end;
 
 procedure FuncStrP_EQ(Param: PExpressionRec);
@@ -1706,14 +1706,14 @@ begin
     if Param^.Args[1][arg1len-1] = '*' then
     begin
       Param^.Args[1][arg1len-1] := #0;
-      match := AnsiStrPos(Param^.Args[0], Param^.Args[1]+1) <> nil;
+      match := dbfStrPos(Param^.Args[0], Param^.Args[1]+1) <> nil;
       Param^.Args[1][arg1len-1] := '*';
     end else begin
       arg0len := dbfStrLen(Param^.Args[0]);
       // at least length without asterisk
       match := arg0len >= arg1len - 1;
       if match then
-        match := AnsiStrLComp(Param^.Args[0]+(arg0len-arg1len+1), Param^.Args[1]+1, arg1len-1) = 0;
+        match := dbfStrLComp(Param^.Args[0]+(arg0len-arg1len+1), Param^.Args[1]+1, arg1len-1) = 0;
     end;
   end else
   if Param^.Args[1][arg1len-1] = '*' then
@@ -1721,36 +1721,36 @@ begin
     arg0len := dbfStrLen(Param^.Args[0]);
     match := arg0len >= arg1len - 1;
     if match then
-      match := AnsiStrLComp(Param^.Args[0], Param^.Args[1], arg1len-1) = 0;
+      match := dbfStrLComp(Param^.Args[0], Param^.Args[1], arg1len-1) = 0;
   end else begin
-    match := AnsiStrComp(Param^.Args[0], Param^.Args[1]) = 0;
+    match := dbfStrComp(Param^.Args[0], Param^.Args[1]) = 0;
   end;
   Param^.Res.MemoryPos^^ := AnsiChar(match); // Was Char
 end;
 
 procedure FuncStr_EQ(Param: PExpressionRec);
 begin
-  Param^.Res.MemoryPos^^ := AnsiChar(AnsiStrComp(Param^.Args[0], Param^.Args[1]) = 0); // Was Char
+  Param^.Res.MemoryPos^^ := AnsiChar(dbfStrComp(Param^.Args[0], Param^.Args[1]) = 0); // Was Char
 end;
 
 procedure FuncStr_NEQ(Param: PExpressionRec);
 begin
-  Param^.Res.MemoryPos^^ := AnsiChar(AnsiStrComp(Param^.Args[0], Param^.Args[1]) <> 0); // Was Char
+  Param^.Res.MemoryPos^^ := AnsiChar(dbfStrComp(Param^.Args[0], Param^.Args[1]) <> 0); // Was Char
 end;
 
 procedure FuncStr_LT(Param: PExpressionRec);
 begin
-  Param^.Res.MemoryPos^^ := AnsiChar(AnsiStrComp(Param^.Args[0], Param^.Args[1]) < 0);  // Was Char
+  Param^.Res.MemoryPos^^ := AnsiChar(dbfStrComp(Param^.Args[0], Param^.Args[1]) < 0);  // Was Char
 end;
 
 procedure FuncStr_GT(Param: PExpressionRec);
 begin
-  Param^.Res.MemoryPos^^ := AnsiChar(AnsiStrComp(Param^.Args[0], Param^.Args[1]) > 0); // Was Char
+  Param^.Res.MemoryPos^^ := AnsiChar(dbfStrComp(Param^.Args[0], Param^.Args[1]) > 0); // Was Char
 end;
 
 procedure FuncStr_LTE(Param: PExpressionRec);
 begin
-  Param^.Res.MemoryPos^^ := AnsiChar(AnsiStrComp(Param^.Args[0], Param^.Args[1]) <= 0); // Was Char
+  Param^.Res.MemoryPos^^ := AnsiChar(dbfStrComp(Param^.Args[0], Param^.Args[1]) <= 0); // Was Char
 end;
 
 procedure FuncStr_GTE(Param: PExpressionRec);

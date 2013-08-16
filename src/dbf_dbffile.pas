@@ -226,16 +226,13 @@ var
 {$ifdef SUPPORT_FORMATSETTINGSTYPE}
 function DbfStrToFloat(const Src: PAnsiChar; const Size: Integer): Extended; // Was PChar
 var
-  eValue: extended;
   endChar: AnsiChar;
 begin
   // temp null-term string
   endChar := (PAnsiChar(Src) + Size)^;
   (PAnsiChar(Src) + Size)^ := #0;
   // convert to double
-  if dbfTextToFloatFmt(PAnsiChar(Src), eValue, fvExtended, FORMAT_SETTINGS_DECIMAL_POINT) then
-    Result := eValue
-  else
+  if not dbfTextToFloatFmt(PAnsiChar(Src), Result, fvExtended, FORMAT_SETTINGS_DECIMAL_POINT) then
     Result := 0;
   // restore Char of null-term
   (PAnsiChar(Src) + Size)^ := endChar;
