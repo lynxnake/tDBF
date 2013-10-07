@@ -673,6 +673,7 @@ begin
   FIndexFile := nil;
   FOnTranslate := nil;
   FOnCopyDateTimeAsString := nil;
+  FLanguageID := DbfGlobals.DefaultCreateLangId; 
 end;
 
 destructor TDbf.Destroy; {override;}
@@ -2237,10 +2238,12 @@ var
 begin
   if FCursor <> nil then
   begin
-    if State = dsCalcFields then
-      pBuffer := TDbfRecordBuffer(CalcBuffer)
+    case State of
+      dsFilter:     pBuffer := TDbfRecordBuffer(FFilterBuffer);
+      dsCalcFields: pBuffer := TDbfRecordBuffer(CalcBuffer);
     else
       pBuffer := TDbfRecordBuffer(ActiveBuffer);
+    end;
     Result := pDbfRecord(pBuffer)^.SequentialRecNo;
   end else
     Result := 0;
