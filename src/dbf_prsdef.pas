@@ -191,6 +191,8 @@ type
   private
     FValue: AnsiString; // Was string
   public
+    // Allow undelimited, delimited by single quotes, delimited by double quotes
+    // If delimited, allow escaping inside string with double delimiters
     constructor Create(AValue: string);
 
     function AsPointer: PAnsiChar; override; // Was PChar
@@ -607,14 +609,25 @@ end;
 constructor TStringConstant.Create(AValue: string);
 var
   firstChar, lastChar: Char;
+  s: string;
+  Len: integer;
 begin
   inherited Create(AValue, etString, _StringConstant);
 
+  // fixme:
+  // This is potentially dangerous if AValue contains multi byte characters it is
+  // possible that it starts with ' or " and ends in a character whose second
+  // (or later) byte is byte(') or byte("). I have no idea if such characters exist
+  // Isn't there an Unquote function for doing this, anyway?
+  // --- 2014-07-13 twm
+  Len := Length(AValue);
   firstChar := AValue[1];
-  lastChar := AValue[Length(AValue)];
-  if (firstChar = lastChar) and ((firstChar = '''') or (firstChar = '"')) then
-    FValue := AnsiString(Copy(AValue, 2, Length(AValue) - 2)) // AnsiString cast added
-  else
+  lastChar := AValue[Len];
+  if (firstChar = lastChar) and ((firstChar = '''') or (firstChar = '"')) then begin
+    s := Copy(AValue, 2, Len - 2);
+    s := StringReplace(s, firstChar + firstChar, firstChar, [rfReplaceAll, rfIgnoreCase]);
+    FValue := AnsiString(s);
+  end else
     FValue := AnsiString(AValue); // AnsiString cast added
 end;
 
