@@ -279,7 +279,7 @@ var
   resLen: Integer;
 begin
   resLen := dbfFloatToTextFmt(PAnsiChar(@Buffer), Val, fvExtended, ffFixed, Size, Precision, FORMAT_SETTINGS_DECIMAL_POINT);
-  SetString(s, PChar(@Buffer), resLen);
+  SetString(s, PAnsiChar(@Buffer), resLen); // was PChar
   B := PAnsiChar(s);
 
   // fill destination with spaces
