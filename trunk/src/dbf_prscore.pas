@@ -124,6 +124,11 @@ procedure FuncInt64ToStr(Param: PExpressionRec);
 procedure FuncDateToStr(Param: PExpressionRec);
 procedure FuncSubString(Param: PExpressionRec);
 procedure FuncUppercase(Param: PExpressionRec);
+procedure FuncNegative_F_F(Param: PExpressionRec);
+procedure FuncNegative_I_I(Param: PExpressionRec);
+{$ifdef SUPPORT_INT64}
+procedure FuncNegative_L_L(Param: PExpressionRec);
+{$endif}
 procedure FuncLowercase(Param: PExpressionRec);
 procedure FuncAdd_F_FF(Param: PExpressionRec);
 procedure FuncAdd_F_FI(Param: PExpressionRec);
@@ -492,6 +497,10 @@ begin
           case ResultType of
             etBoolean: ExprWord := TBooleanConstant.Create(EmptyStr, PBoolean(FExpResult)^);
             etFloat: ExprWord := TFloatConstant.CreateAsDouble(EmptyStr, PDouble(FExpResult)^);
+            etInteger: ExprWord := TIntegerConstant.Create(PInteger(FExpResult)^);
+{$ifdef SUPPORT_INT64}
+            etLargeInt:ExprWord := TLargeIntConstant.Create(PInt64(FExpResult)^);
+{$endif}
             etString: ExprWord := TStringConstant.Create(string(FExpResult)); // Added string cast
           end;
 
@@ -1434,6 +1443,26 @@ begin
   dbfStrLower(Arg0);
 end;
 
+procedure FuncNegative_F_F(Param: PExpressionRec);
+begin
+  with Param^ do
+    PDouble(Res.MemoryPos^)^ := -PDouble(Args[0])^;
+end;
+
+procedure FuncNegative_I_I(Param: PExpressionRec);
+begin
+  with Param^ do
+    PInteger(Res.MemoryPos^)^ := -PInteger(Args[0])^;
+end;
+
+{$ifdef SUPPORT_INT64}
+procedure FuncNegative_L_L(Param: PExpressionRec);
+begin
+  with Param^ do
+    PInt64(Res.MemoryPos^)^ := -PInt64(Args[0])^;
+end;
+{$endif}
+
 procedure FuncAdd_F_FF(Param: PExpressionRec);
 begin
   PDouble(Param^.Res.MemoryPos^)^ := PDouble(Param^.Args[0])^ + PDouble(Param^.Args[1])^;
@@ -2065,6 +2094,11 @@ initialization
     Add(TComma.Create(',', nil));
 
     // operators - name, param types, result type, func addr, precedence
+    Add(TFunction.CreateOper('-@', 'I', etInteger, FuncNegative_I_I, 20));
+    Add(TFunction.CreateOper('-@', 'F', etFloat, FuncNegative_F_F, 20));
+{$ifdef SUPPORT_INT64}
+    Add(TFunction.CreateOper('-@', 'L', etLargeInt, FuncNegative_L_L, 20));
+{$endif}
     Add(TFunction.CreateOper('+', 'SS', etString,   nil,          40));
     Add(TFunction.CreateOper('+', 'FF', etFloat,    FuncAdd_F_FF, 40));
     Add(TFunction.CreateOper('+', 'FI', etFloat,    FuncAdd_F_FI, 40));

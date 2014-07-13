@@ -205,6 +205,17 @@ type
     function AsPointer: PAnsiChar; override; // Was PChar
   end;
 
+{$ifdef SUPPORT_INT64}
+  TLargeIntConstant = class(TConstant)
+  private
+    FValue: Int64;
+  public
+    constructor Create(AValue: Int64);
+
+    function AsPointer: PAnsiChar; override;
+  end;
+{$endif}
+
   TBooleanConstant = class(TConstant)
   private
     FValue: Boolean;
@@ -639,6 +650,22 @@ function TIntegerConstant.AsPointer: PAnsiChar; // Was PChar
 begin
   Result := PAnsiChar(@FValue); // Was PChar
 end;
+
+{$ifdef SUPPORT_INT64}
+{ TLargeIntConstant }
+
+constructor TLargeIntConstant.Create(AValue: Int64);
+begin
+  inherited Create(IntToStr(AValue), etLargeInt, _LargeIntVariable);
+
+  FValue := AValue;
+end;
+
+function TLargeIntConstant.AsPointer: PAnsiChar;
+begin
+  Result := PAnsiChar(@FValue);
+end;
+{$endif}
 
 { TVariable }
 
