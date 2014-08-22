@@ -576,7 +576,7 @@ begin
   BaseName := Copy(BaseName, 1, Length(BaseName)-Length(Extension));
   repeat
     Inc(Modifier);
-    OutName := ChangeFileExt(BaseName+'_'+IntToStr(Modifier), Extension);
+    OutName := BaseName+'_'+IntToStr(Modifier) + Extension;
   until not FileExists(OutName);
 end;
 
