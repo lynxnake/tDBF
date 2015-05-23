@@ -2352,7 +2352,16 @@ begin
       while FLeaves[I].LowerPage <> nil do
         FLeaves[I] := FLeaves[I].LowerPage;
       // parse expression
-      FParsers[I].ParseExpression(String(PIndexHdr(FIndexHeader)^.KeyDesc));
+      try
+        FParsers[I].ParseExpression(PIndexHdr(FIndexHeader)^.KeyDesc);
+      except
+        {$IFDEF TDBF_IGNORE_INVALID_INDICES}
+        on E: EDbfErrorInvalidIndex do
+          // ignore invalid indexes so we can load tables with broken index files
+        else
+        {$ENDIF}
+          raise;
+      end;
     end;
   end else begin
     // clear root
