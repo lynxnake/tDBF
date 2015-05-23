@@ -27,6 +27,8 @@ const
 type
   EDbfError = class (EDatabaseError)
   end;
+  EDbfErrorInvalidIndex = class(EDbfError)
+  end;
   EDbfWriteError = class (EDbfError)
   end;
 
