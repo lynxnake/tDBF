@@ -478,7 +478,7 @@ begin
   // is this variable a fieldname?
   FieldInfo := GetVariableInfo(AnsiString(VarName));
   if FieldInfo = nil then
-    raise EDbfError.CreateFmt(STRING_INDEX_BASED_ON_UNKNOWN_FIELD, [VarName]);
+    raise EDbfErrorInvalidIndex.CreateFmt(STRING_INDEX_BASED_ON_UNKNOWN_FIELD, [VarName]);
 
   // define field in parser
   case FieldInfo.FieldType of
