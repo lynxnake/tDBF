@@ -52,7 +52,7 @@ type
 
     procedure ClearExpressions; override;
 
-    procedure ParseExpression(AExpression: string); virtual;
+    procedure ParseExpression(const AExpression: string); virtual;
     function ExtractFromBuffer(Buffer: PAnsiChar): PAnsiChar; virtual;
 
     property DbfFile: Pointer read FDbfFile write FDbfFile;
@@ -157,9 +157,9 @@ type
   TDateTimeFieldVar = class(TFieldVar)
   private
     FFieldVal: TDateTimeRec;
-    function GetFieldType: TExpressionType; override;
   protected
     function GetFieldVal: Pointer; override;
+    function GetFieldType: TExpressionType; override;
   public
     procedure Refresh(Buffer: PAnsiChar); override;
   end;
@@ -167,9 +167,9 @@ type
   TBooleanFieldVar = class(TFieldVar)
   private
     FFieldVal: boolean;
-    function GetFieldType: TExpressionType; override;
   protected
     function GetFieldVal: Pointer; override;
+    function GetFieldType: TExpressionType; override;
   public
     procedure Refresh(Buffer: PAnsiChar); override;
   end;
@@ -556,7 +556,7 @@ procedure TDbfParser.ValidateExpression(AExpression: string);
 begin
 end;
 
-procedure TDbfParser.ParseExpression(AExpression: string);
+procedure TDbfParser.ParseExpression(const AExpression: string);
 begin
   // clear any current expression
   ClearExpressions;
