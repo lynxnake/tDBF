@@ -3479,14 +3479,18 @@ end;
 procedure TIndexFile.First;
 begin
   // resync tree
-  Resync(false);
+  {$ifndef TDBF_INDEX_NO_RESYNC}
+  Resync(false);  
+  {$endif}
   WalkFirst;
 end;
 
 procedure TIndexFile.Last;
 begin
   // resync tree
-  Resync(false);
+  {$ifndef TDBF_INDEX_NO_RESYNC}
+  Resync(false);  
+  {$endif}
   WalkLast;
 end;
 
@@ -3619,14 +3623,18 @@ end;
 function TIndexFile.Prev: Boolean;
 begin
   // resync in-mem tree with tree on disk
+  {$ifndef TDBF_INDEX_NO_RESYNC}
   Resync(true);
+  {$endif}
   Result := WalkPrev;
 end;
 
 function TIndexFile.Next: Boolean;
 begin
   // resync in-mem tree with tree on disk
-  Resync(true);
+  {$ifndef TDBF_INDEX_NO_RESYNC}
+  Resync(true);     
+  {$endif}
   Result := WalkNext;
 end;
 
