@@ -103,7 +103,7 @@ type
     procedure FastPackTable;
     procedure RestructureTable(DbfFieldDefs: TDbfFieldDefs; Pack: Boolean);
     procedure Rename(DestFileName: string; NewIndexFileNames: TStrings; DeleteFiles: boolean);
-    function  GetFieldInfo(FieldName: AnsiString): TDbfFieldDef;
+    function  GetFieldInfo(const FieldName: AnsiString): TDbfFieldDef;
     function  GetFieldData(Column: Integer; DataType: TFieldType; Src,Dst: Pointer; 
       NativeFormat: boolean): Boolean;
     function  GetFieldDataFromDef(AFieldDef: TDbfFieldDef; DataType: TFieldType; 
@@ -1425,7 +1425,7 @@ begin
   end;
 end;
 
-function TDbfFile.GetFieldInfo(FieldName: AnsiString): TDbfFieldDef;
+function TDbfFile.GetFieldInfo(const FieldName: AnsiString): TDbfFieldDef;
 var
   I: Integer;
   lfi: TDbfFieldDef;
