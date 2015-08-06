@@ -22,10 +22,10 @@ type
     FIndexFile: TIndexFile;
   protected
     function  GetPhysicalRecNo: Integer; override;
-    function  GetSequentialRecNo: Integer; override;
-    function  GetSequentialRecordCount: Integer; override;
+    function  GetSequentialRecNo: TSequentialRecNo; override;
+    function  GetSequentialRecordCount: TSequentialRecNo; override;
     procedure SetPhysicalRecNo(RecNo: Integer); override;
-    procedure SetSequentialRecNo(RecNo: Integer); override;
+    procedure SetSequentialRecNo(RecNo: TSequentialRecNo); override;
 
   public
     constructor Create(DbfIndexFile: TIndexFile);
@@ -36,7 +36,7 @@ type
     procedure First; override;
     procedure Last; override;
 
-    procedure Insert(RecNo: Integer; Buffer: PAnsiChar);
+    procedure Insert(RecNo: Integer; Buffer: PAnsiChar; AUniqueMode: TIndexUniqueType);
     procedure Update(RecNo: Integer; PrevBuffer, NewBuffer: PAnsiChar);
 
 {$ifdef SUPPORT_VARIANTS}
@@ -73,9 +73,9 @@ begin
   inherited Destroy;
 end;
 
-procedure TIndexCursor.Insert(RecNo: Integer; Buffer: PAnsiChar);
+procedure TIndexCursor.Insert(RecNo: Integer; Buffer: PAnsiChar; AUniqueMode: TIndexUniqueType);
 begin
-  TIndexFile(PagedFile).Insert(RecNo, {$IFDEF SUPPORT_TRECORDBUFFER}PByte{$ENDIF}(Buffer));
+  TIndexFile(PagedFile).Insert(RecNo, {$IFDEF SUPPORT_TRECORDBUFFER}PByte{$ENDIF}(Buffer), AUniqueMode);
   // TODO SET RecNo and Key
 end;
 
@@ -114,17 +114,17 @@ begin
   TIndexFile(PagedFile).PhysicalRecNo := RecNo;
 end;
 
-function TIndexCursor.GetSequentialRecordCount: Integer;
+function TIndexCursor.GetSequentialRecordCount: TSequentialRecNo;
 begin
   Result := TIndexFile(PagedFile).SequentialRecordCount;
 end;
 
-function TIndexCursor.GetSequentialRecNo: Integer;
+function TIndexCursor.GetSequentialRecNo: TSequentialRecNo;
 begin
   Result := TIndexFile(PagedFile).SequentialRecNo;
 end;
 
-procedure TIndexCursor.SetSequentialRecNo(RecNo: Integer);
+procedure TIndexCursor.SetSequentialRecNo(RecNo: TSequentialRecNo);
 begin
   TIndexFile(PagedFile).SequentialRecNo := RecNo;
 end;

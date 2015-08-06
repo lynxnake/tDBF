@@ -70,8 +70,8 @@ type
     procedure SetRecordSize(NewValue: Integer); override;
     procedure SetHeaderSize(NewValue: Integer); override;
 
-    function  LockSection(const Offset, Length: Cardinal; const Wait: Boolean): Boolean; override;
-    function  UnlockSection(const Offset, Length: Cardinal): Boolean; override;
+    function  LockSection(const Offset: TPagedFileOffset; const Length: Cardinal; const Wait: Boolean): Boolean; override;
+    function  UnlockSection(const Offset: TPagedFileOffset; const Length: Cardinal): Boolean; override;
 
     function  GetBlockLen: Integer; override;
     function  GetMemoSize: Integer; override;
@@ -182,6 +182,7 @@ begin
     end;
 
     RecordSize := GetBlockLen;
+    HeaderSize := GetBlockLen;
     // checking for right blocksize not needed for foxpro?
     // mod 128 <> 0 <-> and 0x7F <> 0
     if (RecordSize = 0) and ((FDbfVersion = xFoxPro) or ((RecordSize and $7F) <> 0)) then
@@ -511,12 +512,12 @@ begin
   inherited SetHeaderSize(0);
 end;
 
-function  TNullMemoFile.LockSection(const Offset, Length: Cardinal; const Wait: Boolean): Boolean;
+function  TNullMemoFile.LockSection(const Offset: TPagedFileOffset; const Length: Cardinal; const Wait: Boolean): Boolean;
 begin
   Result := true;
 end;
 
-function  TNullMemoFile.UnlockSection(const Offset, Length: Cardinal): Boolean;
+function  TNullMemoFile.UnlockSection(const Offset: TPagedFileOffset; const Length: Cardinal): Boolean;
 begin
   Result := true;
 end;

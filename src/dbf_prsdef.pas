@@ -1,10 +1,15 @@
 unit dbf_prsdef;
 
+{$BOOLEVAL OFF}
+
 interface
 
 {$I dbf_common.inc}
 
 uses
+{$ifdef WINDOWS}
+  Windows,
+{$endif}
   SysUtils,
   Classes,
   db,
@@ -56,6 +61,12 @@ type
     property Size: PInteger read FSize;
   end;
 
+  TExpressionContext = record
+    ValidatingIndex: Boolean;
+    DbfLangId: Integer;
+  end;
+  PExpressionContext = ^TExpressionContext;
+
   TExpressionRec = record
     //used both as linked tree and linked list for maximum evaluation efficiency
     Oper: TExprFunc;
@@ -70,6 +81,9 @@ type
     ArgsSize: array[0..MaxArg-1] of Integer;
     ArgsType: array[0..MaxArg-1] of TExpressionType;
     ArgList: array[0..MaxArg-1] of PExpressionRec;
+    IsNull: Boolean;
+    IsNullPtr: PBoolean;
+    ExpressionContext: PExpressionContext;
   end;
 
   TExprCollection = class(TNoOwnerCollection)
@@ -99,8 +113,10 @@ type
   private
     FName: string;
     FExprFunc: TExprFunc;
+    FIsNull: Boolean;
+    FIsNullPtr: PBoolean;
   protected
-    FRefCount: Cardinal;
+    FRefCount: Integer;
 
     function GetIsOperator: Boolean; virtual;
     function GetIsVariable: Boolean;
@@ -115,7 +131,8 @@ type
     function GetShortName: string; virtual;
     procedure SetFixedLen(NewLen: integer); virtual;
   public
-    constructor Create(AName: string; AExprFunc: TExprFunc);
+    constructor Create(AName: string; AExprFunc: TExprFunc); overload;
+    constructor Create(AName: string; AExprFunc: TExprFunc; AIsNullPtr: PBoolean); overload;
 
     function LenAsPointer: PInteger; virtual;
     function AsPointer: PAnsiChar; virtual; // Was PChar
@@ -134,6 +151,7 @@ type
     property ShortName: string read GetShortName;
     property Description: string read GetDescription;
     property TypeSpec: string read GetTypeSpec;
+    property IsNullPtr: PBoolean read FIsNullPtr;
   end;
 
   TExpressShortList = class(TSortedCollection)
@@ -230,23 +248,37 @@ type
     property Value: Boolean read FValue write FValue;
   end;
 
+  TVariableFieldInfo = record
+    DbfFieldDef: Pointer;
+    NativeFieldType: Char;
+    Size: Integer;
+    Precision: Integer;
+  end;
+  PVariableFieldInfo = ^TVariableFieldInfo;
+
   TVariable = class(TExprWord)
   private
     FResultType: TExpressionType;
+    FFieldInfo: TVariableFieldInfo;
+    FFieldInfoValid: Boolean;
+    function GetFieldInfo: PVariableFieldInfo;
   protected
     function GetCanVary: Boolean; override;
     function GetResultType: TExpressionType; override;
   public
-    constructor Create(AName: string; AVarType: TExpressionType; AExprFunc: TExprFunc);
+//  constructor Create(AName: string; AVarType: TExpressionType; AExprFunc: TExprFunc);
+    constructor Create(AName: string; AVarType: TExpressionType; AExprFunc: TExprFunc; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo);
+    property FieldInfo: PVariableFieldInfo read GetFieldInfo;
   end;
 
   TFloatVariable = class(TVariable)
   private
     FValue: PDouble;
   public
-    constructor Create(AName: string; AValue: PDouble);
+//  constructor Create(AName: string; AValue: PDouble);
+    constructor Create(AName: string; AValue: PDouble; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo);
 
-    function AsPointer: PAnsiChar; override; // Was PChar
+    function AsPointer: PChar; override;
   end;
 
   TStringVariable = class(TVariable)
@@ -257,10 +289,11 @@ type
     function GetFixedLen: Integer; override;
     procedure SetFixedLen(NewLen: integer); override;
   public
-    constructor Create(AName: string; AValue: PPAnsiChar); // Was PPChar
+//  constructor Create(AName: string; AValue: PPAnsiChar); // Was PPChar
+    constructor Create(AName: string; AValue: PPAnsiChar; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo);
 
     function LenAsPointer: PInteger; override;
-    function AsPointer: PAnsiChar; override; // Was PChar
+    function AsPointer: PChar; override;
 
     property FixedLen: Integer read FFixedLen;
   end;
@@ -269,7 +302,8 @@ type
   private
     FValue: PDateTimeRec;
   public
-    constructor Create(AName: string; AValue: PDateTimeRec);
+//  constructor Create(AName: string; AValue: PDateTimeRec);
+    constructor Create(AName: string; AValue: PDateTimeRec; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo);
 
     function AsPointer: PAnsiChar; override; // Was PChar
   end;
@@ -278,8 +312,8 @@ type
   private
     FValue: PInteger;
   public
-    constructor Create(AName: string; AValue: PInteger);
-
+//  constructor Create(AName: string; AValue: PInteger);
+    constructor Create(AName: string; AValue: PInteger; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo);
     function AsPointer: PAnsiChar; override; // Was PChar
   end;
 
@@ -289,7 +323,8 @@ type
   private
     FValue: PLargeInt;
   public
-    constructor Create(AName: string; AValue: PLargeInt);
+//  constructor Create(AName: string; AValue: PLargeInt);
+    constructor Create(AName: string; AValue: PLargeInt; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo);
 
     function AsPointer: PAnsiChar; override; // Was PChar
   end;
@@ -300,9 +335,10 @@ type
   private
     FValue: PBoolean;
   public
-    constructor Create(AName: string; AValue: PBoolean);
+//  constructor Create(AName: string; AValue: PBoolean);
+    constructor Create(AName: string; AValue: PBoolean; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo);
 
-    function AsPointer: PAnsiChar; override; // Was PChar
+    function AsPointer: PChar; override;
   end;
 
   TLeftBracket = class(TExprWord)
@@ -364,6 +400,8 @@ const
   ('c' in 'a,b') =False}
 
 function ExprCharToExprType(ExprChar: Char): TExpressionType;
+function ExprStrLen(P: PAnsiChar; IncludeTrailingSpaces: Boolean): Integer;
+procedure ExprTrailingNulsToSpace(P: PAnsiChar; Len: Integer);
 
 implementation
 
@@ -381,6 +419,33 @@ begin
     'S': Result := etString;
   else
     Result := etUnknown;
+  end;
+end;
+
+function ExprStrLen(P: PAnsiChar; IncludeTrailingSpaces: Boolean): Integer;
+begin
+  Result := StrLen(P);
+  if not IncludeTrailingSpaces then
+    while (Result > 0) and ((P + Pred(Result))^ = ' ') do
+      Dec(Result);
+end;
+
+procedure ExprTrailingNulsToSpace(P: PAnsiChar; Len: Integer);
+var
+  I: Integer;
+begin
+  if Len <> 0 then
+  begin
+    I := Len - 1;
+    repeat
+      if (P+I)^ = #0 then
+      begin
+        (P+I)^ := ' ';
+        Dec(I);
+      end
+      else
+        I:= -1;
+    until I<0;
   end;
 end;
 
@@ -405,14 +470,18 @@ end;
 procedure _StringVariable(Param: PExpressionRec);
 var
   length: integer;
+  P: PAnsiChar;
 begin
   if Assigned(Param^.Args[1]) then // lsp, not set for ExprRec^.ExprWord.FixedLen<0!!!!
     length := PInteger(Param^.Args[1])^
   else
     length := -1;
+  P := PPAnsiChar(Param^.Args[0])^; // Was PPChar
   if length = -1 then
-    length := dbfStrLen(PPAnsiChar(Param^.Args[0])^); // Was PPChar
-  Param^.Res.Append(PPAnsiChar(Param^.Args[0])^, length); // Was PPChar
+    length := dbfStrLen(P)
+  else
+    ExprTrailingNulsToSpace(P, length);
+  Param^.Res.Append(P, length);
 end;
 
 procedure _DateTimeVariable(Param: PExpressionRec);
@@ -449,8 +518,18 @@ end;
 
 constructor TExprWord.Create(AName: string; AExprFunc: TExprFunc);
 begin
+  Create(AName, AExprFunc, nil);
+end;
+
+constructor TExprWord.Create(AName: string; AExprFunc: TExprFunc; AIsNullPtr: PBoolean);
+begin
   FName := AName;
   FExprFunc := AExprFunc;
+
+  if Assigned(AIsNullPtr) then
+    FIsNullPtr := AIsNullPtr
+  else
+    FIsNullPtr := @FIsNull;
 end;
 
 function TExprWord.GetCanVary: Boolean;
@@ -682,11 +761,16 @@ end;
 
 { TVariable }
 
-constructor TVariable.Create(AName: string; AVarType: TExpressionType; AExprFunc: TExprFunc);
+constructor TVariable.Create(AName: string; AVarType: TExpressionType; AExprFunc: TExprFunc; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo);
 begin
-  inherited Create(AName, AExprFunc);
+  inherited Create(AName, AExprFunc, AIsNullPtr);
 
   FResultType := AVarType;
+  if Assigned(AFieldInfo) then
+  begin
+    FFieldInfo := AFieldInfo^;
+    FFieldInfoValid := True;
+  end
 end;
 
 function TVariable.GetCanVary: Boolean;
@@ -699,11 +783,19 @@ begin
   Result := FResultType;
 end;
 
+function TVariable.GetFieldInfo: PVariableFieldInfo;
+begin
+  if FFieldInfoValid then
+    Result := @FFieldInfo
+  else
+    Result := nil;
+end;
+
 { TFloatVariable }
 
-constructor TFloatVariable.Create(AName: string; AValue: PDouble);
+constructor TFloatVariable.Create(AName: string; AValue: PDouble; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo);
 begin
-  inherited Create(AName, etFloat, _FloatVariable);
+  inherited Create(AName, etFloat, _FloatVariable, AIsNullPtr, AFieldInfo);
   FValue := AValue;
 end;
 
@@ -714,10 +806,10 @@ end;
 
 { TStringVariable }
 
-constructor TStringVariable.Create(AName: string; AValue: PPAnsiChar); // Was PPChar
+constructor TStringVariable.Create(AName: string; AValue: PPAnsiChar; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo); // Was PPChar
 begin
   // variable or fixed length?
-  inherited Create(AName, etString, _StringVariable);
+  inherited Create(AName, etString, _StringVariable, AIsNullPtr, AFieldInfo);
 
   // store pointer to string
   FValue := AValue;
@@ -746,9 +838,9 @@ end;
 
 { TDateTimeVariable }
 
-constructor TDateTimeVariable.Create(AName: string; AValue: PDateTimeRec);
+constructor TDateTimeVariable.Create(AName: string; AValue: PDateTimeRec; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo);
 begin
-  inherited Create(AName, etDateTime, _DateTimeVariable);
+  inherited Create(AName, etDateTime, _DateTimeVariable, AIsNullPtr, AFieldInfo);
   FValue := AValue;
 end;
 
@@ -759,9 +851,9 @@ end;
 
 { TIntegerVariable }
 
-constructor TIntegerVariable.Create(AName: string; AValue: PInteger);
+constructor TIntegerVariable.Create(AName: string; AValue: PInteger; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo);
 begin
-  inherited Create(AName, etInteger, _IntegerVariable);
+  inherited Create(AName, etInteger, _IntegerVariable, AIsNullPtr, AFieldInfo);
   FValue := AValue;
 end;
 
@@ -774,9 +866,9 @@ end;
 
 { TLargeIntVariable }
 
-constructor TLargeIntVariable.Create(AName: string; AValue: PLargeInt);
+constructor TLargeIntVariable.Create(AName: string; AValue: PLargeInt; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo);
 begin
-  inherited Create(AName, etLargeInt, _LargeIntVariable);
+  inherited Create(AName, etLargeInt, _LargeIntVariable, AIsNullPtr, AFieldInfo);
   FValue := AValue;
 end;
 
@@ -789,9 +881,9 @@ end;
 
 { TBooleanVariable }
 
-constructor TBooleanVariable.Create(AName: string; AValue: PBoolean);
+constructor TBooleanVariable.Create(AName: string; AValue: PBoolean; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo);
 begin
-  inherited Create(AName, etBoolean, _BooleanVariable);
+  inherited Create(AName, etBoolean, _BooleanVariable, AIsNullPtr, AFieldInfo);
   FValue := AValue;
 end;
 
@@ -843,7 +935,7 @@ begin
   inherited;
 
   { remember we reference the object }
-  Inc(TExprWord(Item).FRefCount);
+  InterlockedIncrement(TExprWord(Item).FRefCount);
 
   { also add ShortName as reference }
   if Length(TExprWord(Item).ShortName) > 0 then
@@ -865,9 +957,8 @@ end;
 
 procedure TExpressList.FreeItem(Item: Pointer);
 begin
-  Dec(TExprWord(Item).FRefCount);
   FShortList.Remove(Item);
-  if TExprWord(Item).FRefCount = 0 then
+  if InterlockedDecrement(TExprWord(Item).FRefCount) = 0 then
     inherited;
 end;
 
@@ -1041,6 +1132,7 @@ end;
 procedure TDynamicType.Rewind;
 begin
   FMemoryPos^ := FMemory^;
+  FillChar(FMemory^^, FSize^, 0);
 end;
 
 procedure TDynamicType.AssureSpace(ASize: Integer);
@@ -1063,6 +1155,7 @@ begin
     NewSize := NewSize div ArgAllocSize * ArgAllocSize + ArgAllocSize;
   // create new buffer
   GetMem(tempBuf, NewSize);
+  FillChar(tempBuf^, NewSize, 0);
   // copy memory
   bytesCopy := FSize^;
   if bytesCopy > NewSize then
@@ -1094,7 +1187,8 @@ procedure TDynamicType.AppendInteger(Source: Integer);
 begin
   // make room for number
   AssureSpace(12);
-  Inc(FMemoryPos^, GetStrFromInt(Source, FMemoryPos^));
+//Inc(FMemoryPos^, GetStrFromInt(Source, FMemoryPos^));
+  Inc(FMemoryPos^, IntToStrWidth(Source, 11, FMemoryPos^, False, #0));
   FMemoryPos^^ := #0;
 end;
 

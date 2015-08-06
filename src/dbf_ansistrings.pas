@@ -11,7 +11,7 @@ type
   TdbfStrLen = function(const Str: PAnsiChar): Cardinal;
   TdbfStrCopy = function(Dest: PAnsiChar; const Source: PAnsiChar): PAnsiChar;
   TdbfStrLCopy = function(Dest: PAnsiChar; const Source: PAnsiChar; MaxLen: Cardinal): PAnsiChar;
-  TdbfFloatToText = function(BufferArg: PAnsiChar; const Value; ValueType: TFloatValue;
+  TdbfFloatToText = function(BufferArg: PAnsiChar; const Value; {$ifndef FPC_VERSION}ValueType: TFloatValue;{$endif}
     Format: TFloatFormat; Precision, Digits: Integer): Integer;
   TdbfFloatToTextFmt = function(BufferArg: PAnsiChar; const Value; ValueType: TFloatValue;
     Format: TFloatFormat; Precision, Digits: Integer; const FormatSettings: TFormatSettings): Integer;
@@ -75,6 +75,27 @@ begin
 end;
 {$ELSE}
 
+{$ifdef FPC_VERSION}
+procedure Init;
+begin
+  dbfStrLen := @SysUtils.StrLen;
+  dbfStrCopy := @SysUtils.StrCopy;
+  dbfStrLCopy := @SysUtils.StrLCopy;
+  dbfFloatToText := @SysUtils.FloatToText;
+  dbfFloatToTextFmt := @SysUtils.FloatToText;
+  dbfStrUpper := @SysUtils.StrUpper;
+  dbfStrLower := @SysUtils.StrLower;
+  dbfStrIComp := @SysUtils.StrIComp;
+  dbfStrLIComp := @SysUtils.StrLIComp;
+  dbfStrPos := @SysUtils.StrPos;
+  dbfStrLComp := @SysUtils.StrLComp;
+  dbfStrComp := @SysUtils.StrComp;
+  dbfStrScan := @SysUtils.StrScan;
+  dbfTextToFloatFmt := @SysUtils.TextToFloat;
+  dbfTextToFloat := @SysUtils.TextToFloat;
+  dbfStrPLCopy := @SysUtils.StrPLCopy;
+end;
+{$else}
 procedure Init;
 begin
   dbfStrLen := SysUtils.StrLen;
@@ -94,6 +115,8 @@ begin
   dbfTextToFloat := SysUtils.TextToFloat;
   dbfStrPLCopy := SysUtils.StrPLCopy;
 end;
+{$endif}
+
 {$ENDIF}
 
 initialization

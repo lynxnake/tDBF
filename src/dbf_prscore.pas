@@ -18,15 +18,17 @@ unit dbf_prscore;
 |
 |---------------------------------------------------------------}
 
+{$BOOLEVAL OFF}
+
 interface
 
 {$I dbf_common.inc}
 
 uses
-  Windows,
   SysUtils,
   Classes,
   Db,
+  Math,
   dbf_Common,
   dbf_prssupp,
   dbf_prsdef;
@@ -52,7 +54,6 @@ type
     FCurrentRec: PExpressionRec;
     FExpResult: PAnsiChar; // was PChar;
     FExpResultPos: PAnsiChar; // was PChar;
-    FExpResultSize: Integer;
 
     procedure ParseString(AnExpression: string; DestCollection: TExprCollection);
     function  MakeTree(Expr: TExprCollection; FirstItem, LastItem: Integer): PExpressionRec;
@@ -63,6 +64,8 @@ type
     procedure RemoveConstants(var ExprRec: PExpressionRec);
     function ResultCanVary(ExprRec: PExpressionRec): Boolean;
   protected
+    FExpressionContext: TExpressionContext;
+    FExpResultSize: Integer;
     FWordsList: TSortedCollection;
 
     function MakeRec: PExpressionRec; virtual;
@@ -75,6 +78,8 @@ type
     procedure DisposeTree(ExprRec: PExpressionRec);
     function CurrentExpression: string; virtual; abstract;
     function GetResultType: TExpressionType; virtual;
+    function IsIndex: Boolean; virtual;
+    procedure OptimizeExpr(var ExprRec: PExpressionRec); virtual;
 
     property CurrentRec: PExpressionRec read FCurrentRec write FCurrentRec;
     property LastRec: PExpressionRec read FLastRec write FLastRec;
@@ -85,15 +90,21 @@ type
     constructor Create;
     destructor Destroy; override;
 
-    function DefineFloatVariable(AVarName: string; AValue: PDouble): TExprWord;
-    function DefineIntegerVariable(AVarName: string; AValue: PInteger): TExprWord;
-//    procedure DefineSmallIntVariable(AVarName: string; AValue: PSmallInt);
+    function DefineFloatVariable(AVarName: string; AValue: PDouble): TExprWord; overload;
+    function DefineFloatVariable(AVarName: string; AValue: PDouble; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo): TExprWord; overload;
+    function DefineIntegerVariable(AVarName: string; AValue: PInteger): TExprWord; overload;
+    function DefineIntegerVariable(AVarName: string; AValue: PInteger; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo): TExprWord; overload;
+//  procedure DefineSmallIntVariable(AVarName: string; AValue: PSmallInt);
 {$ifdef SUPPORT_INT64}
-    function DefineLargeIntVariable(AVarName: string; AValue: PLargeInt): TExprWord;
+    function DefineLargeIntVariable(AVarName: string; AValue: PLargeInt): TExprWord; overload;
+    function DefineLargeIntVariable(AVarName: string; AValue: PLargeInt; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo): TExprWord; overload;
 {$endif}
-    function DefineDateTimeVariable(AVarName: string; AValue: PDateTimeRec): TExprWord;
-    function DefineBooleanVariable(AVarName: string; AValue: PBoolean): TExprWord;
-    function DefineStringVariable(AVarName: string; AValue: PPAnsiChar): TExprWord; // Was PPChar
+    function DefineDateTimeVariable(AVarName: string; AValue: PDateTimeRec): TExprWord; overload;
+    function DefineDateTimeVariable(AVarName: string; AValue: PDateTimeRec; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo): TExprWord; overload;
+    function DefineBooleanVariable(AVarName: string; AValue: PBoolean): TExprWord; overload;
+    function DefineBooleanVariable(AVarName: string; AValue: PBoolean; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo): TExprWord; overload;
+    function DefineStringVariable(AVarName: string; AValue: PPAnsiChar): TExprWord; overload; // Was PPChar
+    function DefineStringVariable(AVarName: string; AValue: PPAnsiChar; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo): TExprWord; overload; // Was PPChar
     function DefineFunction(AFunctName, AShortName, ADescription, ATypeSpec: string;
         AMinFunctionArg: Integer; AResultType: TExpressionType; AFuncAddress: TExprFunc): TExprWord;
     procedure Evaluate(AnExpression: string);
@@ -107,7 +118,6 @@ type
     property Optimize: Boolean read FOptimize write FOptimize;
     property ResultType: TExpressionType read GetResultType;
 
-
     //if optimize is selected, constant expressions are tried to remove
     //such as: 4*4*x is evaluated as 16*x and exp(1)-4*x is repaced by 2.17 -4*x
   end;
@@ -115,12 +125,15 @@ type
 
 //--Expression functions-----------------------------------------------------
 
+(*
 procedure FuncFloatToStr(Param: PExpressionRec);
 procedure FuncIntToStr_Gen(Param: PExpressionRec; Val: {$ifdef SUPPORT_INT64}Int64{$else}Integer{$endif});
 procedure FuncIntToStr(Param: PExpressionRec);
 {$ifdef SUPPORT_INT64}
 procedure FuncInt64ToStr(Param: PExpressionRec);
 {$endif}
+*)
+procedure FuncStr      (Param: PExpressionRec);
 procedure FuncDateToStr(Param: PExpressionRec);
 procedure FuncSubString(Param: PExpressionRec);
 procedure FuncUppercase(Param: PExpressionRec);
@@ -246,6 +259,10 @@ procedure Func_AND(Param: PExpressionRec);
 procedure Func_OR(Param: PExpressionRec);
 procedure Func_NOT(Param: PExpressionRec);
 
+procedure FuncAdd_S(Param: PExpressionRec);
+procedure FuncRecNo(Param: PExpressionRec);
+procedure FuncSub_S(Param: PExpressionRec);
+
 var
   DbfWordsSensGeneralList, DbfWordsInsensGeneralList: TExpressList;
   DbfWordsSensPartialList, DbfWordsInsensPartialList: TExpressList;
@@ -267,7 +284,10 @@ begin
       ExprRec^.Args[0] := ExprRec^.ExprWord.AsPointer;
       // store length as second parameter
       ExprRec^.Args[1] := PAnsiChar(ExprRec^.ExprWord.LenAsPointer); // Was PChar
-    end;
+      ExprRec^.IsNullPtr := ExprRec^.ExprWord.IsNullPtr;
+    end
+    else
+      ExprRec^.IsNullPtr := @ExprRec^.IsNull;
   end;
 end;
 
@@ -309,6 +329,7 @@ begin
   GetMem(FExpResult, ArgAllocSize);
   FExpResultPos := FExpResult;
   FExpResultSize := ArgAllocSize;
+  FillChar(FExpResultPos^, FExpResultSize, 0);
   FOptimize := true;
   FillExpressList;
 end;
@@ -339,10 +360,12 @@ begin
       ExprTree := MakeTree(ExpColl, 0, ExpColl.Count - 1);
       FCurrentRec := nil;
       CheckArguments(ExprTree);
-      LinkVariables(ExprTree);
+//    LinkVariables(ExprTree);
       if Optimize then
-        RemoveConstants(ExprTree);
+//      RemoveConstants(ExprTree);
+        OptimizeExpr(ExprTree);
       // all constant expressions are evaluated and replaced by variables
+      LinkVariables(ExprTree);
       FCurrentRec := nil;
       FExpResultPos := FExpResult;
       MakeLinkedList(ExprTree, @FExpResult, @FExpResultPos, @FExpResultSize);
@@ -399,14 +422,17 @@ var
         exit;
       end;
 
-      while (I < ExprWord.MaxFunctionArg) and (ArgList[I] <> nil) and (error = 0) do
+      while (ArgList[I] <> nil) and (error = 0) do
       begin
-        // test subarguments first
-        CheckArguments(ArgList[I]);
+        if I < ExprWord.MaxFunctionArg then
+        begin
+          // test subarguments first
+          CheckArguments(ArgList[I]);
 
-        // test if correct type
-        if (ArgList[I]^.ExprWord.ResultType <> ExprCharToExprType(ExprWord.TypeSpec[I+1])) then
-          error := 2;
+          // test if correct type
+          if (ArgList[I]^.ExprWord.ResultType <> ExprCharToExprType(ExprWord.TypeSpec[I+1])) then
+            error := 2;
+        end;
 
         // goto next argument
         Inc(I);
@@ -443,6 +469,9 @@ begin
     ExprRec^.Oper := ExprRec^.ExprWord.ExprFunc;
     InternalCheckArguments;
   end;
+
+  if (error = 0) and ((@ExprRec^.Oper = @FuncAdd_S) or (@ExprRec^.Oper = @FuncSub_S)) and (not IsIndex) then
+    error := 2;
 
   // fatal error?
   case error of
@@ -582,9 +611,6 @@ begin
       // goto next argument
       Inc(I);
     end;
-    // don't need this record anymore
-    Dispose(ExprRec);
-    ExprRec := nil;
   end else begin
     // inc memory pointer so we know if we are first
     ExprRec^.ResetDest := MemoryPos^ = Memory^;
@@ -621,16 +647,16 @@ begin
 
     // link result to target argument
     ExprRec^.Res := TDynamicType.Create(Memory, MemoryPos, MemSize);
+  end;
 
-    // link to next operation
-    if FCurrentRec = nil then
-    begin
-      FCurrentRec := ExprRec;
-      FLastRec := ExprRec;
-    end else begin
-      FLastRec^.Next := ExprRec;
-      FLastRec := ExprRec;
-    end;
+  // link to next operation
+  if FCurrentRec = nil then
+  begin
+    FCurrentRec := ExprRec;
+    FLastRec := ExprRec;
+  end else begin
+    FLastRec^.Next := ExprRec;
+    FLastRec := ExprRec;
   end;
 end;
 
@@ -711,7 +737,8 @@ begin
   for I := FirstItem to LastItem do
   begin
     ExprWord := TExprWord(Expr.Items[I]);
-    if (brCount = 0) and ExprWord.IsOperator and (TFunction(ExprWord).OperPrec > lPrec) then
+//  if (brCount = 0) and ExprWord.IsOperator and (TFunction(ExprWord).OperPrec > lPrec) then
+    if (brCount = 0) and ExprWord.IsOperator and (TFunction(ExprWord).OperPrec >= lPrec) then
     begin
       IEnd := I;
       lPrec := TFunction(ExprWord).OperPrec;
@@ -1111,11 +1138,15 @@ begin
     repeat
       with TempRec^ do
       begin
-        // do we need to reset pointer?
-        if ResetDest then
-          Res.MemoryPos^ := Res.Memory^;
+        if Assigned(@Oper) then
+        begin
+          // do we need to reset pointer?
+          if ResetDest then
+            Res.Rewind;
 
-        Oper(TempRec);
+          IsNull := False;
+          Oper(TempRec);
+        end;
 
         // goto next
         TempRec := Next;
@@ -1133,7 +1164,12 @@ end;
 
 function TCustomExpressionParser.DefineIntegerVariable(AVarName: string; AValue: PInteger): TExprWord;
 begin
-  Result := TIntegerVariable.Create(AVarName, AValue);
+  Result := DefineIntegerVariable(AVarName, AValue, nil, nil);
+end;
+
+function TCustomExpressionParser.DefineIntegerVariable(AVarName: string; AValue: PInteger; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo): TExprWord;
+begin
+  Result := TIntegerVariable.Create(AVarName, AValue, AIsNullPtr, AFieldInfo);
   FWordsList.Add(Result);
 end;
 
@@ -1141,7 +1177,12 @@ end;
 
 function TCustomExpressionParser.DefineLargeIntVariable(AVarName: string; AValue: PLargeInt): TExprWord;
 begin
-  Result := TLargeIntVariable.Create(AVarName, AValue);
+  Result := DefineLargeIntVariable(AVarName, AValue, nil, nil);
+end;
+
+function TCustomExpressionParser.DefineLargeIntVariable(AVarName: string; AValue: PLargeInt; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo): TExprWord;
+begin
+  Result := TLargeIntVariable.Create(AVarName, AValue, AIsNullPtr, AFieldInfo);
   FWordsList.Add(Result);
 end;
 
@@ -1149,25 +1190,45 @@ end;
 
 function TCustomExpressionParser.DefineDateTimeVariable(AVarName: string; AValue: PDateTimeRec): TExprWord;
 begin
-  Result := TDateTimeVariable.Create(AVarName, AValue);
+  Result := DefineDateTimeVariable(AVarName, AValue, nil, nil);
+end;
+
+function TCustomExpressionParser.DefineDateTimeVariable(AVarName: string; AValue: PDateTimeRec; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo): TExprWord;
+begin
+  Result := TDateTimeVariable.Create(AVarName, AValue, AIsNullPtr, AFieldInfo);
   FWordsList.Add(Result);
 end;
 
 function TCustomExpressionParser.DefineBooleanVariable(AVarName: string; AValue: PBoolean): TExprWord;
 begin
-  Result := TBooleanVariable.Create(AVarName, AValue);
+  Result := DefineBooleanVariable(AVarName, AValue, nil, nil);
+end;
+
+function TCustomExpressionParser.DefineBooleanVariable(AVarName: string; AValue: PBoolean; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo): TExprWord;
+begin
+  Result := TBooleanVariable.Create(AVarName, AValue, AIsNullPtr, AFieldInfo);
   FWordsList.Add(Result);
 end;
 
 function TCustomExpressionParser.DefineFloatVariable(AVarName: string; AValue: PDouble): TExprWord;
 begin
-  Result := TFloatVariable.Create(AVarName, AValue);
+  Result := DefineFloatVariable(AVarName, AValue, nil, nil);
+end;
+
+function TCustomExpressionParser.DefineFloatVariable(AVarName: string; AValue: PDouble; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo): TExprWord;
+begin
+  Result := TFloatVariable.Create(AVarName, AValue, AIsNullPtr, AFieldInfo);
   FWordsList.Add(Result);
 end;
 
-function TCustomExpressionParser.DefineStringVariable(AVarName: string; AValue: PPAnsiChar): TExprWord; // Was PPChar
+function TCustomExpressionParser.DefineStringVariable(AVarName: string; AValue: PPAnsiChar): TExprWord;
 begin
-  Result := TStringVariable.Create(AVarName, AValue);
+  Result := DefineStringVariable(AVarName, AValue, nil, nil);
+end;
+
+function TCustomExpressionParser.DefineStringVariable(AVarName: string; AValue: PPAnsiChar; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo): TExprWord; // Was PPChar
+begin
+  Result := TStringVariable.Create(AVarName, AValue, AIsNullPtr, AFieldInfo);
   FWordsList.Add(Result);
 end;
 
@@ -1199,6 +1260,16 @@ begin
   end;
 end;
 
+function TCustomExpressionParser.IsIndex: Boolean;
+begin
+  Result:= False;
+end;
+
+procedure TCustomExpressionParser.OptimizeExpr(var ExprRec: PExpressionRec);
+begin
+  RemoveConstants(ExprRec);
+end;
+
 function TCustomExpressionParser.MakeRec: PExpressionRec;
 var
   I: Integer;
@@ -1219,6 +1290,7 @@ begin
   Result^.Next := nil;
   Result^.ExprWord := nil;
   Result^.ResetDest := false;
+  Result^.ExpressionContext := @FExpressionContext;
 end;
 
 procedure TCustomExpressionParser.Evaluate(AnExpression: string);
@@ -1289,6 +1361,7 @@ end;
 
 //--Expression functions-----------------------------------------------------
 
+(*
 procedure FuncFloatToStr(Param: PExpressionRec);
 var
   width, numDigits, resWidth: Integer;
@@ -1387,6 +1460,61 @@ begin
 end;
 
 {$endif}
+*)
+
+procedure FuncStr(Param: PExpressionRec);
+var
+  Size: Integer;
+  Precision: Integer;
+  PadChar: Char;
+{$ifdef SUPPORT_INT64}
+  IntValue: Int64;
+{$else}
+  IntValue: Integer;
+{$endif}
+  FloatValue: Extended;
+  Len: Integer;
+begin
+  if Param^.Args[1] <> nil then
+    Size := PInteger(Param^.Args[1])^
+  else
+  begin
+    case Param^.ArgsType[0] of
+      etInteger: Size := 11;
+      etLargeInt: Size := 20;
+    else
+      Size := 10;
+    end;
+  end;
+  if Param^.Args[2] <> nil then
+    Precision := PInteger(Param^.Args[2])^
+  else
+    Precision := 0;
+  if Param^.Args[3] <> nil then
+    PadChar := Param^.Args[0]^
+  else
+    PadChar := #0;
+  if PadChar = #0 then
+    PadChar := ' ';
+  Param^.Res.AssureSpace(Succ(Size));
+  if (Precision = 0) and (Param^.ArgsType[0] in [etInteger, etLargeInt]) then
+  begin
+{$ifdef SUPPORT_INT64}
+    if Param^.ArgsType[0] = etLargeInt then
+      IntValue := PInt64(Param^.Args[0])^
+    else
+{$endif}
+      IntValue := PInteger(Param^.Args[0])^;
+    Len := IntToStrWidth(IntValue, Size, Param^.Res.MemoryPos^, True, PadChar);
+  end
+  else
+  begin
+    FloatValue := PDouble(Param^.Args[0])^;
+    Len := FloatToStrWidth(FloatValue, Size, Precision, Param^.Res.MemoryPos^, True);
+  end;
+  Inc(Param^.Res.MemoryPos^, Len);
+  Param^.Res.MemoryPos^^ := #0;
+end;
 
 procedure FuncDateToStr(Param: PExpressionRec);
 var
@@ -1394,6 +1522,8 @@ var
 begin
   // create in temporary string
   DateTimeToString(TempStr, 'yyyymmdd', PDateTimeRec(Param^.Args[0])^.DateTime);
+  if Param^.ArgList[0]^.IsNullPtr^ then
+    FillChar(PAnsiChar(TempStr)^, Length(TempStr), ' ');
   // copy to buffer
   Param^.Res.Append(PAnsiChar(AnsiString(TempStr)), Length(TempStr)); // Was PChar
 end;
@@ -1480,24 +1610,34 @@ begin
 end;
 {$endif}
 
+procedure FuncAddSub_CheckNull(Param: PExpressionRec);
+begin
+  if (Param^.ArgList[0]^.IsNullPtr^) and (Param^.ArgList[1]^.IsNullPtr^) then
+    Param^.IsNull := True;
+end;
+
 procedure FuncAdd_F_FF(Param: PExpressionRec);
 begin
   PDouble(Param^.Res.MemoryPos^)^ := PDouble(Param^.Args[0])^ + PDouble(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
 end;
 
 procedure FuncAdd_F_FI(Param: PExpressionRec);
 begin
   PDouble(Param^.Res.MemoryPos^)^ := PDouble(Param^.Args[0])^ + PInteger(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
 end;
 
 procedure FuncAdd_F_II(Param: PExpressionRec);
 begin
   PInteger(Param^.Res.MemoryPos^)^ := PInteger(Param^.Args[0])^ + PInteger(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
 end;
 
 procedure FuncAdd_F_IF(Param: PExpressionRec);
 begin
   PDouble(Param^.Res.MemoryPos^)^ := PInteger(Param^.Args[0])^ + PDouble(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
 end;
 
 {$ifdef SUPPORT_INT64}
@@ -1505,26 +1645,31 @@ end;
 procedure FuncAdd_F_FL(Param: PExpressionRec);
 begin
   PDouble(Param^.Res.MemoryPos^)^ := PDouble(Param^.Args[0])^ + PInt64(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
 end;
 
 procedure FuncAdd_F_IL(Param: PExpressionRec);
 begin
   PInt64(Param^.Res.MemoryPos^)^ := PInteger(Param^.Args[0])^ + PInt64(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
 end;
 
 procedure FuncAdd_F_LL(Param: PExpressionRec);
 begin
   PInt64(Param^.Res.MemoryPos^)^ := PInt64(Param^.Args[0])^ + PInt64(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
 end;
 
 procedure FuncAdd_F_LF(Param: PExpressionRec);
 begin
   PDouble(Param^.Res.MemoryPos^)^ := PInt64(Param^.Args[0])^ + PDouble(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
 end;
 
 procedure FuncAdd_F_LI(Param: PExpressionRec);
 begin
   PInt64(Param^.Res.MemoryPos^)^ := PInt64(Param^.Args[0])^ + PInteger(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
 end;
 
 {$endif}
@@ -1532,48 +1677,69 @@ end;
 procedure FuncSub_F_FF(Param: PExpressionRec);
 begin
   PDouble(Param^.Res.MemoryPos^)^ := PDouble(Param^.Args[0])^ - PDouble(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
 end;
 
 procedure FuncSub_F_FI(Param: PExpressionRec);
 begin
   PDouble(Param^.Res.MemoryPos^)^ := PDouble(Param^.Args[0])^ - PInteger(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
 end;
 
 procedure FuncSub_F_II(Param: PExpressionRec);
 begin
   PInteger(Param^.Res.MemoryPos^)^ := PInteger(Param^.Args[0])^ - PInteger(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
 end;
 
 procedure FuncSub_F_IF(Param: PExpressionRec);
 begin
   PDouble(Param^.Res.MemoryPos^)^ := PInteger(Param^.Args[0])^ - PDouble(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
+end;
+
+procedure FuncSub_F_DD(Param: PExpressionRec);
+begin
+  PDouble(Param^.Res.MemoryPos^)^ := PDateTime(Param^.Args[0])^ - PDateTime(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
 end;
 
 {$ifdef SUPPORT_INT64}
 
+procedure FuncSub_D_DL(Param: PExpressionRec);
+begin
+  PDateTime(Param^.Res.MemoryPos^)^ := PDateTime(Param^.Args[0])^ - PLargeInt(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
+end;
+
 procedure FuncSub_F_FL(Param: PExpressionRec);
 begin
   PDouble(Param^.Res.MemoryPos^)^ := PDouble(Param^.Args[0])^ - PInt64(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
 end;
 
 procedure FuncSub_F_IL(Param: PExpressionRec);
 begin
   PInt64(Param^.Res.MemoryPos^)^ := PInteger(Param^.Args[0])^ - PInt64(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
 end;
 
 procedure FuncSub_F_LL(Param: PExpressionRec);
 begin
   PInt64(Param^.Res.MemoryPos^)^ := PInt64(Param^.Args[0])^ - PInt64(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
 end;
 
 procedure FuncSub_F_LF(Param: PExpressionRec);
 begin
   PDouble(Param^.Res.MemoryPos^)^ := PInt64(Param^.Args[0])^ - PDouble(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
 end;
 
 procedure FuncSub_F_LI(Param: PExpressionRec);
 begin
   PInt64(Param^.Res.MemoryPos^)^ := PInt64(Param^.Args[0])^ - PInteger(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
 end;
 
 {$endif}
@@ -2093,6 +2259,442 @@ begin
   Param^.Res.MemoryPos^^ := AnsiChar(not Boolean(Param^.Args[0]^)); // Was Char
 end;
 
+procedure FuncAbs_I_I(Param: PExpressionRec);
+begin
+  PInteger(Param^.Res.MemoryPos^)^ := Abs(PInteger(Param^.Args[0])^);
+end;
+
+procedure FuncAbs_F_F(Param: PExpressionRec);
+begin
+  PDouble(Param^.Res.MemoryPos^)^ := Abs(PDouble(Param^.Args[0])^);
+end;
+
+{$ifdef SUPPORT_INT64}
+procedure FuncAbs_F_L(Param: PExpressionRec);
+begin
+  PDouble(Param^.Res.MemoryPos^)^ := Abs(PLargeInt(Param^.Args[0])^);
+end;
+{$endif}
+
+procedure FuncConcatenate_S(Param: PExpressionRec; Pad: Boolean);
+var
+  ArgIndex: Integer;
+  FloatValue: Extended;
+  StringValue: string;
+  Buffer: array[0..19] of Char;
+  Len: Integer;
+  ResSource: PChar;
+  ResLength: Integer;
+  Arg: PChar;
+  ArgType: TExpressionType;
+  ArgIsNull: Boolean;
+  Precision: Integer;
+  Variable: TVariable;
+  FieldInfo: PVariableFieldInfo;
+begin
+  ArgIndex:= 0;
+  while (ArgIndex >= 0) and (ArgIndex < MaxArg) do
+  begin
+    if Assigned(Param^.ArgList[ArgIndex]) then
+    begin
+      ResSource := nil;
+      ResLength := 0;
+      Len := 0;
+      Arg := Param^.Args[ArgIndex];
+      ArgType := Param^.ArgsType[ArgIndex];
+      ArgIsNull := Param^.ArgList[ArgIndex]^.IsNullPtr^;
+      if (not ArgIsNull) or Pad then
+      begin
+        case ArgType of
+          etString:
+          begin
+            ResSource := Arg;
+            ResLength := ExprStrLen(Arg, Pad);
+          end;
+          etFloat:
+          begin
+            ResSource := @Buffer;
+            ResLength := 20;
+            Precision := 4;
+            FloatValue := PDouble(Arg)^;
+            if Param^.ArgList[ArgIndex]^.ExprWord is TVariable then
+            begin
+              Variable := TVariable(Param^.ArgList[ArgIndex]^.ExprWord);
+              FieldInfo := Variable.FieldInfo;
+              if Assigned(FieldInfo) then
+              begin
+                case FieldInfo.NativeFieldType of
+                  'F', 'N':
+                  begin
+                    if ((FieldInfo.Size > 0) and (FieldInfo.Size <= ResLength)) and (FieldInfo.Precision >= 0) then
+                    begin
+                      ResLength := FieldInfo.Size;
+                      Precision := FieldInfo.Precision;
+                    end;
+                  end;
+                end;
+              end;
+            end;
+            if not ArgIsNull then
+              Len := FloatToStrWidth(FloatValue, ResLength, Precision, ResSource, Pad);
+            if not Pad then
+              ResLength := Len;
+          end;
+          etInteger,
+          etLargeInt:
+          begin
+            ResSource := @Buffer;
+            ResLength := 11;
+            if not ArgIsNull then
+              Len:= IntToStrWidth(PInteger(Arg)^, ResLength, ResSource, Pad, ' ');
+            if not Pad then
+              ResLength := Len;
+          end;
+          etDateTime:
+          begin
+            ResLength := 8;
+            if ArgIsNull then
+              ResSource := @Buffer
+            else
+            begin
+              StringValue := FormatDateTime('YYYYMMDD', PDateTime(Arg)^);
+              Len := ResLength;
+              ResSource := pChar(StringValue);
+            end;
+          end;
+        end;
+      end;
+      if Assigned(ResSource) then
+      begin
+        if (ArgType <> etString) and Pad then
+          FillChar(ResSource^, ResLength - Len, ' ');
+        if ResLength <> 0 then
+          Param^.Res.Append(ResSource, ResLength);
+      end;
+      Inc(ArgIndex);
+    end
+    else
+      ArgIndex := -1;
+  end;
+end;
+
+procedure FuncAdd_D_DF(Param: PExpressionRec);
+begin
+  PDateTime(Param^.Res.MemoryPos^)^ := PDateTime(Param^.Args[0])^ + PDouble(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
+end;
+
+procedure FuncAdd_D_DI(Param: PExpressionRec);
+begin
+  PDateTime(Param^.Res.MemoryPos^)^ := PDateTime(Param^.Args[0])^ + PInteger(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
+end;
+
+procedure FuncAdd_D_DL(Param: PExpressionRec);
+begin
+  PDateTime(Param^.Res.MemoryPos^)^ := PDateTime(Param^.Args[0])^ + PInt64(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
+end;
+
+procedure FuncAdd_D_FD(Param: PExpressionRec);
+begin
+  PDateTime(Param^.Res.MemoryPos^)^ := PDouble(Param^.Args[0])^ + PDateTime(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
+end;
+
+procedure FuncAdd_D_ID(Param: PExpressionRec);
+begin
+  PDateTime(Param^.Res.MemoryPos^)^ := PInteger(Param^.Args[0])^ + PDateTime(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
+end;
+
+procedure FuncAdd_D_LD(Param: PExpressionRec);
+begin
+  PDateTime(Param^.Res.MemoryPos^)^ := PInt64(Param^.Args[0])^ + PDateTime(Param^.Args[1])^;
+  FuncAddSub_CheckNull(Param);
+end;
+
+procedure FuncAdd_S(Param: PExpressionRec);
+begin
+  FuncConcatenate_S(Param, True);
+end;
+
+procedure FuncAsc(Param: PExpressionRec);
+begin
+  if ExprStrLen(Param^.Args[0], False) > 0 then
+    PInteger(Param^.Res.MemoryPos^)^ := Ord(Param^.Args[0]^);
+end;
+
+procedure FuncCDOW(Param: PExpressionRec);
+var
+  ADate: TDateTime;
+  TempStr: AnsiString;
+begin
+  ADate := PDateTimeRec(Param^.Args[0])^.DateTime;
+  if ADate <> 0 then
+    TempStr := ShortDayNames[DayOfWeek(ADate)]
+  else
+    TempStr := '   ';
+  Param^.Res.Append(PAnsiChar(TempStr), Length(TempStr));
+end;
+
+procedure FuncCeil_I_F(Param: PExpressionRec);
+begin
+  PInteger(Param^.Res.MemoryPos^)^ := Ceil(PDouble(Param^.Args[0])^);
+end;
+
+procedure FuncCeil_F_F(Param: PExpressionRec);
+begin
+  PDouble(Param^.Res.MemoryPos^)^ := Ceil(PDouble(Param^.Args[0])^);
+end;
+
+procedure FuncChr(Param: PExpressionRec);
+var
+  IntValue: Integer;
+begin
+  if Param^.ExpressionContext^.ValidatingIndex then
+    IntValue:= Ord(' ')
+  else
+    IntValue := PInteger(Param^.Args[0])^;
+  if (IntValue >= Low(Byte)) and (IntValue <= High(Byte)) then
+    Param^.Res.Append(@IntValue, SizeOf(Byte));
+end;
+
+procedure FuncDate(Param: PExpressionRec);
+begin
+  PDateTime(Param^.Res.MemoryPos^)^ := Now;
+end;
+
+procedure FuncDay(Param: PExpressionRec);
+var
+  ADate: TDateTime;
+  Year, Month, Day: Word;
+begin
+  ADate := PDateTimeRec(Param^.Args[0])^.DateTime;
+  if ADate <> 0 then
+  begin
+    DecodeDate(ADate, Year, Month, Day);
+    PInteger(Param^.Res.MemoryPos^)^ := Day;
+  end
+  else
+    PInteger(Param^.Res.MemoryPos^)^ := 0;
+end;
+
+procedure FuncEmpty(Param: PExpressionRec);
+begin
+  case Param^.ArgsType[0] of
+    etDateTime: PBoolean(Param^.Res.MemoryPos^)^ := PDateTime(Param^.Args[0])^ = 0;
+    etFloat: PBoolean(Param^.Res.MemoryPos^)^ := PDouble(Param^.Args[0])^ = 0;
+    etInteger: PBoolean(Param^.Res.MemoryPos^)^ := PInteger(Param^.Args[0])^ = 0;
+    etLargeInt: PBoolean(Param^.Res.MemoryPos^)^ := PLargeInt(Param^.Args[0])^ = 0;
+    etString: PBoolean(Param^.Res.MemoryPos^)^ := ExprStrLen(Param^.Args[0], False) = 0;
+  end;
+end;
+
+procedure FuncIIF_S_SS(Param: PExpressionRec);
+begin
+  if PBoolean(Param^.Args[0])^ then
+    Param^.Res.Append(Param^.Args[1], dbfStrLen(Param^.Args[1]))
+  else
+    Param^.Res.Append(Param^.Args[2], dbfStrLen(Param^.Args[2]));
+end;
+
+procedure FuncIIF_F_FF(Param: PExpressionRec);
+begin
+  if PBoolean(Param^.Args[0])^ then
+    PDouble(Param^.Res.MemoryPos^)^ := PDouble(Param^.Args[1])^
+  else
+    PDouble(Param^.Res.MemoryPos^)^ := PDouble(Param^.Args[2])^;
+end;
+
+procedure FuncIIF_I_II(Param: PExpressionRec);
+begin
+  if PBoolean(Param^.Args[0])^ then
+    PInteger(Param^.Res.MemoryPos^)^ := PInteger(Param^.Args[1])^
+  else
+    PInteger(Param^.Res.MemoryPos^)^ := PInteger(Param^.Args[2])^;
+end;
+
+procedure FuncLen_F_S(Param: PExpressionRec);
+begin
+  PDouble(Param^.Res.MemoryPos^)^ := dbfStrLen(Param^.Args[0]);
+end;
+
+{$ifdef SUPPORT_INT64}
+procedure FuncLen_L_S(Param: PExpressionRec);
+begin
+  PLargeInt(Param^.Res.MemoryPos^)^ := dbfStrLen(Param^.Args[0]);
+end;
+{$endif}
+
+procedure FuncLen_I_S(Param: PExpressionRec);
+begin
+  PInteger(Param^.Res.MemoryPos^)^ := dbfStrLen(Param^.Args[0]);
+end;
+
+procedure FuncLTrim(Param: PExpressionRec);
+var
+  TempStr: AnsiString;
+begin
+  if Param^.ExpressionContext^.ValidatingIndex then
+    Param^.Res.Append(Param^.Args[0], dbfStrLen(Param^.Args[0]))
+  else
+  begin
+    TempStr := TrimLeft(Param^.Args[0]);
+    Param^.Res.Append(PChar(TempStr), Length(TempStr));
+  end;
+end;
+
+procedure FuncMonth(Param: PExpressionRec);
+var
+  ADate: TDateTime;
+  Year, Month, Day: Word;
+begin
+  ADate := PDateTimeRec(Param^.Args[0])^.DateTime;
+  if ADate <> 0 then
+  begin
+    DecodeDate(ADate, Year, Month, Day);
+    PInteger(Param^.Res.MemoryPos^)^ := Month;
+  end
+  else
+    PInteger(Param^.Res.MemoryPos^)^ := 0;
+end;
+
+procedure FuncProper(Param: PExpressionRec);
+var
+  P: PAnsiChar;
+  Len: Integer;
+  Index: Integer;
+  NewWord: Boolean;
+  Buffer: array[0..1] of AnsiChar;
+begin
+  P := Param^.Args[0];
+  Len := dbfStrLen(P);
+  NewWord := True;
+  Buffer[1]:= #0;
+  for Index:= 1 to Len do
+  begin
+    if P^ = ' ' then
+      NewWord := True
+    else
+    begin
+      if NewWord then
+      begin
+        Buffer[0] := P^;
+        P^ := dbfStrUpper(Buffer)^;
+        NewWord := False;
+      end
+      else
+        P^ := dbfStrLower(Buffer)^;
+    end;
+    Inc(P);
+  end;
+  Param^.Res.Append(Param^.Args[0], Len);
+end;
+
+procedure FuncRecNo(Param: PExpressionRec);
+begin
+  PInteger(Param^.Res.MemoryPos^)^ := -1;
+end;
+
+procedure FuncRight(Param: PExpressionRec);
+var
+  srcLen, index, count: Integer;
+begin
+  srcLen := dbfStrLen(Param^.Args[0]);
+  count  := PInteger(Param^.Args[1])^;
+  if count > srcLen then
+    count := srcLen;
+  if count > 0 then
+  begin
+    index := srcLen - count;
+    Param^.Res.Append(Param^.Args[0]+index, count);
+  end;
+end;
+
+procedure FuncRound_F_FF(Param: PExpressionRec);
+var
+  TempInt: Integer;
+begin
+  TempInt := Trunc(PDouble(Param^.Args[1])^);
+  PDouble(Param^.Res.MemoryPos^)^ := RoundTo(PDouble(Param^.Args[0])^, -TempInt);
+end;
+
+procedure FuncRound_F_FI(Param: PExpressionRec);
+var
+  TempInt: integer;
+begin
+  TempInt := PInteger(Param^.Args[1])^;
+  PDouble(Param^.Res.MemoryPos^)^ := RoundTo(PDouble(Param^.Args[0])^, -TempInt);
+end;
+
+procedure FuncRTrim(Param: PExpressionRec);
+var
+  TempStr: AnsiString;
+begin
+  if Param^.ExpressionContext^.ValidatingIndex then
+    Param^.Res.Append(Param^.Args[0], dbfStrLen(Param^.Args[0]))
+  else
+  begin
+    TempStr := TrimRight(Param^.Args[0]);
+    Param^.Res.Append(pchar(TempStr), Length(TempStr));
+  end;
+end;
+
+{$I dbf_soundex.inc}
+procedure FuncSoundex(Param: PExpressionRec);
+var
+  Src: pchar;
+  Dest: AnsiString;
+begin
+  with Param^ do
+  begin
+    Src := Param^.Args[0];
+    Dest := Soundex(src);
+    Param^.Res.Append(pchar(Dest), Length(Dest));
+  end;
+end;
+
+procedure FuncSub_S(Param: PExpressionRec);
+begin
+  FuncConcatenate_S(Param, Param^.ExpressionContext^.ValidatingIndex);
+end;
+
+procedure FuncVal(Param: PExpressionRec);
+var
+  Index: Integer;
+  TempStr: AnsiString;
+  Code: Integer;
+begin
+  TempStr := TrimLeft(Param^.Args[0]);
+  Index := 0;
+  while (Index<Length(TempStr)) and (TempStr[Succ(Index)] in [DBF_ZERO..DBF_NINE, DBF_POSITIVESIGN, DBF_NEGATIVESIGN, DBF_DECIMAL]) do
+    Inc(Index);
+  SetLength(TempStr, Index);
+  case Param^.ExprWord.ResultType of
+    etFloat: Val(TempStr, PDouble(Param^.Res.MemoryPos^)^, Code);
+    etInteger: Val(TempStr, PInteger(Param^.Res.MemoryPos^)^, Code);
+{$ifdef SUPPORT_INT64}
+    etLargeInt: Val(TempStr, PLargeInt(Param^.Res.MemoryPos^)^, Code);
+{$endif}
+  end;
+end;
+
+procedure FuncYear(Param: PExpressionRec);
+var
+  ADate: TDateTime;
+  Year, Month, Day: Word;
+begin
+  ADate := PDateTimeRec(Param^.Args[0])^.DateTime;
+  if ADate <> 0 then
+  begin
+    DecodeDate(ADate, Year, Month, Day);
+    PInteger(Param^.Res.MemoryPos^)^ := Year;
+  end
+  else
+    PInteger(Param^.Res.MemoryPos^)^ := 0;
+end;
+
 initialization
 
   DbfWordsGeneralList := TExpressList.Create;
@@ -2128,17 +2730,42 @@ initialization
     Add(TFunction.CreateOper('+', 'LL', etLargeInt, FuncAdd_F_LI, 40));
     Add(TFunction.CreateOper('+', 'LI', etLargeInt, FuncAdd_F_LL, 40));
 {$endif}
+    Add(TFunction.CreateOper('+', 'DF', etDateTime, FuncAdd_D_DF, 40));
+    Add(TFunction.CreateOper('+', 'DI', etDateTime, FuncAdd_D_DI, 40));
+    Add(TFunction.CreateOper('+', 'DL', etDateTime, FuncAdd_D_DL, 40));
+    Add(TFunction.CreateOper('+', 'FD', etDateTime, FuncAdd_D_FD, 40));
+    Add(TFunction.CreateOper('+', 'ID', etDateTime, FuncAdd_D_ID, 40));
+    Add(TFunction.CreateOper('+', 'LD', etDateTime, FuncAdd_D_LD, 40));
+    Add(TFunction.CreateOper('+', 'DS', etString,   FuncAdd_S,    40));
+    Add(TFunction.CreateOper('+', 'FS', etString,   FuncAdd_S,    40));
+    Add(TFunction.CreateOper('+', 'IS', etString,   FuncAdd_S,    40));
+    Add(TFunction.CreateOper('+', 'LS', etString,   FuncAdd_S,    40));
+    Add(TFunction.CreateOper('+', 'SD', etString,   FuncAdd_S,    40));
+    Add(TFunction.CreateOper('+', 'SF', etString,   FuncAdd_S,    40));
+    Add(TFunction.CreateOper('+', 'SI', etString,   FuncAdd_S,    40));
+    Add(TFunction.CreateOper('+', 'SL', etString,   FuncAdd_S,    40));
     Add(TFunction.CreateOper('-', 'FF', etFloat,    FuncSub_F_FF, 40));
     Add(TFunction.CreateOper('-', 'FI', etFloat,    FuncSub_F_FI, 40));
     Add(TFunction.CreateOper('-', 'IF', etFloat,    FuncSub_F_IF, 40));
     Add(TFunction.CreateOper('-', 'II', etInteger,  FuncSub_F_II, 40));
+    Add(TFunction.CreateOper('-', 'DD', etFloat,    FuncSub_F_DD, 40));
 {$ifdef SUPPORT_INT64}
+    Add(TFunction.CreateOper('-', 'DL', etDateTime, FuncSub_D_DL, 40));
     Add(TFunction.CreateOper('-', 'FL', etFloat,    FuncSub_F_FL, 40));
     Add(TFunction.CreateOper('-', 'IL', etLargeInt, FuncSub_F_IL, 40));
     Add(TFunction.CreateOper('-', 'LF', etFloat,    FuncSub_F_LF, 40));
     Add(TFunction.CreateOper('-', 'LL', etLargeInt, FuncSub_F_LI, 40));
     Add(TFunction.CreateOper('-', 'LI', etLargeInt, FuncSub_F_LL, 40));
 {$endif}
+    Add(TFunction.CreateOper('-', 'DS', etString,   FuncSub_S,    40));
+    Add(TFunction.CreateOper('-', 'FS', etString,   FuncSub_S,    40));
+    Add(TFunction.CreateOper('-', 'IS', etString,   FuncSub_S,    40));
+    Add(TFunction.CreateOper('-', 'LS', etString,   FuncSub_S,    40));
+    Add(TFunction.CreateOper('-', 'SD', etString,   FuncSub_S,    40));
+    Add(TFunction.CreateOper('-', 'SF', etString,   FuncSub_S,    40));
+    Add(TFunction.CreateOper('-', 'SI', etString,   FuncSub_S,    40));
+    Add(TFunction.CreateOper('-', 'SL', etString,   FuncSub_S,    40));
+    Add(TFunction.CreateOper('-', 'SS', etString,   FuncSub_S,    40));
     Add(TFunction.CreateOper('*', 'FF', etFloat,    FuncMul_F_FF, 40));
     Add(TFunction.CreateOper('*', 'FI', etFloat,    FuncMul_F_FI, 40));
     Add(TFunction.CreateOper('*', 'IF', etFloat,    FuncMul_F_IF, 40));
@@ -2219,20 +2846,76 @@ initialization
     Add(TFunction.CreateOper('<>','IL', etBoolean, Func_IL_NEQ, 80));
 {$endif}
 
-    Add(TFunction.CreateOper('NOT', 'B',  etBoolean, Func_NOT, 85));
-    Add(TFunction.CreateOper('AND', 'BB', etBoolean, Func_AND, 90));
-    Add(TFunction.CreateOper('OR',  'BB', etBoolean, Func_OR, 100));
+    Add(TFunction.CreateOper('NOT', 'B',  etBoolean,  Func_NOT,  85));
+    Add(TFunction.CreateOper('AND', 'BB', etBoolean,  Func_AND,  90));
+    Add(TFunction.CreateOper('OR',  'BB', etBoolean,  Func_OR,  100));
+
+    // Unary plus
+    Add(TFunction.CreateOper('+',   'D',  etDateTime, nil,       40));
+    Add(TFunction.CreateOper('+',   'F',  etFloat,    nil,       40));
+    Add(TFunction.CreateOper('+',   'I',  etInteger,  nil,       40));
+    Add(TFunction.CreateOper('+',   'S',  etString,   nil,       40));
+{$ifdef SUPPORT_INT64}
+    Add(TFunction.CreateOper('+',   'L',  etLargeInt, nil,       40));
+{$endif}
 
     // Functions - name, description, param types, min params, result type, Func addr
-    Add(TFunction.Create('STR',       '',      'FII', 1, etString, FuncFloatToStr, ''));
-    Add(TFunction.Create('STR',       '',      'III', 1, etString, FuncIntToStr, ''));
-    Add(TFunction.Create('STR',       '',      'LII', 1, etString, FuncInt64ToStr, ''));
-    Add(TFunction.Create('DTOS',      '',      'D',   1, etString, FuncDateToStr, ''));
-    Add(TFunction.Create('SUBSTR',    'SUBS',  'SII', 3, etString, FuncSubString, ''));
-    Add(TFunction.Create('LEFT',      'LEFT',  'SI',  2, etString, FuncLeftString, ''));
-    Add(TFunction.Create('UPPERCASE', 'UPPER', 'S',   1, etString, FuncUppercase, ''));
-    Add(TFunction.Create('LOWERCASE', 'LOWER', 'S',   1, etString, FuncLowercase, ''));
-  end;
+//  Add(TFunction.Create('STR',       '',      'FII', 1, etString,   FuncFloatToStr, ''));
+//  Add(TFunction.Create('STR',       '',      'III', 1, etString,   FuncIntToStr, ''));
+//  Add(TFunction.Create('STR',       '',      'LII', 1, etString,   FuncInt64ToStr, ''));
+    Add(TFunction.Create('STR',       '',      'FIIS',1, etString,   FuncStr,       ''));
+    Add(TFunction.Create('STR',       '',      'IIIS',1, etString,   FuncStr,       ''));
+    Add(TFunction.Create('STR',       '',      'LIIS',1, etString,   FuncStr,       ''));
+    Add(TFunction.Create('DTOS',      '',      'D',   1, etString,   FuncDateToStr, ''));
+    Add(TFunction.Create('SUBSTR',    'SUBS',  'SII', 3, etString,   FuncSubString, ''));
+    Add(TFunction.Create('SUBSTR',    'SUBS',  'SI',  2, etString,   FuncSubString, ''));
+    Add(TFunction.Create('LEFT',      'LEFT',  'SI',  2, etString,   FuncLeftString, ''));
+    Add(TFunction.Create('UPPERCASE', 'UPPER', 'S',   1, etString,   FuncUppercase, ''));
+    Add(TFunction.Create('LOWERCASE', 'LOWER', 'S',   1, etString,   FuncLowercase, ''));
+
+// More functions
+    Add(TFunction.Create('ABS',       '',      'I',   1, etInteger,  FuncAbs_I_I,    ''));
+    Add(TFunction.Create('ABS',       '',      'F',   1, etFloat,    FuncAbs_F_F,    ''));
+{$ifdef SUPPORT_INT64}
+    Add(TFunction.Create('ABS',       '',      'L',   1, etFloat,    FuncAbs_F_L,    ''));
+{$endif}
+    Add(TFunction.Create('ASC',       '',      'S',   1, etInteger,  FuncAsc,        ''));
+    Add(TFunction.Create('CDOW',      '',      'D',   1, etString,   FuncCDOW,       ''));
+    Add(TFunction.Create('CEILING',   'CEIL',  'F',   1, etInteger,  FuncCeil_I_F,   ''));
+    Add(TFunction.Create('CEILING',   'CEIL',  'F',   1, etFloat,    FuncCeil_F_F,   ''));
+    Add(TFunction.Create('CHR',       '',      'I',   1, etString,   FuncChr,        ''));
+    Add(TFunction.Create('DATE',      '',      '',    0, etDateTime, FuncDate,       ''));
+    Add(TFunction.Create('DAY',       '',      'D',   1, etInteger,  FuncDay,        ''));
+    Add(TFunction.Create('EMPTY',     '',      'D',   1, etBoolean,  FuncEmpty,      ''));
+    Add(TFunction.Create('EMPTY',     '',      'F',   1, etBoolean,  FuncEmpty,      ''));
+    Add(TFunction.Create('EMPTY',     '',      'I',   1, etBoolean,  FuncEmpty,      ''));
+{$ifdef SUPPORT_INT64}
+    Add(TFunction.Create('EMPTY',     '',      'L',   1, etBoolean,  FuncEmpty,      ''));
+{$endif}
+    Add(TFunction.Create('EMPTY',     '',      'S',   1, etBoolean,  FuncEmpty,      ''));
+    Add(TFunction.Create('IIF',       '',      'BSS', 3, etString,   FuncIIF_S_SS,   ''));
+    Add(TFunction.Create('IIF',       '',      'BFF', 3, etFloat,    FuncIIF_F_FF,   ''));
+    Add(TFunction.Create('IIF',       '',      'BII', 3, etInteger,  FuncIIF_I_II,   ''));
+    Add(TFunction.Create('LEN',       '',      'S',   1, etInteger,  FuncLen_I_S,    ''));
+{$ifdef SUPPORT_INT64}
+    Add(TFunction.Create('LEN',       '',      'S',   1, etLargeInt, FuncLen_L_S,    ''));
+{$endif}
+    Add(TFunction.Create('LEN',       '',      'S',   1, etFloat,    FuncLen_F_S,    ''));
+    Add(TFunction.Create('LTRIM',     '',      'S',   1, etString,   FuncLTrim,      ''));
+    Add(TFunction.Create('MONTH',     '',      'D',   1, etInteger,  FuncMonth,      ''));
+    Add(TFunction.Create('PROPER',    '',      'S',   1, etString,   FuncProper,     ''));
+    Add(TVaryingFunction.Create('RECNO', '', '',      0, etInteger,  FuncRecNo,      ''));
+    Add(TFunction.Create('RIGHT',     '',      'SI',  2, etString,   FuncRight,      ''));
+    Add(TFunction.Create('ROUND',     '',      'FI',  2, etFloat,    FuncRound_F_FI, ''));
+    Add(TFunction.Create('ROUND',     '',      'FF',  2, etFloat,    FuncRound_F_FF, ''));
+    Add(TFunction.Create('RTRIM',     '',      'S',   1, etString,   FuncRTrim,      ''));
+    Add(TFunction.Create('SOUNDEX',   '',      'S',   1, etString,   FuncSoundex,    ''));
+    Add(TFunction.Create('TRIM',      '',      'S',   1, etString,   FuncRTrim,      ''));
+    Add(TFunction.Create('VAL',       '',      'S',   1, etFloat,    FuncVal,        ''));
+    Add(TFunction.Create('VAL',       '',      'S',   1, etInteger,  FuncVal,        ''));
+    Add(TFunction.Create('VAL',       '',      'S',   1, etLargeInt, FuncVal,       ''));
+    Add(TFunction.Create('YEAR',      '',      'D',   1, etInteger,  FuncYear,       ''));
+end;
 
   with DbfWordsInsensGeneralList do
   begin

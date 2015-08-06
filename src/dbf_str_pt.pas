@@ -1,6 +1,6 @@
 unit dbf_str;
 
-{ note this is Brazilian Portuguese }
+{ Brazilian Portuguese }
 
 interface
 
@@ -15,6 +15,7 @@ initialization
   STRING_VERSION                      := 'TDbf V%d.%d';
 
   STRING_RECORD_LOCKED                := 'Registro bloqueado.';
+  STRING_READ_ERROR                   := 'Erro de leitura.';
   STRING_WRITE_ERROR                  := 'Erro de escrita. (Disco cheio?)';
   STRING_WRITE_INDEX_ERROR            := 'Erro de escrita; índices provavelmente corrompidos. (Disco cheio?)';
   STRING_KEY_VIOLATION                := 'Violação de chave. (Chave já presente no archivo).'+#13+#10+
@@ -26,6 +27,7 @@ initialization
   STRING_INVALID_FIELD_TYPE           := 'Tipo de campo inválido ''%s'' para o campo ''%s''.';
   STRING_INVALID_VCL_FIELD_TYPE       := 'Não se pode criar o campo "%s", campo VCL tipo %x não suportado por DBF.';
 
+  STRING_INVALID_MDX_FILE             := 'Arquivo MDX inválido.';
   STRING_INDEX_BASED_ON_UNKNOWN_FIELD := 'Índice baseado em campo desconhecido "%s".';
   STRING_INDEX_BASED_ON_INVALID_FIELD := 'Campo "%s" inválido para criar um índice.';
   STRING_INDEX_EXPRESSION_TOO_LONG    := 'Resultado de índice para "%s" demasiado grande, >100 caracteres (%d).';
@@ -34,4 +36,11 @@ initialization
   STRING_TOO_MANY_INDEXES             := 'Não se pode criar o índice: demasiados índices no archivo.';
   STRING_INDEX_NOT_EXIST              := 'Ìndice "%s" não existe.';
   STRING_NEED_EXCLUSIVE_ACCESS        := 'Acesso Exclusivo requerido para esta operação.';
+
+  STRING_PROGRESS_PACKINGRECORDS      := 'Empacota registros';
+  STRING_PROGRESS_READINGRECORDS      := 'Lê registros';
+  STRING_PROGRESS_APPENDINGRECORDS    := 'Anexa registros';
+  STRING_PROGRESS_SORTING_RECORDS     := 'Ordena records';
+  STRING_PROGRESS_WRITING_RECORDS     := 'Escreve records';
 end.
+
