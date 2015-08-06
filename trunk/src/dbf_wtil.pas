@@ -11,6 +11,7 @@ uses
 {$else}
   Libc, 
 {$endif}
+  dbf_AnsiStrings,
   Types, SysUtils, Classes;
 
 const
@@ -238,6 +239,17 @@ type
     wSecond: Word;
     wMilliseconds: Word;
   end;
+
+{$ifdef SUPPORT_INT64}
+  ULARGE_INTEGER = record
+    case Integer of
+    0: (
+      LowPart: DWORD;
+      HighPart: DWORD);
+    1: (
+      QuadPart: Int64);
+  end;
+{$endif}
 
   TFarProc = Pointer;
   TFNLocaleEnumProc = TFarProc;

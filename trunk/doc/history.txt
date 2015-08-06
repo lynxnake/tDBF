@@ -40,6 +40,122 @@ V6.9.2
 - fix memory leak when inserting duplicate item in AVL tree 
 - add german localization strings (thx heiko)
 
+following changes thx paulenandrew:
+- fix compiler errors in dbf_ansistrings for Free Pascal
+- fix compiler errors in dbf_dbffile for Free Pascal
+- expose TIndexFile.CompareKeys in TDbf.CompareKeys
+- change TDbf.ExtractKey to extract key from index instead of evaluate it from record buffer
+- prevent Access Violation in TDbf.IsDeleted and TDbf.Undelete if table is closed and $booleval is on
+- use fmShareExclusive in exclusive create/open mode
+- only lock a record if the table is shared
+- fix memo file not being maintained correctly if block size is not the default of 1024
+- fix exception inserting into index leaving page locked
+- update references to record number when inserting a record
+- when setting IndexName, do not resync index unless it changed
+- fix error when opening a table leaving it in an intermediate state
+- fully support TableLevel 5
+- changed the default TableLevel from 4 to 5, supports a much larger record size and is otherwise almost identical
+- maintain record number order within index entries with the same key
+- update FCachedSize when adding backlink to FoxPro file
+- ensure consistent behaviour when normalizing index name
+- do not assume MDX page size is 1024 or block size is 512
+- fix memory leak if error opening an index
+- preserve deleted flag in TDbf.CopyFrom
+- if a memo field is set to an empty value, clear the reference so that it is null (consistent with BDE)
+- add support for SetKey, GotoKey and GotoNearest
+- maintain IndexDefs when DeleteIndex is used to delete an index
+- add support for @, O, I and + dBASE 7 index key types and I and + FoxPro index key types
+- preserve autoincrement field values in TDbf.CopyFrom
+- limit index name length in header to 8 (compatibility with BDE)
+- if TagsUsed is more than 47 tags in an index file, raise "Invalid MDX file." exception
+- fix record buffer corruption if there is an error parsing the value of an F (Float), N (Numeric) or O (Double) field
+- use record packing for index file declarations
+- add support for up to 47 indexes, fix errors if an index file has more than 34 indexes
+- use correct tag size when clearing level 7 indexes
+- if size of tags in index file is too large, raise "Invalid MDX file." exception
+- fix potential Range Check Error when deleting an entry from an index
+- maintain linked list in tag table (compatibility with BDE and other engines)
+- fix Zap leaving cached data in the file
+- fix copying of memo file data when restructuring
+- open FoxPro MDX index file (FoxPro CDX index file still not supported)
+- create FoxPro DBF file with VerDBF = $30 ($02 is not compatible with BDE or Visual FoxPro 6.0)
+- fix access is denied error trying to write corrections to the DBF header when opening read only
+- fix ordering of floating point numeric index
+- ensure GetCanModify returns False if table is not Active
+- fix Division by zero error if index file block size is 0, raise "Invalid MDX. file" exception
+- fix record count in DBF header (was not working as intended)
+- add support for files larger than 4 GB (requires compiler to support Int64)
+- add support for building/maintaining Date (D) index
+- fix calculation of tag offset in index file
+- fix access violation closing a table that is locked without explicitly unlocking
+- use and recognize NUL instead of space to fill empty level 7 Character (C) fields, but not level 7 C index keys (consistent with BDE)
+- fix error handling and potential access violation when there is an index key violation
+- preserve cursor if GetRecord finds no record
+- fix index file key length error handling, raise "Invalid MDX file." exception
+- fix Integer overflow errors if more than 2,147,483,648 entries in an index file (requires compiler to support Int64)
+- fix inaccurate floating point values in numeric index
+- consistently use EParserException for parser error
+- recalculate key length when rebuilding an index, to correct it if necessary
+- implement DeleteMdxFile to delete MDX index file and clear MDX flag, implement DeleteIndexFile to delete index file
+- consistently use EDbfIndexError for index error
+- add OnIndexInvalidEvent - set Handled to continue anyway, DeleteLink to clear MDX flag
+- fix problems if index key length does not match parser result length
+- fix error handling updating an index
+- fix potential access violation if TDBF_INDEX_CHECK is defined
+- fix problems maintaining an index if leaf nodes are not on the same level (though they should be), raise "Invalid MDX file." exception
+- fix error handling of out of range value in index page
+- fix error handling in parser if too many arguments/operands
+- fix sporadic access violation and other errors when creating/destroying a table in a multi-threaded application (fixes bug #68)
+- fix writing of EOF terminator when inserting a record (fixes bug #58)
+- fix incorrect parser linked list
+- if there is a file read/write error, raise an exception
+- change index locking algorithm to avoid resyncs, achieves much better performance (consistent with BDE)
+- use BufferAhead and DisableResyncOnPost by default when table is exclusive or write locked, achieves much better performance
+- use dynamic buffer size, achieves much better performance with both random and sequential access (performance similar to BDE)
+- re-read current record if table is shared, under limited conditions so that performance is not affected (similar to BDE)
+- add OnProgress event to report the progress of long-running functions and allow cancellation, used when copying and restructuring (similar to BDE)
+- add missing message translations (fr, ita, nl, pl, ru)
+- include deleted records in distinct index (compatible with BDE)
+- build index using partial bulkloading, achieves much better performance (comparable to BDE)
+- fix record and table locking algorithm - when table is locked, can edit a record anyway and adding a record causes it to hang (also compatible with BDE)
+- add more robust Numeric (N) and Float (F) field value translation - prevents potential access violation, supports exponential notation for integers (also compatible with BDE)
+- add more robust error handling for invalid index header, page or entry
+- add TDbf.BatchMove method (similar to BDE batch move)
+- if there is no active record, preventing it from reading the table twice (forwards then backwards)
+- do not use OnIndexMissing with a FoxPro table
+- do not convert index expression to upper case
+- treat level 7 null value the same as an empty value when comparing Character (C) index keys (consistent with BDE)
+- add more robust Str() function to parser
+- add concept of null value to parser, use it to implement DTOS(null) = null instead of "18991230"
+- make third parameter optional in SubStr()
+- evaluate operators with equal precedence from left to right
+- add Empty() function to parser
+- add Proper() function to parser
+- add Val() function to parser
+- add Chr() function to parser
+- add LTrim(), RTrim() and Trim() functions to parser
+- add Asc() function to parser
+- add Right() function to parser
+- add Abs() function to parser
+- add CDOW(), Date(), Day(), Month(), Year() functions to parser
+- add Len() function to parser
+- add IIF() function to parser
+- add Ceil(), Ceiling(), Round() functions to parser
+- fix index parser to be case sensitive
+- add RecNo() function to parser
+- make native field information available in parser
+- allow concatenating a string using the + or - binary operator only in an index expression
+- add unary plus (+) operator to parser
+- add binary plus (+) operator for strings, dates
+- add binary minus (-) operator for strings, dates
+- fixes so that it compiles in Free Pascal on Linux
+- fixes so that it compiles in compiler that does not support Int64
+- fix PhysicalRecNo property when filtering
+- prevent Access Violation in TDbf.LocateRecord if no index active and $booleval is on
+- add checking of required fields (call inherited InternalPost)
+- fix exception in TDataSet.Post if State = dsSetKey (Free Pascal)
+- consistently use little endianness for bookmark (allows it to be passed between architectures to support middle-tier)
+
 ------------------------
 V6.9.1
 

@@ -64,7 +64,7 @@ begin
     end;
 end;
 
-function DbfCompareString( CollationTable :PCollationTable; String1 :PAnsiChar; nLength1 :integer; String2 :PAnsiChar; nLength2 :integer ) :integer;
+function DbfCompareString( CollationTable :PCollationTable; String1 :PChar; nLength1 :integer; String2 :PChar; nLength2 :integer ) :integer;
 var
   nCnt, nMax, nVal1, nVal2 :integer;
 const
@@ -74,56 +74,36 @@ const
 begin
   result := EQUAL;
 
-  if CollationTable = BINARY_COLLATION then
-    begin
-      // binary collation
-      nMax := Min( nLength1, nLength2 );
-      for nCnt := 1 to nMax do
+   nMax := Min( nLength1, nLength2 );
+    for nCnt := 1 to nMax do
+      begin
+        nVal1 := Ord(String1^);
+        if nVal1 = 0 then
+          nVal1 := Ord(' ');
+        nVal2 := Ord(String2^);
+        if nVal2 = 0 then
+          nVal2 := Ord(' ');
+        if CollationTable <> BINARY_COLLATION then
         begin
-          if Ord(String1^) < Ord(String2^) then
-            begin
-              result := ONE_LESS_THAN_TWO;
-              break;
-            end
-          else if Ord(String1^) > Ord(String2^) then
-            begin
-              result := TWO_LESS_THAN_ONE;
-              break;
-            end;
-
-          Inc(String1);
-          Inc(String2);
-        end;
-    end
-
-  else
-
-    begin
-      // collation via collation table
-      nMax := Min( nLength1, nLength2 );
-      for nCnt := 1 to nMax do
-        begin
-          nVal1 := CollationTable[Ord(String1^)];
-          nVal2 := CollationTable[Ord(String2^)];
-
-          if nVal1 < nVal2 then
-            begin
-              result := ONE_LESS_THAN_TWO;
-              break;
-            end
-
-          else if nVal1 > nVal2 then
-            begin
-              result := TWO_LESS_THAN_ONE;
-              break;
-            end;
-
-          Inc(String1);
-          Inc(String2);
+          nVal1 := CollationTable[nVal1];
+          nVal2 := CollationTable[nVal2];
         end;
 
-    end;
+        if nVal1 < nVal2 then
+          begin
+            result := ONE_LESS_THAN_TWO;
+            break;
+          end
 
+        else if nVal1 > nVal2 then
+          begin
+            result := TWO_LESS_THAN_ONE;
+            break;
+          end;
+
+        Inc(String1);
+        Inc(String2);
+      end;
 
   if result = EQUAL then
     begin

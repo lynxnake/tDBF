@@ -33,6 +33,7 @@ uses
 type
 
 //====================================================================
+  TDbfIndexInvalidEvent = procedure(Sender: TObject; var Handled, DeleteLink: Boolean) of object;
   TDbfIndexMissingEvent = procedure(var DeleteLink: Boolean) of object;
   TUpdateNullField = (unClear, unSet);
 
@@ -63,15 +64,20 @@ type
     FAutoIncPresent: Boolean;
     FCopyDateTimeAsString: Boolean;
     FDateTimeHandling: TDateTimeHandling;
+    FInCopyFrom: Boolean;
     FOnLocaleError: TDbfLocaleErrorEvent;
+    FOnIndexInvalid: TDbfIndexInvalidEvent;
     FOnIndexMissing: TDbfIndexMissingEvent;
+    FRecordCountDirty: Boolean;
 
     function  HasBlob: Boolean;
     function  GetMemoExt: string;
 
     function GetLanguageId: Integer;
     function GetLanguageStr: AnsiString;
-    
+
+    procedure RecordCountFlush;
+    procedure WriteEOFTerminator;
   protected
     procedure ConstructFieldDefs;
     procedure InitDefaultBuffer;
@@ -85,6 +91,11 @@ type
     procedure Open;
     procedure Close;
     procedure Zap;
+    procedure DeleteMdxFile;
+    procedure UpdateLock;
+    procedure BatchStart;
+    procedure BatchUpdate;
+    procedure BatchFinish;
 
     procedure FinishCreate(AFieldDefs: TDbfFieldDefs; MemoSize: Integer);
     function GetIndexByName(AIndexName: string): TIndexFile;
@@ -110,12 +121,14 @@ type
       Src, Dst: Pointer; NativeFormat: boolean): Boolean;
     procedure SetFieldData(Column: Integer; DataType: TFieldType; Src,Dst: Pointer; NativeFormat: boolean);
     procedure InitRecord(DestBuf: PAnsiChar);
-    procedure PackIndex(lIndexFile: TIndexFile; AIndexName: string);
+    procedure PackIndex(lIndexFile: TIndexFile; AIndexName: string; CreateIndex: Boolean);
     procedure RegenerateIndexes;
-    procedure LockRecord(RecNo: Integer; Buffer: TDbfRecordBuffer);
+    procedure LockRecord(RecNo: Integer; Buffer: TDbfRecordBuffer; Resync: Boolean);
     procedure UnlockRecord(RecNo: Integer; Buffer: TDbfRecordBuffer);
     procedure RecordDeleted(RecNo: Integer; Buffer: TDbfRecordBuffer);
     procedure RecordRecalled(RecNo: Integer; Buffer: TDbfRecordBuffer);
+    procedure DeleteIndexFile(AIndexFile: TIndexFile);
+    procedure Flush; override;
 
     property MemoFile: TMemoFile read FMemoFile;
     property FieldDefs: TDbfFieldDefs read FFieldDefs;
@@ -132,7 +145,9 @@ type
     property ForceClose: Boolean read FForceClose;
     property CopyDateTimeAsString: Boolean read FCopyDateTimeAsString write FCopyDateTimeAsString;
     property DateTimeHandling: TDateTimeHandling read FDateTimeHandling write FDateTimeHandling;
+    property InCopyFrom: Boolean write FInCopyFrom;
 
+    property OnIndexInvalid: TDbfIndexInvalidEvent read FOnIndexInvalid write FOnIndexInvalid;
     property OnIndexMissing: TDbfIndexMissingEvent read FOnIndexMissing write FOnIndexMissing;
     property OnLocaleError: TDbfLocaleErrorEvent read FOnLocaleError write FOnLocaleError;
   end;
@@ -151,9 +166,9 @@ type
     function GetPhysicalRecNo: Integer; override;
     procedure SetPhysicalRecNo(RecNo: Integer); override;
 
-    function GetSequentialRecordCount: Integer; override;
-    function GetSequentialRecNo: Integer; override;
-    procedure SetSequentialRecNo(RecNo: Integer); override;
+    function GetSequentialRecordCount: TSequentialRecNo; override;
+    function GetSequentialRecNo: TSequentialRecNo; override;
+    procedure SetSequentialRecNo(RecNo: TSequentialRecNo); override;
   end;
 
 //====================================================================
@@ -203,139 +218,9 @@ uses
   dbf_str, dbf_lang, dbf_prssupp, dbf_prsdef;
 
 const
-  sDBF_DEC_SEP = '.';
+  SEOFTerminator = $1A;
 
 {$I dbf_struct.inc}
-
-
-//====================================================================
-// International separator
-// thanks to Bruno Depero from Italy
-// and Andreas Wöllenstein from Denmark
-//====================================================================
-
-{$ifdef SUPPORT_FORMATSETTINGSTYPE}
-// if we have the overloaded FloatToText versions that take a TFormatSettings parameter,
-// we use them with this variable (initialized in the inialization section).
-// Otherwise the code is more complex.
-var
-  FORMAT_SETTINGS_DECIMAL_POINT: TFormatSettings;
-{$endif SUPPORT_FORMATSETTINGSTYPE}
-
-
-{$ifdef SUPPORT_FORMATSETTINGSTYPE}
-function DbfStrToFloat(const Src: PAnsiChar; const Size: Integer): Extended; // Was PChar
-var
-  endChar: AnsiChar;
-begin
-  // temp null-term string
-  endChar := (PAnsiChar(Src) + Size)^;
-  (PAnsiChar(Src) + Size)^ := #0;
-  // convert to double
-  if not dbfTextToFloatFmt(PAnsiChar(Src), Result, fvExtended, FORMAT_SETTINGS_DECIMAL_POINT) then
-    Result := 0;
-  // restore Char of null-term
-  (PAnsiChar(Src) + Size)^ := endChar;
-end;
-{$else SUPPORT_FORMATSETTINGSTYPE}
-function DbfStrToFloat(const Src: PAnsiChar; const Size: Integer): Extended; // Was PChar
-var
-  iPos: PAnsiChar;
-  eValue: extended;
-  endChar: AnsiChar;
-begin
-  // temp null-term string
-  endChar := (PAnsiChar(Src) + Size)^;
-  (PAnsiChar(Src) + Size)^ := #0;
-  // we only have to convert if decimal separator different
-  if DecimalSeparator <> sDBF_DEC_SEP then
-  begin
-    // search dec sep
-    iPos := dbfStrScan(Src, AnsiChar(sDBF_DEC_SEP));
-    // replace
-    if iPos <> nil then
-      iPos^ := AnsiChar(DecimalSeparator);
-  end else
-    iPos := nil;
-  // convert to double
-  if dbfTextToFloat(Src, eValue {$ifndef VER1_0}, fvExtended{$endif}) then
-    Result := eValue
-  else
-    Result := 0;
-  // restore dec sep
-  if iPos <> nil then
-    iPos^ := sDBF_DEC_SEP;
-  // restore Char of null-term
-  (PAnsiChar(Src) + Size)^ := endChar;
-end;
-{$endif SUPPORT_FORMATSETTINGS}
-
-{$ifdef SUPPORT_FORMATSETTINGSTYPE}
-procedure FloatToDbfStr(const Val: Extended; const Size, Precision: Integer; const Dest: PAnsiChar);
-var
-  Buffer: array[0..63] of char;
-  B : PAnsiChar;
-  s : AnsiString;
-  resLen: Integer;
-begin
-  resLen := dbfFloatToTextFmt(PAnsiChar(@Buffer), Val, fvExtended, ffFixed, Size, Precision, FORMAT_SETTINGS_DECIMAL_POINT);
-  SetString(s, PAnsiChar(@Buffer), resLen); // was PChar
-  B := PAnsiChar(s);
-
-  // fill destination with spaces
-  FillChar(Dest^, Size, ' ');
-  // now copy right-aligned to destination
-  Move(B^, Dest[Size-resLen], resLen);
-end;
-{$else SUPPORT_FORMATSETTINGSTYPE}
-procedure FloatToDbfStr(const Val: Extended; const Size, Precision: Integer; const Dest: PAnsiChar);
-var
-  Buffer: array[0..63] of char;
-  B : PAnsiChar;
-  s : AnsiString;
-  resLen: Integer;
-begin
-  // convert to temporary buffer
-  resLen := dbfFloatToText(PWideChar(@Buffer[0]), Val, {$ifndef FPC_VERSION}fvExtended,{$endif} ffFixed, Size, Precision);
-  // prevent overflow in destination buffer
-  if resLen > Size then
-    resLen := Size;
-  // null-terminate buffer
-  Buffer[resLen] := #0;
-  // we only have to convert if decimal separator different
-  if DecimalSeparator <> sDBF_DEC_SEP then
-  begin
-    iPos := dbfStrScan(PAnsiChar(@Buffer[0]), AnsiChar(DecimalSeparator));
-    if iPos <> nil then
-      iPos^ := sDBF_DEC_SEP;
-  end;
-  // fill destination with spaces
-  FillChar(Dest^, Size, ' ');
-  // now copy right-aligned to destination
-  Move(Buffer[0], Dest[Size-resLen], resLen);
-end;
-{$endif SUPPORT_FORMATSETTINGS}
-
-//-------------------------------------------------------------------------------
-// Rev. 2010-02-23 : Rafal Chlopek - shorter conversion
-//-------------------------------------------------------------------------------
-function GetIntFromStrLength(Src: PAnsiChar; Size: Integer; Default: Integer): Integer; // Was Pointer
-{var endChar: AnsiChar;
-  Code: Integer;}
-begin
-  Result := StrToIntDef(Copy(String(Src), 1, Size), Default);   // SHORT WAY, PAnsiChar cast no longer needed
-
-  {// save Char at pos term. null
-  endChar := (PAnsiChar(Src) + Size)^;                  // NIGHTMARE WAY :-)
-  (PAnsiChar(Src) + Size)^ := #0;
-  // convert
-  Val(String(PAnsiChar(Src)), Result, Code);
-  // check success
-  if Code <> 0 then
-    Result := Default;
-  // restore prev. ending Char
-  (PAnsiChar(Src) + Size)^ := endChar;  }
-end;
 
 //====================================================================
 // TDbfFile
@@ -381,6 +266,9 @@ var
   lModified: boolean;
   LangStr: PAnsiChar;
   version: byte;
+  Handled: Boolean;
+  EOFTerminator: Byte;
+  lOffset: TPagedFileOffset;
 begin
   // check if not already opened
   if not Active then
@@ -411,7 +299,7 @@ begin
           if LanguageID = 0 then
             FDbfVersion := xBaseIII
           else
-            FDbfVersion := xBaseIV;
+            FDbfVersion := xBaseV;
         $04:
           FDbfVersion := xBaseVII;
         $02, $05:
@@ -437,17 +325,6 @@ begin
         FForceClose := true;
         exit;
       end;
-      // check if specified recordcount correct
-      if PDbfHdr(Header)^.RecordCount <> RecordCount then
-      begin
-        // This message was annoying
-        // and was not understood by most people
-        // ShowMessage('Invalid Record Count,'+^M+
-        //             'RecordCount in Hdr : '+IntToStr(PDbfHdr(Header).RecordCount)+^M+
-        //             'expected : '+IntToStr(RecordCount));
-        PDbfHdr(Header)^.RecordCount := RecordCount;
-        lModified := true;
-      end;
       // determine codepage
       if FDbfVersion >= xBaseVII then
       begin
@@ -468,7 +345,8 @@ begin
           begin
             FFileCodePage := 1255;
           end else begin
-            FFileCodePage := GetIntFromStrLength(LangStr+2, 3, 0);
+//          FFileCodePage := GetIntFromStrLength(LangStr+2, 3, 0);
+            StrToInt32Width(Integer(FFileCodePage), LangStr+2, 3, 0);
             if (Ord(LangStr[5]) >= Ord('0')) and (Ord(LangStr[5]) <= Ord('9')) then
               FFileCodePage := FFileCodePage * 10 + Ord(LangStr[5]) - Ord('0');
           end;
@@ -478,7 +356,8 @@ begin
           if dbfStrLComp(LangStr+5, 'WIN', 3) = 0 then
             FFileCodePage := 1252
           else
-            FFileCodePage := GetIntFromStrLength(LangStr+5, 3, 0)
+//          FFileCodePage := GetIntFromStrLength(LangStr+5, 3, 0)
+            StrToInt32Width(Integer(FFileCodePage), LangStr+5, 3, 0);
         end else begin
           FFileCodePage := 0;
         end;
@@ -494,6 +373,12 @@ begin
         FUseCodePage := DbfGlobals.DefaultOpenCodePage;
       // get list of fields
       ConstructFieldDefs;
+      // check if specified recordcount correct
+      if PDbfHdr(Header)^.RecordCount <> RecordCount then
+      begin
+        PDbfHdr(Header)^.RecordCount := RecordCount;
+        lModified := true;
+      end;
       // open blob file if present
       lMemoFileName := ChangeFileExt(FileName, GetMemoExt);
       if HasBlob then
@@ -515,23 +400,23 @@ begin
         // set header blob flag corresponding to field list
         if FDbfVersion <> xFoxPro then
         begin
-          Version := PDbfHdr(Header)^.VerDBF or $80;
-          if Version <> PDbfHdr(Header)^.VerDBF then begin
-            PDbfHdr(Header)^.VerDBF := Version;
+          version := PDbfHdr(Header)^.VerDBF or $80;
+          if version <> PDbfHdr(Header)^.VerDBF then begin
+            PDbfHdr(Header)^.VerDBF := version;
             lModified := true;
           end;
         end;
       end else
         if FDbfVersion <> xFoxPro then
         begin
-          Version := PDbfHdr(Header)^.VerDBF and $7F;
-          if Version <> PDbfHdr(Header)^.VerDBF then begin
-            PDbfHdr(Header)^.VerDBF := Version;
+          version := PDbfHdr(Header)^.VerDBF and $7F;
+          if version <> PDbfHdr(Header)^.VerDBF then begin
+            PDbfHdr(Header)^.VerDBF := version;
             lModified := true;
           end;
         end;
       // check if mdx flagged
-      if (FDbfVersion <> xFoxPro) and (PDbfHdr(Header)^.MDXFlag <> 0) then
+      if PDbfHdr(Header)^.MDXFlag <> 0 then
       begin
         // open mdx file if present
         lMdxFileName := ChangeFileExt(FileName, '.mdx');
@@ -544,7 +429,32 @@ begin
           FMdxFile.AutoCreate := false;
           FMdxFile.OnLocaleError := FOnLocaleError;
           FMdxFile.CodePage := UseCodePage;
-          FMdxFile.Open;
+          try
+            FMdxFile.Open;
+          except
+            on E: Exception do
+            begin
+              if (E is EDbfIndexError) or (E is EParserException) then
+              begin
+                FMdxFile.Close;
+                Handled := False;
+                deleteLink := False;
+                if Assigned(FOnIndexInvalid) then
+                  FOnIndexInvalid(Self, Handled, deleteLink);
+                if not Handled then
+                  raise;
+                if deleteLink then
+                begin
+                  PDbfHdr(Header)^.MDXFlag := 0;
+                  lModified := true;
+                end;
+              end
+              else
+                raise;
+            end;
+          else
+            raise;
+          end;
           // is index ready for use?
           if not FMdxFile.ForceClose then
           begin
@@ -556,25 +466,33 @@ begin
             FreeAndNil(FMdxFile);
           end;
         end else begin
-          // ask user
-          deleteLink := true;
-          if Assigned(FOnIndexMissing) then
-            FOnIndexMissing(deleteLink);
-          // correct flag
-          if deleteLink then
+          if FDbfVersion <> xFoxPro then
           begin
-            PDbfHdr(Header)^.MDXFlag := 0;
-            lModified := true;
-          end else
-            FForceClose := true;
+            // ask user
+            deleteLink := true;
+            if Assigned(FOnIndexMissing) then
+              FOnIndexMissing(deleteLink);
+            // correct flag
+            if deleteLink then
+            begin
+              PDbfHdr(Header)^.MDXFlag := 0;
+              lModified := true;
+            end else
+              FForceClose := true;
+          end;
         end;
       end;
     end;
 
     // record changes
-    if lModified then
+    if lModified and (Mode <> pfReadOnly) then
       WriteHeader;
-    
+
+    lOffset:= CalcPageOffset(Succ(RecordCount));
+    if Succ(lOffset)=FCachedSize then
+      if (ReadBlock(@EOFTerminator, SizeOf(EOFTerminator), lOffset)=SizeOf(EOFTerminator)) and (EOFTerminator=SEOFTerminator) then
+        Dec(FCachedSize);
+
     // open indexes
     for I := 0 to FIndexFiles.Count - 1 do
       TIndexFile(FIndexFiles.Items[I]).Open;
@@ -599,6 +517,7 @@ begin
     FreeAndNil(FMemoFile);
 
     // now we can close physical dbf file
+    RecordCountFlush;
     CloseFile;
 
     // free FMdxFile, remove it from the FIndexFiles and Names lists
@@ -666,7 +585,7 @@ begin
       FillChar(Header^, HeaderSize, #0);
       if FDbfVersion = xFoxPro then
       begin
-        PDbfHdr(Header)^.VerDBF := $02
+        PDbfHdr(Header)^.VerDBF := $30
       end else
         PDbfHdr(Header)^.VerDBF := $03;
       // standard language WE, dBase III no language support
@@ -750,6 +669,7 @@ begin
     end;
     // end of header
     WriteChar($0D);
+    Inc(FCachedSize);
 
     // write memo bit
     if lHasBlob then
@@ -774,7 +694,10 @@ begin
       the file is not associated with a database. Therefore, database files always 
       contain 0x00. }
     if FDbfVersion = xFoxPro then
+    begin
       Inc(PDbfHdr(Header)^.FullHdrSize, 263);
+      Inc(FCachedSize, 263);
+    end;
 
     // write dbf header to disk
     inherited WriteHeader;
@@ -822,21 +745,55 @@ end;
 
 procedure TDbfFile.Zap;
 begin
+  FlushBuffer;
+  UpdateBufferSize;
   // make recordcount zero
   RecordCount := 0;
   // update recordcount
   PDbfHdr(Header)^.RecordCount := RecordCount;
   // update disk header
   WriteHeader;
+  FlushHeader;
   // update indexes
   RegenerateIndexes;
+end;
+
+procedure TDbfFile.DeleteMdxFile;
+begin
+  PDbfHdr(Header)^.MDXFlag := 0;
+  WriteHeader;
+  DeleteIndexFile(MdxFile);
+end;
+
+procedure TDbfFile.BatchStart;
+begin
+  FInCopyFrom := True;
+end;
+
+procedure TDbfFile.BatchUpdate;
+begin
+  if not NeedLocks then
+    RecordCountFlush;
+end;
+
+procedure TDbfFile.BatchFinish;
+begin
+  FInCopyFrom := False;
+end;
+
+procedure TDbfFile.UpdateLock;
+begin
+{$ifdef USE_CACHE}
+  BufferAhead := True;
+{$else}
+  BufferAhead := (not IsSharedAccess) or FFileLocked;
+{$endif}
 end;
 
 procedure TDbfFile.WriteHeader;
 var
   SystemTime: TSystemTime;
   lDataHdr: PDbfHdr;
-  EofTerminator: Byte;
 begin
   if (HeaderSize=0) then
     exit;
@@ -850,8 +807,9 @@ begin
 //  lDataHdr.RecordCount := RecordCount;
   inherited WriteHeader;
 
-  EofTerminator := $1A;
-  WriteBlock(@EofTerminator, 1, CalcPageOffset(RecordCount+1));
+  // write EOF terminator
+//if RecordCount = 0 then
+//  WriteEOFTerminator;
 end;
 
 procedure TDbfFile.ConstructFieldDefs;
@@ -899,7 +857,7 @@ begin
       if FDbfVersion >= xBaseVII then
       begin
         ReadRecord(I, @lFieldDescVII);
-        lFieldName := AnsiUpper(PAnsiChar(@lFieldDescVII.FieldName[0]));
+        lFieldName := dbfStrUpper(PAnsiChar(@lFieldDescVII.FieldName[0]));
         lSize := lFieldDescVII.FieldSize;
         lPrec := lFieldDescVII.FieldPrecision;
         lNativeFieldType := lFieldDescVII.FieldType;
@@ -908,7 +866,7 @@ begin
           FAutoIncPresent := true;
       end else begin
         ReadRecord(I, @lFieldDescIII);
-        lFieldName := AnsiUpper(PAnsiChar(@lFieldDescIII.FieldName[0]));
+        lFieldName := dbfStrUpper(PAnsiChar(@lFieldDescIII.FieldName[0]));
         lSize := lFieldDescIII.FieldSize;
         lPrec := lFieldDescIII.FieldPrecision;
         lNativeFieldType := lFieldDescIII.FieldType;
@@ -961,7 +919,7 @@ begin
         if FLockUserLen > DbfGlobals.UserNameLen then
           FLockUserLen := DbfGlobals.UserNameLen;
       end else
-      if AnsiUpper(PAnsiChar(lFieldName)) = '_NULLFLAGS' then
+      if dbfStrUpper(PAnsiChar(lFieldName)) = '_NULLFLAGS' then
         FNullField := TempFieldDef;
 
       // goto next field
@@ -1047,6 +1005,25 @@ function TDbfFile.GetLanguageStr: AnsiString;
 begin
   if FDbfVersion >= xBaseVII then
     Result := PAfterHdrVII(PAnsiChar(Header) + SizeOf(rDbfHdr))^.LanguageDriverName; // Was PChar
+end;
+
+procedure TDbfFile.RecordCountFlush;
+begin
+  if FRecordCountDirty then
+  begin
+    WriteEOFTerminator;
+    PDbfHdr(Header)^.RecordCount := RecordCount;
+    WriteHeader;
+    FRecordCountDirty := False;
+  end;
+end;
+
+procedure TDbfFile.WriteEOFTerminator;
+var
+  EOFTerminator: Byte;
+begin
+  EOFTerminator := SEOFTerminator;
+  WriteBlock(@EOFTerminator, SizeOf(EOFTerminator), CalcPageOffset(RecordCount + 1));
 end;
 
 {
@@ -1194,6 +1171,7 @@ var
   pBuff, pDestBuff: TDbfRecordBuffer;
   RestructFieldInfo: PRestructFieldInfo;
   BlobStream: TMemoryStream;
+  last: Integer;
 begin
   // nothing to do?
   if (RecordSize < 1) or ((DbfFieldDefs = nil) and not Pack) then
@@ -1236,6 +1214,7 @@ begin
     DestDbfFile.FinishCreate(DestFieldDefs, FMemoFile.RecordSize)
   else
     DestDbfFile.FinishCreate(DestFieldDefs, 512);
+  DestDbfFile.UpdateLock;
 
   // adjust size and offsets of fields
   GetMem(RestructFieldInfo, sizeof(TRestructFieldInfo)*DestFieldDefs.Count);
@@ -1312,95 +1291,111 @@ begin
 
   // let the games begin!
   try
-{$ifdef USE_CACHE}
-    BufferAhead := true;
-    DestDbfFile.BufferAhead := true;
-{$endif}
-    lWRecNo := 1;
-    for lRecNo := 1 to RecordCount do
-    begin
-      // read record from original dbf
-      ReadRecord(lRecNo, pBuff);
-      // copy record?
-      if ({$IFDEF SUPPORT_TRECORDBUFFER}Char(pBuff[0]){$ELSE}pBuff^{$ENDIF} <> '*') or not Pack then
+    DestDbfFile.BatchStart;
+    try
+//{$ifdef USE_CACHE}
+//    BufferAhead := true;
+//    DestDbfFile.BufferAhead := true;
+//{$endif}
+      lWRecNo := 1;
+      last := RecordCount;
+      if Pack then
+        DoProgress(0, last, STRING_PROGRESS_PACKINGRECORDS);
+      for lRecNo := 1 to last do
       begin
-        // if restructure, initialize dest
-        if DbfFieldDefs <> nil then
+        // read record from original dbf
+        ReadRecord(lRecNo, pBuff);
+        // copy record?
+        if ({$IFDEF SUPPORT_TRECORDBUFFER}Char(pBuff[0]){$ELSE}pBuff^{$ENDIF} <> '*') or not Pack then
         begin
-          DestDbfFile.InitRecord(PAnsiChar(pDestBuff));
-          // copy deleted mark (the first byte)
-          pDestBuff^ := pBuff^;
-        end;
-
-        if (DbfFieldDefs <> nil) or (FMemoFile <> nil) then
-        begin
-          // copy fields
-          for lFieldNo := 0 to DestFieldDefs.Count-1 do
+          // if restructure, initialize dest
+          if DbfFieldDefs <> nil then
           begin
-            TempDstDef := DestFieldDefs.Items[lFieldNo];
-            // handle blob fields differently
-            // don't try to copy new blob fields!
-            // DbfFieldDefs = nil -> pack only
-            // TempDstDef.CopyFrom >= 0 -> copy existing (blob) field
-            if TempDstDef.IsBlob and ((DbfFieldDefs = nil) or (TempDstDef.CopyFrom >= 0)) then
+            DestDbfFile.InitRecord(pDestBuff);
+            // copy deleted mark (the first byte)
+            pDestBuff^ := pBuff^;
+          end;
+
+          if (DbfFieldDefs <> nil) or (FMemoFile <> nil) then
+          begin
+            // copy fields
+            for lFieldNo := 0 to DestFieldDefs.Count-1 do
             begin
-              // get current blob blockno
-              GetFieldData(lFieldNo, ftInteger, pBuff, @lBlobPageNo, false);
-              // valid blockno read?
-              if lBlobPageNo > 0 then
+              TempDstDef := DestFieldDefs.Items[lFieldNo];
+              // handle blob fields differently
+              // don't try to copy new blob fields!
+              // DbfFieldDefs = nil -> pack only
+              // TempDstDef.CopyFrom >= 0 -> copy existing (blob) field
+              if TempDstDef.IsBlob and ((DbfFieldDefs = nil) or (TempDstDef.CopyFrom >= 0)) then
               begin
-                BlobStream.Clear;
-                FMemoFile.ReadMemo(lBlobPageNo, BlobStream);
-                BlobStream.Position := 0;
-                // always append
-                DestDbfFile.FMemoFile.WriteMemo(lBlobPageNo, 0, BlobStream);
+                // get current blob blockno
+                if GetFieldData(lFieldNo, ftInteger, pBuff, @lBlobPageNo, false) and (lBlobPageNo > 0) then
+                begin
+                  BlobStream.Clear;
+                  FMemoFile.ReadMemo(lBlobPageNo, BlobStream);
+                  BlobStream.Position := 0;
+                  // always append
+                  DestDbfFile.FMemoFile.WriteMemo(lBlobPageNo, 0, BlobStream);
+                  // write new blockno
+                  DestDbfFile.SetFieldData(lFieldNo, ftInteger, @lBlobPageNo, pDestBuff, false);
+                end;
+              end else if (DbfFieldDefs <> nil) and (TempDstDef.CopyFrom >= 0) then
+              begin
+                // copy content of field
+                with RestructFieldInfo[lFieldNo] do
+                  Move(pBuff[SourceOffset], pDestBuff[DestOffset], Size);
               end;
-              // write new blockno
-              DestDbfFile.SetFieldData(lFieldNo, ftInteger, @lBlobPageNo, pDestBuff, false);
-            end else if (DbfFieldDefs <> nil) and (TempDstDef.CopyFrom >= 0) then
-            begin
-              // copy content of field
-              with RestructFieldInfo[lFieldNo] do
-                Move(pBuff[SourceOffset], pDestBuff[DestOffset], Size);
             end;
           end;
+
+          // write record
+          DestDbfFile.WriteRecord(lWRecNo, pDestBuff);
+          // update indexes
+//        for I := 0 to DestDbfFile.IndexFiles.Count - 1 do
+//        begin
+//          lIndexFile := TIndexFile(DestDbfFile.IndexFiles.Items[I]);
+//          if lIndexFile.UniqueMode = iuUnique then
+//            lUniqueMode := iuDistinct
+//          else
+//            lUniqueMode := lIndexFile.UniqueMode;
+//          lIndexFile.Insert(lWRecNo, pDestBuff, lUniqueMode);
+//        end;
+
+          // go to next record
+          Inc(lWRecNo);
         end;
-
-        // write record
-        DestDbfFile.WriteRecord(lWRecNo, pDestBuff);
-        // update indexes
-        for I := 0 to DestDbfFile.IndexFiles.Count - 1 do
-          TIndexFile(DestDbfFile.IndexFiles.Items[I]).Insert(lWRecNo, pDestBuff);
-
-        // go to next record
-        Inc(lWRecNo);
+        if Pack then
+        DoProgress(lRecNo, last, STRING_PROGRESS_PACKINGRECORDS);
       end;
-    end;
 
-{$ifdef USE_CACHE}
-    BufferAhead := false;
-    DestDbfFile.BufferAhead := false;
-{$endif}
+//{$ifdef USE_CACHE}
+//    BufferAhead := false;
+//    DestDbfFile.BufferAhead := false;
+//{$endif}
+      BufferAhead := false;
 
-    // save index filenames
-    for I := 0 to FIndexFiles.Count - 1 do
-      OldIndexFiles.Add(TIndexFile(IndexFiles[I]).FileName);
+      // save index filenames
+      for I := 0 to FIndexFiles.Count - 1 do
+        OldIndexFiles.Add(TIndexFile(IndexFiles[I]).FileName);
 
-    // close dbf
-    Close;
+      // close dbf
+      Close;
 
-    // if restructure -> rename the old dbf files
-    // if pack only -> delete the old dbf files
-    DestDbfFile.Rename(FileName, OldIndexFiles, DbfFieldDefs = nil);
+      // if restructure -> rename the old dbf files
+      // if pack only -> delete the old dbf files
+      DestDbfFile.Rename(FileName, OldIndexFiles, DbfFieldDefs = nil);
     
-    // we have to reinit fielddefs if restructured
-    Open;
+      // we have to reinit fielddefs if restructured
+      Open;
 
-    // crop deleted records
-    RecordCount := lWRecNo - 1;
-    // update date/time stamp, recordcount
-    PDbfHdr(Header)^.RecordCount := RecordCount;
-    WriteHeader;
+      // crop deleted records
+      RecordCount := lWRecNo - 1;
+      // update date/time stamp, recordcount
+      FRecordCountDirty := True;
+      BatchUpdate;
+    finally
+      DestDbfFile.BatchFinish;
+    end;
   finally
     // close temporary file
     FreeAndNil(DestDbfFile);
@@ -1412,6 +1407,7 @@ begin
     if DbfFieldDefs <> nil then
       FreeMem(pDestBuff);
   end;
+  RegenerateIndexes;
 end;
 
 procedure TDbfFile.RegenerateIndexes;
@@ -1421,7 +1417,7 @@ begin
   // recreate every index in every file
   for lIndexNo := 0 to FIndexFiles.Count-1 do
   begin
-    PackIndex(TIndexFile(FIndexFiles.Items[lIndexNo]), EmptyStr);
+    PackIndex(TIndexFile(FIndexFiles.Items[lIndexNo]), EmptyStr, False);
   end;
 end;
 
@@ -1430,7 +1426,7 @@ var
   I: Integer;
   lfi: TDbfFieldDef;
 begin
-  FieldName := AnsiUpper(PAnsiChar(FieldName));
+  FieldName := dbfStrUpper(PAnsiChar(FieldName));
   for I := 0 to FFieldDefs.Count-1 do
   begin
     lfi := TDbfFieldDef(FFieldDefs.Items[I]);
@@ -1463,28 +1459,8 @@ var
   date: TDateTime;
   timeStamp: TTimeStamp;
   asciiContents: boolean;
-
-{$ifdef SUPPORT_INT64}
-  //-------------------------------------------------------------------------------
-  // Rev. 2010-02-23 : Rafal Chlopek - shorter conversion
-  //-------------------------------------------------------------------------------
-  function GetInt64FromStrLength(Src: PAnsiChar; Size: Integer; Default: Int64): Int64; // Was Pointer
-  {var endChar: AnsiChar;
-    Code: Integer;}
-  begin
-    Result := StrToInt64Def(Copy(String(Src), 1, Size), Default);   // SHORT WAY, PAnsiChar cast no longer needed
-
-    {// save Char at pos term. null
-    endChar := (PAnsiChar(Src) + Size)^;                    // NIGHTMARE WAY :-)
-    (PAnsiChar(Src) + Size)^ := #0;
-    // convert
-    Val(PAnsiChar(Src), Result, Code);
-    // check success
-    if Code <> 0 then Result := Default;
-    // restore prev. ending Char
-    (PAnsiChar(Src) + Size)^ := endChar;  }
-  end;
-{$endif}
+  IntValue: Integer;
+  FloatValue: Extended;
 
   procedure CorrectYear(var wYear: Integer);
   var
@@ -1576,6 +1552,7 @@ begin
       end;
     '@':
       begin
+{$ifdef SUPPORT_INT64}
         Result := (PInteger(Src)^ <> 0) and (PInteger(PAnsiChar(Src)+4)^ <> 0);
         if Result and (Dst <> nil) then
         begin
@@ -1586,6 +1563,7 @@ begin
             date := PDateTime(Dst)^;
           SaveDateToDst;
         end;
+{$endif}
       end;
     'T':
       begin
@@ -1643,7 +1621,7 @@ begin
     //    SetString(s, PChar(Src) + FieldOffset, FieldSize );
     //    s := {TrimStr(s)} TrimRight(s);
     // truncate spaces at end by shortening fieldsize
-    while (FieldSize > 0) and ((PAnsiChar(Src) + FieldSize - 1)^ = ' ') do
+    while (FieldSize > 0) and (((PAnsiChar(Src) + FieldSize - 1)^ = ' ') or ((PAnsiChar(Src) + FieldSize - 1)^ = #0)) do
       dec(FieldSize);
     // if not string field, truncate spaces at beginning too
     if DataType <> ftString then
@@ -1667,26 +1645,43 @@ begin
             PWord(Dst)^ := 0;
         end;
       ftSmallInt:
-        PSmallInt(Dst)^ := GetIntFromStrLength(Src, FieldSize, 0);
+      begin
+//      PSmallInt(Dst)^ := GetIntFromStrLength(Src, FieldSize, 0);
+        Result := StrToInt32Width(IntValue, Src, FieldSize, 0);
+        if Result then
+          Result := (IntValue >= Low(SmallInt)) and (IntValue <= High(SmallInt));
+        if Result then
+          PSmallInt(Dst)^ := IntValue;
+      end;
 {$ifdef SUPPORT_INT64}
       ftLargeInt:
-        PLargeInt(Dst)^ := GetInt64FromStrLength(Src, FieldSize, 0);
+//      PLargeInt(Dst)^ := GetInt64FromStrLength(Src, FieldSize, 0);
+        Result := StrToIntWidth(PInt64(Dst)^, Src, FieldSize, 0);
 {$endif}
       ftInteger:
-        PInteger(Dst)^ := GetIntFromStrLength(Src, FieldSize, 0);
+//      PInteger(Dst)^ := GetIntFromStrLength(Src, FieldSize, 0);
+        Result := StrToInt32Width(PInteger(Dst)^, Src, FieldSize, 0);
       ftFloat, ftCurrency:
-        PDouble(Dst)^ := DbfStrToFloat(Src, FieldSize);
+      begin
+//      PDouble(Dst)^ := DbfStrToFloat(Src, FieldSize);
+        Result := StrToFloatWidth(FloatValue, Src, FieldSize, 0);
+        if Result then
+          PDouble(Dst)^ := FloatValue;
+      end;
       ftDate, ftDateTime:
         begin
           // get year, month, day
-          ldy := GetIntFromStrLength(PAnsiChar(Src) + 0, 4, 1);
-          ldm := GetIntFromStrLength(PAnsiChar(Src) + 4, 2, 1);
-          ldd := GetIntFromStrLength(PAnsiChar(Src) + 6, 2, 1);
+//        ldy := GetIntFromStrLength(PAnsiChar(Src) + 0, 4, 1);
+//        ldm := GetIntFromStrLength(PAnsiChar(Src) + 4, 2, 1);
+//        ldd := GetIntFromStrLength(PAnsiChar(Src) + 6, 2, 1);
+          StrToInt32Width(ldy, PChar(Src) + 0, 4, 1);
+          StrToInt32Width(ldm, PChar(Src) + 4, 2, 1);
+          StrToInt32Width(ldd, PChar(Src) + 6, 2, 1);
           //if (ly<1900) or (ly>2100) then ly := 1900;
           //Year from 0001 to 9999 is possible
           //everyting else is an error, an empty string too
           //Do DateCorrection with Delphis possibillities for one or two digits
-          if (ldy < 100) and (PAnsiChar(Src)[0] = #32) and (PAnsiChar(Src)[1] = #32) then
+          if (ldy < 100) and (PChar(Src)[0] = #32) and (PChar(Src)[1] = #32) then
             CorrectYear(ldy);
           try
             date := EncodeDate(ldy, ldm, ldd);
@@ -1698,9 +1693,12 @@ begin
           if (AFieldDef.FieldType = ftDateTime) and (DataType = ftDateTime) then
           begin
             // get hour, minute, second
-            lth := GetIntFromStrLength(PAnsiChar(Src) + 8,  2, 1);
-            ltm := GetIntFromStrLength(PAnsiChar(Src) + 10, 2, 1);
-            lts := GetIntFromStrLength(PAnsiChar(Src) + 12, 2, 1);
+//          lth := GetIntFromStrLength(PAnsiChar(Src) + 8,  2, 1);
+//          ltm := GetIntFromStrLength(PAnsiChar(Src) + 10, 2, 1);
+//          lts := GetIntFromStrLength(PAnsiChar(Src) + 12, 2, 1);
+            StrToInt32Width(lth, PAnsiChar(Src) + 8,  2, 1);
+            StrToInt32Width(ltm, PAnsiChar(Src) + 10, 2, 1);
+            StrToInt32Width(lts, PAnsiChar(Src) + 12, 2, 1);
             // encode
             try
               date := date + EncodeTime(lth, ltm, lts, 0);
@@ -1828,20 +1826,17 @@ begin
       end;
     '@':
       begin
+{$ifdef SUPPORT_INT64}
         if Src = nil then
         begin
-{$ifdef SUPPORT_INT64}
           PInt64(Dst)^ := 0;
-{$else}          
-          PInteger(Dst)^ := 0;
-          PInteger(PAnsiChar(Dst)+4)^ := 0;
-{$endif}
         end else begin
           LoadDateFromSrc;
           if FDateTimeHandling = dtBDETimeStamp then
             date := DateTimeToBDETimeStamp(date);
           SwapInt64BE(@date, Dst);
         end;
+{$endif}
       end;
     'T':
       begin
@@ -1880,6 +1875,7 @@ begin
       end;
     'B':
       begin
+{$ifdef SUPPORT_INT64}
         if DbfVersion = xFoxPro then
         begin
           if Src = nil then
@@ -1888,6 +1884,7 @@ begin
             SwapInt64LE(Src, Dst);
         end else
           asciiContents := true;
+{$endif}
       end;
     'M':
       begin
@@ -1907,7 +1904,10 @@ begin
   begin
     if Src = nil then
     begin
-      FillChar(Dst^, FieldSize, ' ');
+      if (FDbfVersion >= xBaseVII) and (DataType=ftString) then
+        FillChar(Dst^, FieldSize, #0)
+      else
+        FillChar(Dst^, FieldSize, ' ');
     end else begin
       case DataType of
         ftBoolean:
@@ -1918,33 +1918,43 @@ begin
               PAnsiChar(Dst)^ := 'F';
           end;
         ftSmallInt:
-          GetStrFromInt_Width(PSmallInt(Src)^, FieldSize, PAnsiChar(Dst), #32);
+//        GetStrFromInt_Width(PSmallInt(Src)^, FieldSize, PAnsiChar(Dst), #32);
+          IntToStrWidth(PSmallInt(Src)^, FieldSize, PChar(Dst), True, #32);
 {$ifdef SUPPORT_INT64}
         ftLargeInt:
-          GetStrFromInt64_Width(PLargeInt(Src)^, FieldSize, PAnsiChar(Dst), #32);
+//        GetStrFromInt64_Width(PLargeInt(Src)^, FieldSize, PAnsiChar(Dst), #32);
+          IntToStrWidth(PInt64(Src)^, FieldSize, PChar(Dst), True, #32);
 {$endif}
         ftFloat, ftCurrency:
-          FloatToDbfStr(PDouble(Src)^, FieldSize, FieldPrec, PAnsiChar(Dst));
+//        FloatToDbfStr(PDouble(Src)^, FieldSize, FieldPrec, PAnsiChar(Dst));
+          FloatToStrWidth(PDouble(Src)^, FieldSize, FieldPrec, PChar(Dst), True);
         ftInteger:
-          GetStrFromInt_Width(PInteger(Src)^, FieldSize, PAnsiChar(Dst),
-            IsBlobFieldToPadChar[TempFieldDef.IsBlob]);
+//        GetStrFromInt_Width(PInteger(Src)^, FieldSize, PAnsiChar(Dst),
+//          IsBlobFieldToPadChar[TempFieldDef.IsBlob]);
+          IntToStrWidth(PInteger(Src)^, FieldSize, PChar(Dst), True, IsBlobFieldToPadChar[TempFieldDef.IsBlob]);
         ftDate, ftDateTime:
           begin
             LoadDateFromSrc;
             // decode
             DecodeDate(date, year, month, day);
             // format is yyyymmdd
-            GetStrFromInt_Width(year,  4, PAnsiChar(Dst),   '0');
-            GetStrFromInt_Width(month, 2, PAnsiChar(Dst)+4, '0');
-            GetStrFromInt_Width(day,   2, PAnsiChar(Dst)+6, '0');
+//          GetStrFromInt_Width(year,  4, PAnsiChar(Dst),   '0');
+//          GetStrFromInt_Width(month, 2, PAnsiChar(Dst)+4, '0');
+//          GetStrFromInt_Width(day,   2, PAnsiChar(Dst)+6, '0');
+            IntToStrWidth(year,  4, PChar(Dst),   True, DBF_ZERO);
+            IntToStrWidth(month, 2, PChar(Dst)+4, True, DBF_ZERO);
+            IntToStrWidth(day,   2, PChar(Dst)+6, True, DBF_ZERO);
             // do time too if datetime
             if DataType = ftDateTime then
             begin
               DecodeTime(date, hour, minute, sec, msec);
               // format is hhmmss
-              GetStrFromInt_Width(hour,   2, PAnsiChar(Dst)+8,  '0');
-              GetStrFromInt_Width(minute, 2, PAnsiChar(Dst)+10, '0');
-              GetStrFromInt_Width(sec,    2, PAnsiChar(Dst)+12, '0');
+//            GetStrFromInt_Width(hour,   2, PAnsiChar(Dst)+8,  '0');
+//            GetStrFromInt_Width(minute, 2, PAnsiChar(Dst)+10, '0');
+//            GetStrFromInt_Width(sec,    2, PAnsiChar(Dst)+12, '0');
+              IntToStrWidth(hour,   2, PChar(Dst)+8,  True, DBF_ZERO);
+              IntToStrWidth(minute, 2, PChar(Dst)+10, True, DBF_ZERO);
+              IntToStrWidth(sec,    2, PChar(Dst)+12, True, DBF_ZERO);
             end;
           end;
         ftString:
@@ -1984,7 +1994,8 @@ begin
     TempFieldDef := FFieldDefs.Items[I];
     // binary field? (foxpro memo fields are binary, but dbase not)
     if CharInSet(TempFieldDef.NativeFieldType, ['I', 'O', '@', '+', '0', 'Y'])
-        or ((TempFieldDef.NativeFieldType = 'M') and (TempFieldDef.Size = 4)) then
+        or ((TempFieldDef.NativeFieldType = 'M') and (TempFieldDef.Size = 4))
+        or ((FDbfVersion >= xBaseVII) and (TempFieldDef.NativeFieldType='C') and (not TempFieldDef.HasDefault)) then
       FillChar(PAnsiChar(FDefaultBuffer+TempFieldDef.Offset)^, TempFieldDef.Size, 0); // Was PChar
     // copy default value?
     if TempFieldDef.HasDefault then
@@ -2012,11 +2023,11 @@ begin
   if FAutoIncPresent then
   begin
     // if shared, reread header to find new autoinc values
-    if NeedLocks then
-    begin
+//  if NeedLocks then
+//  begin
       // lock header so nobody else can use this value
-      LockPage(0, true);
-    end;
+//    LockPage(0, true);
+//  end;
 
     // find autoinc fields
     for I := 0 to FFieldDefs.Count-1 do
@@ -2047,8 +2058,8 @@ begin
     WriteHeader;
     
     // release lock if locked
-    if NeedLocks then
-      UnlockPage(0);
+//  if NeedLocks then
+//    UnlockPage(0);
   end;
 end;
 
@@ -2188,13 +2199,13 @@ begin
       tempExclusive := IsSharedAccess;
       if tempExclusive then TryExclusive;
       // always uppercase index expression
-      IndexField := AnsiUpperCase(IndexField);
+//    IndexField := AnsiUpperCase(IndexField);
       try
         try
           // create index if asked
           lIndexFile.CreateIndex(IndexField, IndexName, Options);
           // add all records
-          PackIndex(lIndexFile, IndexName);
+          PackIndex(lIndexFile, IndexName, CreateIndex);
           // if we wanted to open index readonly, but we created it, then reopen
           if Mode = pfReadOnly then
           begin
@@ -2204,7 +2215,8 @@ begin
           end;
           // if mdx file just created, write changes to dbf header
           // set MDX flag to true
-          if CreateMdxFile then begin
+          if lIndexFile = FMdxFile then
+          begin
             PDbfHdr(Header)^.MDXFlag := 1;
             WriteHeader;
           end;
@@ -2219,13 +2231,7 @@ begin
               FIndexNames.Delete(addedIndexName);
             // if no file created, do not destroy!
             if addedIndexFile >= 0 then
-            begin
-              lIndexFile.Close;
-              Sysutils.DeleteFile(lIndexFileName);
-              if FMdxFile = lIndexFile then
-                FMdxFile := nil;
-              lIndexFile.Free;
-            end;
+              DeleteIndexFile(lIndexFile);
             raise;
           end;
         end;
@@ -2237,13 +2243,14 @@ begin
   end;
 end;
 
-procedure TDbfFile.PackIndex(lIndexFile: TIndexFile; AIndexName: string);
+procedure TDbfFile.PackIndex(lIndexFile: TIndexFile; AIndexName: string; CreateIndex: Boolean);
 var
   prevMode: TIndexUpdateMode;
   prevIndex: string;
-  cur, last: Integer;
 {$ifdef USE_CACHE}
+  cur, last: Integer;
   prevCache: Integer;
+  lUniqueMode: TIndexUniqueType;
 {$endif}
 begin
   // save current mode in case we change it
@@ -2254,16 +2261,18 @@ begin
   begin
     // only pack specified index, not all
     lIndexFile.IndexName := AIndexName;
-    lIndexFile.ClearIndex;
     lIndexFile.UpdateMode := umCurrent;
+    if not CreateIndex then
+      lIndexFile.CalcRegenerateIndexes;
+    lIndexFile.ClearIndex;
   end else begin
     lIndexFile.IndexName := EmptyStr;
-    lIndexFile.Clear;
     lIndexFile.UpdateMode := umAll;
+    if not CreateIndex then
+      lIndexFile.CalcRegenerateIndexes;
+    lIndexFile.Clear;
   end;
   // prepare update
-  cur := 1;
-  last := RecordCount;
 {$ifdef USE_CACHE}
   BufferAhead := true;
   prevCache := lIndexFile.CacheSize;
@@ -2273,12 +2282,29 @@ begin
 {$endif}
   try
     try
+{$ifdef USE_CACHE}
+      cur := 1;
+      last := RecordCount;
+      DoProgress(0, last, STRING_PROGRESS_READINGRECORDS);
+      if lIndexFile.UniqueMode = iuUnique then
+        lUniqueMode := iuDistinct
+      else
+        lUniqueMode := lIndexFile.UniqueMode;
       while cur <= last do
       begin
         ReadRecord(cur, FPrevBuffer);
-        lIndexFile.Insert(cur, FPrevBuffer);
+        lIndexFile.Insert(cur, FPrevBuffer, lUniqueMode);
+        DoProgress(cur, last, STRING_PROGRESS_READINGRECORDS);
         inc(cur);
       end;
+{$else}
+      lIndexFile.OnProgress := FOnProgress;
+      try
+        lIndexFile.BulkLoadIndexes;
+      finally
+        lIndexFile.OnProgress := nil;
+      end;
+{$endif}
     except
       on E: EDbfError do
       begin
@@ -2452,83 +2478,109 @@ var
 var
   I: Integer;
   error: TErrorContext;
+  Locked: Boolean;
 begin
-  // get new record index
   Result := 0;
-  newRecord := RecordCount+1;
-  // lock record so we can write data
-  while not LockPage(newRecord, false) do
-    Inc(newRecord);
-  // write autoinc value
-  ApplyAutoIncToBuffer(Buffer);
-  error := ecNone;
-  I := 0;
-  while I < FIndexFiles.Count do
-  begin
-    lIndex := TIndexFile(FIndexFiles.Items[I]);
-    if not lIndex.Insert(newRecord, Buffer) then
-      error := ecInsert;
-    if lIndex.WriteError then
-      error := ecWriteIndex;
-    if error <> ecNone then
-    begin
-      // if there's an index write error, I shouldn't
-      // try to write the dbf header and the new record,
-      // but raise an exception right away
-      UnlockPage(newRecord);
-      RollBackIndexesAndRaise(I, ecWriteIndex);
+  Locked := LockPage(0, False);
+  if not Locked then
+    raise EDbfError.Create(STRING_RECORD_LOCKED);
+  try
+    if not LockPage(-1, True) then
+      EDbfError.Create(STRING_RECORD_LOCKED);
+    try
+      // get new record index
+      newRecord := RecordCount+1;
+      // lock record so we can write data
+      if not LockPage(newRecord, False) then
+        EDbfError.Create(STRING_RECORD_LOCKED);
+      try
+        UnlockPage(0);
+        Locked := False;
+        // write autoinc value
+        if not FInCopyFrom then
+          ApplyAutoIncToBuffer(Buffer);
+        error := ecNone;
+        I := 0;
+        while I < FIndexFiles.Count do
+        begin
+          lIndex := TIndexFile(FIndexFiles.Items[I]);
+          if not lIndex.Insert(newRecord, Buffer, lIndex.UniqueMode) then
+            error := ecInsert;
+          if lIndex.WriteError then
+            error := ecWriteIndex;
+          if error <> ecNone then
+          begin
+            // if there's an index write error, I shouldn't
+            // try to write the dbf header and the new record,
+            // but raise an exception right away
+            RollBackIndexesAndRaise(I, error);
+          end;
+          Inc(I);
+        end;
+
+        if NeedLocks then
+        begin
+          // indexes ok -> continue inserting
+          // update header record count
+          // read current header
+          ReadHeader;
+          // increase current record count
+          Inc(PDbfHdr(Header)^.RecordCount);
+          // write header to disk
+          WriteHeader;
+          // done with header
+        end
+        else
+          FRecordCountDirty := True;
+
+        if WriteError then
+        begin
+          // couldn't write header, so I shouldn't
+          // even try to write the record.
+          //
+          // At this point I should "roll back"
+          // the already written index records.
+          // if this fails, I'm in deep trouble!
+          RollbackIndexesAndRaise(FIndexFiles.Count, ecWriteDbf);
+        end;
+
+        // write locking info
+        if FLockField <> nil then
+          WriteLockInfo(Buffer);
+        // write buffer to disk
+        WriteRecord(newRecord, Buffer);
+        if NeedLocks then
+          WriteEOFTerminator;
+
+        // done updating, unlock
+        //UnlockPage(newRecord);
+        // error occurred while writing?
+        if WriteError then
+        begin
+          // -- Tobias --
+          // The record couldn't be written, so
+          // the written index records and the
+          // change to the header have to be
+          // rolled back
+//        LockPage(0, true);
+          ReadHeader;
+          Dec(PDbfHdr(Header)^.RecordCount);
+          WriteHeader;
+//        UnlockPage(0);
+          // roll back indexes too
+          RollbackIndexesAndRaise(FIndexFiles.Count, ecWriteDbf);
+        end else
+          Result := newRecord;
+      finally
+        UnlockPage(newRecord);
+      end;
+    finally
+      UnlockPage(-1);
     end;
-    Inc(I);
+  finally
+    if Locked then
+      UnlockPage(0);
   end;
-
-  // indexes ok -> continue inserting
-  // update header record count
-  LockPage(0, true);
-  // read current header
-  ReadHeader;
-  // increase current record count
-  Inc(PDbfHdr(Header)^.RecordCount);
-  // write header to disk
-  WriteHeader;
-  // done with header
-  UnlockPage(0);
-
-  if WriteError then
-  begin
-    // couldn't write header, so I shouldn't
-    // even try to write the record.
-    //
-    // At this point I should "roll back"
-    // the already written index records.
-    // if this fails, I'm in deep trouble!
-    UnlockPage(newRecord);
-    RollbackIndexesAndRaise(FIndexFiles.Count, ecWriteDbf);
-  end;
-
-  // write locking info
-  if FLockField <> nil then
-    WriteLockInfo(Buffer);
-  // write buffer to disk
-  WriteRecord(newRecord, Buffer);
-  // done updating, unlock
-  UnlockPage(newRecord);
-  // error occurred while writing?
-  if WriteError then
-  begin
-    // -- Tobias --
-    // The record couldn't be written, so
-    // the written index records and the
-    // change to the header have to be
-    // rolled back
-    LockPage(0, true);
-    ReadHeader;
-    Dec(PDbfHdr(Header)^.RecordCount);
-    WriteHeader;
-    UnlockPage(0);
-    // roll back indexes too
-    RollbackIndexesAndRaise(FIndexFiles.Count, ecWriteDbf);
-  end else
-    Result := newRecord;
 end;
 
 procedure TDbfFile.WriteLockInfo(Buffer: TDbfRecordBuffer);
@@ -2557,12 +2609,29 @@ begin
   Move(DbfGlobals.UserName[1], Buffer[lockoffset+8], FLockUserLen);
 end;
 
-procedure TDbfFile.LockRecord(RecNo: Integer; Buffer: TDbfRecordBuffer);
+procedure TDbfFile.LockRecord(RecNo: Integer; Buffer: TDbfRecordBuffer; Resync: Boolean);
+var
+  Locked : Boolean;
 begin
-  if LockPage(RecNo, false) then
+  if NeedLocks then
+  begin
+    if FVirtualLocks then
+    begin
+      if not LockPage(0, False) then
+        raise EDbfError.Create(STRING_RECORD_LOCKED);
+    end;
+    Locked := LockPage(RecNo, false);
+    if FVirtualLocks then
+      UnlockPage(0);
+  end
+  else
+    Locked := True;
+  if Locked then
   begin
     // reread data
-    ReadRecord(RecNo, Buffer);
+    if Resync then
+      if ResyncSharedReadBuffer then
+        ReadRecord(RecNo, Buffer);
     // store previous data for updating indexes
     Move(Buffer^, FPrevBuffer^, RecordSize);
     // lock succeeded, update lock info, if field present
@@ -2604,7 +2673,8 @@ begin
   // write new record buffer, all keys ok
   WriteRecord(RecNo, Buffer);
   // done updating, unlock
-  UnlockPage(RecNo);
+  if NeedLocks then
+    UnlockPage(RecNo);
 end;
 
 procedure TDbfFile.RecordDeleted(RecNo: Integer; Buffer: TDbfRecordBuffer);
@@ -2642,6 +2712,28 @@ begin
     end;
     Inc(I);
   end;
+end;
+
+procedure TDbfFile.DeleteIndexFile(AIndexFile: TIndexFile);
+var
+  Index: Integer;
+begin
+  for Index:= Pred(FIndexNames.Count) downto 0 do
+    if FIndexNames.Objects[Index]=AIndexFile then
+      FIndexNames.Delete(Index);
+  FIndexFiles.Remove(AIndexFile);
+  AIndexFile.Close;
+  AIndexFile.DeleteFile;
+  if FMdxFile = AIndexFile then
+    FMdxFile := nil;
+  AIndexFile.Free;
+end;
+
+procedure TDbfFile.Flush;
+begin
+  FlushBuffer;
+  FlushHeader;
+  inherited;
 end;
 
 procedure TDbfFile.SetRecordSize(NewSize: Integer);
@@ -2723,17 +2815,17 @@ begin
   FPhysicalRecNo := RecNo;
 end;
 
-function TDbfCursor.GetSequentialRecordCount: Integer;
+function TDbfCursor.GetSequentialRecordCount: TSequentialRecNo;
 begin
   Result := TDbfFile(PagedFile).RecordCount;
 end;
 
-function TDbfCursor.GetSequentialRecNo: Integer;
+function TDbfCursor.GetSequentialRecNo: TSequentialRecNo;
 begin
   Result := FPhysicalRecNo;
 end;
 
-procedure TDbfCursor.SetSequentialRecNo(RecNo: Integer);
+procedure TDbfCursor.SetSequentialRecNo(RecNo: TSequentialRecNo);
 begin
   FPhysicalRecNo := RecNo;
 end;
@@ -2746,12 +2838,16 @@ var
 // PChar = PWideChar for Unicode, PAnsiChar otherwise
 
 function CodePagesProc(CodePageString: PChar): Cardinal; stdcall; // PChar intended here
+var
+  IntValue: Integer;
 begin
   // add codepage to list
 {$IFDEF WINAPI_IS_UNICODE}
   TempCodePageList.Add(Pointer(StrToIntDef(string(CodePageString), -1))); // Avoid conversion to AnsiString
 {$ELSE}
-  TempCodePageList.Add(Pointer(GetIntFromStrLength(CodePageString, dbfStrLen(CodePageString), -1)));
+//TempCodePageList.Add(Pointer(GetIntFromStrLength(CodePageString, dbfStrLen(CodePageString), -1)));
+  if StrToInt32Width(IntValue, CodePageString, dbfStrLen(CodePageString), -1) then
+    TempCodePageList.Add(Pointer(IntValue));
 {$ENDIF}
 
   // continue enumeration
@@ -2835,11 +2931,7 @@ end;
 {$endif SUPPORT_FORMATSETTINGSTYPE}
 
 initialization
-{$ifdef SUPPORT_FORMATSETTINGSTYPE}
-  FORMAT_SETTINGS_DECIMAL_POINT := GetUserDefaultLocaleSettings;
-  FORMAT_SETTINGS_DECIMAL_POINT.DecimalSeparator := '.';
-  FORMAT_SETTINGS_DECIMAL_POINT.ThousandSeparator := #0;
-{$endif SUPPORT_FORMATSETTINGSTYPE}
+  DbfGlobals := TDbfGlobals.Create;
 finalization
   FreeAndNil(DbfGlobals);
 

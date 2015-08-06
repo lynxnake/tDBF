@@ -2,6 +2,8 @@ unit dbf_prssupp;
 
 // parse support
 
+{$BOOLEVAL OFF}
+
 {$I dbf_common.inc}
 
 interface
@@ -48,6 +50,22 @@ type
     function Compare(Key1, Key2: Pointer): Integer; override;
     procedure FreeItem(Item: Pointer); override;
   end;
+
+const
+  DBF_POSITIVESIGN = '+';
+  DBF_NEGATIVESIGN = '-';
+  DBF_DECIMAL = '.';
+  DBF_EXPSIGN = 'E';
+  DBF_ZERO = '0';
+  DBF_NINE = '9';
+
+
+function IntToStrWidth(Val: {$ifdef SUPPORT_INT64}Int64{$else}Integer{$endif}; const FieldSize: Integer; const Dest: PChar; Pad: Boolean; PadChar: Char): Integer;
+function FloatToStrWidth(const Val: Extended; const FieldSize, FieldPrec: Integer; const Dest: PChar; Pad: Boolean): Integer;
+
+function StrToIntWidth(var IntValue: {$ifdef SUPPORT_INT64}Int64{$else}Integer{$endif}; Src: Pointer; Size: Integer; Default: Integer): Boolean;
+function StrToInt32Width(var IntValue: Integer; Src: Pointer; Size: Integer; Default: Integer): Boolean;
+function StrToFloatWidth(var FloatValue: Extended; const Src: PChar; const Size: Integer; Default: Extended): Boolean;
 
 implementation
 
@@ -178,6 +196,312 @@ procedure TStrCollection.FreeItem(Item: Pointer);
 begin
   StrDispose(PChar(Item));
 end;
+
+var
+  DbfFormatSettings: TFormatSettings;
+
+type
+  TFloatResult = record
+    Dest: PChar;
+    P: PChar;
+    FieldSize: Integer;
+    FieldPrec: Integer;
+    Len: Integer;
+  end;
+
+procedure FloatPutChar(var FloatResult: TFloatResult; C: Char);
+begin
+  Inc(FloatResult.Len);
+  if FloatResult.Len <= FloatResult.FieldSize then
+  begin
+    FloatResult.P^ := C;
+    Inc(FloatResult.P);
+  end;
+end;
+
+procedure FloatReset(var FloatResult: TFloatResult);
+begin
+  FloatResult.P := FloatResult.Dest;
+  FloatResult.Len := 0;
+end;
+
+procedure DecimalToDbfStr(var FloatResult: TFloatResult; const FloatRec: TFloatRec; Exponent: SmallInt; FieldPrec: Integer);
+var
+  Digit: SmallInt;
+  DigitCount: SmallInt;
+  DigitMin: SmallInt;
+  DigitMax: SmallInt;
+  DigitChar: Char;
+  DecCount: Integer;
+begin
+  FloatReset(FloatResult);
+  if FloatRec.Negative then
+    FloatPutChar(FloatResult, DBF_NEGATIVESIGN);
+  DigitCount := StrLen(FloatRec.Digits);
+  if Exponent <= 0 then
+  begin
+    DigitMin := Exponent;
+    FloatPutChar(FloatResult, DBF_ZERO);
+  end
+  else
+    DigitMin := Low(FloatRec.Digits);
+  if Exponent > DigitCount then
+    DigitMax := Exponent
+  else
+    DigitMax := DigitCount;
+  Digit := DigitMin;
+  DecCount := -1;
+  while (Digit < DigitMax) or ((FieldPrec <> 0) and (DecCount < FieldPrec) and (FloatResult.Len < FloatResult.FieldSize - Ord(DecCount<0))) do
+  begin
+    if (Digit >= 0) and (Digit < DigitCount) then
+      DigitChar := FloatRec.Digits[Digit]
+    else
+      DigitChar := DBF_ZERO;
+    if Digit=Exponent then
+    begin
+      FloatPutChar(FloatResult, DBF_DECIMAL);
+      DecCount := 0;
+    end;
+    FloatPutChar(FloatResult, DigitChar);
+    Inc(Digit);
+    if DecCount >= 0 then
+      Inc(DecCount);
+  end;
+end;
+
+procedure DecimalToDbfStrFormat(var FloatResult: TFloatResult; const FloatRec: TFloatRec; Format: TFloatFormat; FieldPrec: Integer);
+var
+  Exponent: SmallInt;
+  ExponentBuffer: array[1..5] of Char;
+  Index: Byte;
+begin
+  if Format=ffExponent then
+  begin
+    DecimalToDbfStr(FloatResult, FloatRec, 1, 0);
+    Exponent:= Pred(FloatRec.Exponent);
+    if Exponent<>0 then
+    begin
+      FloatPutChar(FloatResult, DBF_EXPSIGN);
+      if Exponent<0 then
+      begin
+        FloatPutChar(FloatResult, DBF_NEGATIVESIGN);
+        Exponent:= -Exponent;
+      end;
+      Index:= 0;
+      while Exponent<>0 do
+      begin
+        Inc(Index);
+        ExponentBuffer[Index] := Char(Ord(DBF_ZERO) + (Exponent mod 10));
+        Exponent := Exponent div 10;
+      end;
+      while Index>0 do
+      begin
+        FloatPutChar(FloatResult, ExponentBuffer[Index]);
+        Dec(Index);
+      end;
+    end;
+  end
+  else
+    DecimalToDbfStr(FloatResult, FloatRec, FloatRec.Exponent, FieldPrec);
+end;
+
+procedure FloatToDbfStrFormat(var FloatResult: TFloatResult; const FloatRec: TFloatRec; Format: TFloatFormat; FieldPrec: Integer; FloatValue: Extended);
+var
+  FloatRec2: TFloatRec;
+  Precision: Integer;
+begin
+  DecimalToDbfStrFormat(FloatResult, FloatRec, Format, FieldPrec);
+  Precision:= Integer(StrLen(FloatRec.Digits));
+  if FloatResult.Len > FloatResult.FieldSize then
+  begin
+    Precision:= Precision - (FloatResult.Len - FloatResult.FieldSize);
+    if FloatRec.Exponent = FloatResult.FieldSize-Ord(FloatRec.Negative) then
+      Inc(Precision);
+    if Precision>0 then
+    begin
+      FloatToDecimal(FloatRec2, FloatValue, fvExtended, Precision, FieldPrec);
+      DecimalToDbfStrFormat(FloatResult, FloatRec2, Format, FieldPrec);
+      if FloatResult.Len > FloatResult.FieldSize then
+        FloatResult.Len := 0;
+    end
+    else
+       FloatResult.Len := 0;
+  end;
+end;
+
+function NumberPad(const FloatResult: TFloatResult; const Dest: PChar; Pad: Boolean; PadChar: Char): Integer;
+begin
+  Result:= FloatResult.Len;
+  if Pad and (FloatResult.Len <> FloatResult.FieldSize) then
+  begin
+    Move(Dest^, (Dest+FloatResult.FieldSize-FloatResult.Len)^, FloatResult.Len);
+    FillChar(Dest^, FloatResult.FieldSize-FloatResult.Len, PadChar);
+    Result:= FloatResult.FieldSize;
+  end;
+end;
+
+function IntToStrWidth(Val: {$ifdef SUPPORT_INT64}Int64{$else}Integer{$endif}; const FieldSize: Integer; const Dest: PChar; Pad: Boolean; PadChar: Char): Integer;
+var
+  FloatResult: TFloatResult;
+  Negative: Boolean;
+  IntValue: Integer;
+  Buffer: array[0..{$ifdef SUPPORT_INT64}18{$else}9{$endif}] of Char;
+  P: PChar;
+begin
+  FillChar(FloatResult, SizeOf(FloatResult), 0);
+  FloatResult.Dest := Buffer;
+  FloatResult.FieldSize := FieldSize;
+  FloatReset(FloatResult);
+  Negative := Val<0;
+  if Negative then
+    IntValue := -Val
+  else
+    IntValue := Val;
+  repeat
+    FloatPutChar(FloatResult, Char(Ord(DBF_ZERO) + (IntValue mod 10)));
+    IntValue := IntValue div 10;
+  until IntValue = 0;
+  P:= FloatResult.P;
+  FloatResult.Dest := Dest;
+  if FloatResult.Len+Ord(Negative) > FieldSize then
+  begin
+    if PadChar<>DBF_ZERO then
+      FloatResult.Len := FloatToStrWidth(Val, FieldSize, 0, Dest, Pad)
+    else
+      FloatResult.Len := 0;
+  end
+  else
+  begin
+    FloatReset(FloatResult);
+    if Negative then
+      FloatPutChar(FloatResult, DBF_NEGATIVESIGN);
+    repeat
+      Dec(P);
+      FloatPutChar(FloatResult, P^);
+    until P=Buffer;
+  end;
+  Result:= NumberPad(FloatResult, Dest, Pad, PadChar);
+end;
+
+function Int64ToStrWidth(Val: Int64; const FieldSize: Integer; const Dest: PChar; Pad: Boolean; PadChar: Char): Integer;
+begin
+  Result:= IntToStrWidth(Val, FieldSize, Dest, Pad, PadChar);
+end;
+
+function FloatToStrWidth(const Val: Extended; const FieldSize, FieldPrec: Integer; const Dest: PChar; Pad: Boolean): Integer;
+var
+  FloatResult: TFloatResult;
+  FloatRec: TFloatRec;
+begin
+  FillChar(FloatResult, SizeOf(FloatResult), 0);
+  FloatResult.Dest := Dest;
+  FloatResult.FieldSize := FieldSize;
+  FloatToDecimal(FloatRec, Val, fvExtended, 15, FieldPrec);
+  if FloatRec.Exponent <= 15 then
+    FloatToDbfStrFormat(FloatResult, FloatRec, ffFixed, FieldPrec, Val);
+  if FloatResult.Len = 0 then
+    FloatToDbfStrFormat(FloatResult, FloatRec, ffExponent, FieldPrec, Val);
+  Result:= NumberPad(FloatResult, Dest, Pad, ' ');
+end;
+
+function StrToIntWidth(var IntValue: {$ifdef SUPPORT_INT64}Int64{$else}Integer{$endif}; Src: Pointer; Size: Integer; Default: Integer): Boolean;
+var
+  P: PChar;
+  Negative: Boolean;
+  Digit: Byte;
+  FloatValue: Extended;
+begin
+  P := Src;
+  while (P < PChar(Src) + Size) and (P^ = ' ') do
+    Inc(P);
+  Dec(Size, P - Src);
+  Src := P;
+  Result := Size <> 0;
+  if Result then
+  begin
+    IntValue := 0;
+    Negative := False;
+    case P^ of
+      DBF_POSITIVESIGN: Inc(P);
+      DBF_NEGATIVESIGN:
+      begin
+        Negative := True;
+        Inc(P);
+      end;
+    end;
+    repeat
+      if P^ in [DBF_ZERO..DBF_NINE] then
+      begin
+        Digit := Ord(P^) - Ord(DBF_ZERO);
+        if IntValue < 0 then
+          Result := IntValue >= (Low(IntValue) + Digit) div 10
+        else
+          Result := IntValue <= (High(IntValue) - Digit) div 10;
+        if Result then
+          IntValue := IntValue * 10;
+        if IntValue >= 0 then
+          Inc(IntValue, Digit)
+        else
+          Dec(IntValue, Digit);
+        if Negative and (IntValue <>0) then
+        begin
+          IntValue := -IntValue;
+          Negative := False;
+        end;
+      end
+      else
+        Result := False;
+      Inc(P);
+    until (P = PChar(Src) + Size) or (not Result);
+    if not Result then
+    begin
+      Result := StrToFloatWidth(FloatValue, Src, Size, Default);
+      if Result then
+        IntValue:= Round(FloatValue);
+    end;
+    if not Result then
+      IntValue := Default;
+  end;
+end;
+
+function StrToInt32Width(var IntValue: Integer; Src: Pointer; Size: Integer; Default: Integer): Boolean;
+{$ifdef SUPPORT_INT64}
+var
+  AIntValue: Int64;
+begin
+  Result := StrToIntWidth(AIntValue, Src, Size, Default);
+  if Result then
+  begin
+    Result := (AIntValue >= Low(IntValue)) and (AIntValue <= High(IntValue));
+    if Result then
+      IntValue := AIntValue
+    else
+      IntValue := Default;
+  end;
+{$else}
+begin
+  Result := StrToIntWidth(IntValue, Src, Size, Default);
+{$endif}
+end;
+
+function StrToFloatWidth(var FloatValue: Extended; const Src: PChar; const Size: Integer; Default: Extended): Boolean;
+var
+  Buffer: array[0..20] of Char;
+begin
+  Result := Size < SizeOf(Buffer);
+  if Result then
+  begin
+    Move(Src^, Buffer, Size);
+    Buffer[Size] := #0;
+    Result:= TextToFloat(@Buffer, FloatValue {$ifndef VER1_0}, fvExtended{$endif}, DbfFormatSettings);
+  end;
+  if not Result then
+    FloatValue := Default;
+end;
+
+initialization
+  FillChar(DbfFormatSettings, SizeOf(DbfFormatSettings), 0);
+  DbfFormatSettings.DecimalSeparator:= DBF_DECIMAL;
 
 end.
 

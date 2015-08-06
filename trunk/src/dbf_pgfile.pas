@@ -16,7 +16,7 @@ type
   EPagedFile = class(Exception)
   end;
 
-  TPagedFileMode = (pfNone, pfMemoryCreate, pfMemoryOpen, pfExclusiveCreate, 
+  TPagedFileMode = (pfNone, pfMemoryCreate, pfMemoryOpen, pfExclusiveCreate,
     pfExclusiveOpen, pfReadWriteCreate, pfReadWriteOpen, pfReadOnly);
 
   // access levels:
@@ -27,11 +27,35 @@ type
   // - readonly                 open
   //
   // - memory            -*-share: N/A          -*-locks: disabled    -*-indexes: read/write
-  // - exclusive_create  -*-share: deny write   -*-locks: disabled    -*-indexes: read/write
-  // - exclusive_open    -*-share: deny write   -*-locks: disabled    -*-indexes: read/write
+  // - exclusive_create  -*-share: exclusive    -*-locks: disabled    -*-indexes: read/write
+  // - exclusive_open    -*-share: exclusive    -*-locks: disabled    -*-indexes: read/write
   // - readwrite_create  -*-share: deny none    -*-locks: enabled     -*-indexes: read/write
   // - readwrite_open    -*-share: deny none    -*-locks: enabled     -*-indexes: read/write
   // - readonly          -*-share: deny none    -*-locks: disabled    -*-indexes: readonly
+
+  {$ifdef SUPPORT_INT64}
+    TPagedFileOffset = Int64;
+  {$else}
+    TPagedFileOffset = Integer;
+  {$endif}
+  TPagedFileProgressEvent = procedure(Sender: TObject; Position, Max: Integer; var Aborted: Boolean; Msg: string) of object;
+
+  TPagedFileStream = class(TFileStream)
+  protected
+{$ifdef SUPPORT_INT64}
+    procedure SetSize(NewSize: Longint); override;
+{$else}
+    procedure SetSize(const NewSize: Int64); override;
+{$endif}
+  public
+    function Read(var Buffer; Count: Longint): Longint; override;
+    function Write(const Buffer; Count: Longint): Longint; override;
+{$ifdef SUPPORT_INT64}
+    function Seek(const Offset: Int64; Origin: TSeekOrigin): Int64; override;
+{$else}
+    function Seek(Offset: Longint; Origin: Word): Longint; override;
+{$endif}
+  end;
 
   TPagedFile = class(TObject)
   protected
@@ -42,7 +66,7 @@ type
     FPageSize: Integer;         { need for MDX, where recordsize <> pagesize }
     FRecordCount: Integer;      { actually FPageCount, but we want to keep existing code }
     FPagesPerRecord: Integer;
-    FCachedSize: Integer;
+    FCachedSize: TPagedFileOffset;
     FCachedRecordCount: Integer;
     FHeader: PAnsiChar;
     FActive: Boolean;
@@ -60,12 +84,13 @@ type
     FBufferPtr: Pointer;
     FBufferAhead: Boolean;
     FBufferPage: Integer;
-    FBufferOffset: Integer;
+    FBufferOffset: TPagedFileOffset;
     FBufferSize: Integer;
     FBufferReadSize: Integer;
     FBufferMaxSize: Integer;
     FBufferModified: Boolean;
     FWriteError: Boolean;
+    FOnProgress: TPagedFileProgressEvent;
   protected
     procedure SetHeaderOffset(NewValue: Integer); virtual;
     procedure SetRecordSize(NewValue: Integer); virtual;
@@ -76,24 +101,25 @@ type
     procedure SetBufferAhead(NewValue: Boolean);
     procedure SetFileName(NewName: string);
     procedure SetStream(NewStream: TStream);
-    function  LockSection(const Offset, Length: Cardinal; const Wait: Boolean): Boolean; virtual;
-    function  UnlockSection(const Offset, Length: Cardinal): Boolean; virtual;
+    function  LockSection(const Offset: TPagedFileOffset; const Length: Cardinal; const Wait: Boolean): Boolean; virtual;
+    function  UnlockSection(const Offset: TPagedFileOffset; const Length: Cardinal): Boolean; virtual;
     procedure UpdateBufferSize;
     procedure RecalcPagesPerRecord;
-    procedure ReadHeader;
+    function ReadHeader: Integer;
     procedure FlushHeader;
     procedure FlushBuffer;
     function  ReadChar: Byte;
     procedure WriteChar(c: Byte);
-    procedure CheckCachedSize(const APosition: Integer);
+    procedure CheckCachedSize(const APosition: TPagedFileOffset);
     procedure SynchronizeBuffer(IntRecNum: Integer);
+    function  ReadBuffer: Boolean;
     function  Read(Buffer: Pointer; ASize: Integer): Integer;
-    function  ReadBlock(const BlockPtr: Pointer; const ASize, APosition: Integer): Integer;
+    function  ReadBlock(const BlockPtr: Pointer; const ASize: Integer; const APosition: TPagedFileOffset): Integer;
     function  SingleReadRecord(IntRecNum: Integer; Buffer: Pointer): Integer;
-    procedure WriteBlock(const BlockPtr: Pointer; const ASize, APosition: Integer);
+    procedure WriteBlock(const BlockPtr: Pointer; const ASize: Integer; const APosition: TPagedFileOffset);
     procedure SingleWriteRecord(IntRecNum: Integer; Buffer: Pointer);
     function  GetRecordCount: Integer;
-    procedure UpdateCachedSize(CurrPos: Integer);
+    procedure UpdateCachedSize(CurrPos: TPagedFileOffset);
 
     property VirtualLocks: Boolean read FVirtualLocks write FVirtualLocks;
   public
@@ -107,14 +133,17 @@ type
     procedure EndExclusive; virtual;
     procedure CheckExclusiveAccess;
     procedure DisableForceCreate;
-    function  CalcPageOffset(const PageNo: Integer): Integer;
+    function  CalcPageOffset(const PageNo: Integer): TPagedFileOffset;
     function  IsRecordPresent(IntRecNum: Integer): boolean;
     function  ReadRecord(IntRecNum: Integer; Buffer: Pointer): Integer; virtual;
     procedure WriteRecord(IntRecNum: Integer; Buffer: Pointer); virtual;
     procedure WriteHeader; virtual;
     function  FileCreated: Boolean;
     function  IsSharedAccess: Boolean;
-    procedure ResetError;
+    procedure ResetError; virtual;
+    function  ResyncSharedReadBuffer: Boolean;
+    function  ResyncSharedFlushBuffer: Boolean;
+    procedure DoProgress(Position, Max: Integer; Msg: string);
 
     function  LockPage(const PageNo: Integer; const Wait: Boolean): Boolean;
     function  LockAllPages(const Wait: Boolean): Boolean;
@@ -142,6 +171,7 @@ type
     property Stream: TStream read FStream write SetStream;
     property BufferAhead: Boolean read FBufferAhead write SetBufferAhead;
     property WriteError: Boolean read FWriteError;
+    property OnProgress: TPagedFileProgressEvent read FOnProgress write FOnProgress;
   end;
 
 implementation
@@ -149,13 +179,67 @@ implementation
 uses
 {$ifdef WINDOWS}
   Windows,
-{$else}
 {$ifdef KYLIX}
   Libc, 
 {$endif}  
-  Types, dbf_wtil,
+  Types,
+{$else}
+  dbf_wtil,
 {$endif}
   dbf_str;
+
+//====================================================================
+// TPagedFileStream
+//====================================================================
+function TPagedFileStream.Read(var Buffer; Count: Longint): Longint;
+begin
+  Result := FileRead(Handle,Buffer,Count);
+  if Result = -1 then
+    raise EPagedFile.Create(STRING_READ_ERROR);
+end;
+
+function TPagedFileStream.Write(const Buffer; Count: Longint): Longint;
+begin
+  Result:=FileWrite (Handle,Buffer,Count);
+  if Result = -1 then
+    raise EPagedFile.Create(STRING_WRITE_ERROR);
+end;
+
+{$ifdef SUPPORT_INT64}
+function TPagedFileStream.Seek(const Offset: Int64; Origin: TSeekOrigin): Int64;
+begin
+  Result := FileSeek(Handle, Offset, Ord(Origin));
+  if Result = -1 then
+    raise EPagedFile.Create(STRING_READ_ERROR);
+end;
+{$else}
+function TPagedFileStream.Seek(Offset: Longint; Origin: Word): Longint;
+begin
+  Result := FileSeek(Handle, Offset, Ord(Origin));
+end;
+{$endif}
+
+{$ifdef SUPPORT_INT64}
+procedure TPagedFileStream.SetSize(NewSize: Longint);
+begin
+{$ifdef FPC_VERSION}
+  if not FileTruncate(Handle, NewSize) then
+    raise EPagedFile.Create(STRING_WRITE_ERROR);
+{$else}
+  inherited;
+{$endif}
+end;
+{$else}
+procedure TPagedFileStream.SetSize(const NewSize: Int64);
+begin
+{$ifdef FPC_VERSION}
+  if not FileTruncate(Handle, NewSize) then
+    raise EPagedFile.Create(STRING_WRITE_ERROR);
+{$else}
+  inherited;
+{$endif}
+end;
+{$endif}
 
 //====================================================================
 // TPagedFile
@@ -232,15 +316,15 @@ begin
     end;
     // specify open mode
     case FMode of
-      pfExclusiveCreate: fileOpenMode := fmOpenReadWrite or fmShareDenyWrite;
-      pfExclusiveOpen:   fileOpenMode := fmOpenReadWrite or fmShareDenyWrite;
+      pfExclusiveCreate: fileOpenMode := fmOpenReadWrite or fmShareExclusive;
+      pfExclusiveOpen:   fileOpenMode := fmOpenReadWrite or fmShareExclusive;
       pfReadWriteCreate: fileOpenMode := fmOpenReadWrite or fmShareDenyNone;
       pfReadWriteOpen:   fileOpenMode := fmOpenReadWrite or fmShareDenyNone;
     else    // => readonly
                          fileOpenMode := fmOpenRead or fmShareDenyNone;
     end;
     // open file
-    FStream := TFileStream.Create(FFileName, fileOpenMode);
+    FStream := TPagedFileStream.Create(FFileName, fileOpenMode);
     // if creating, then empty file
     if FileCreated then
       FStream.Size := 0;
@@ -315,17 +399,17 @@ begin
     raise EDbfError.Create(STRING_NEED_EXCLUSIVE_ACCESS);
 end;
 
-function TPagedFile.CalcPageOffset(const PageNo: Integer): Integer;
+function TPagedFile.CalcPageOffset(const PageNo: Integer): TPagedFileOffset;
 begin
   if not FPageOffsetByHeader then
-    Result := FPageSize * PageNo
+    Result := TPagedFileOffset(FPageSize) * PageNo
   else if PageNo = 0 then
     Result := 0
   else
-    Result := FHeaderOffset + FHeaderSize + (FPageSize * (PageNo - 1))
+    Result := FHeaderOffset + FHeaderSize + (TPagedFileOffset(FPageSize) * (PageNo - 1));
 end;
 
-procedure TPagedFile.CheckCachedSize(const APosition: Integer);
+procedure TPagedFile.CheckCachedSize(const APosition: TPagedFileOffset);
 begin
   // file expanded?
   if APosition > FCachedSize then
@@ -356,7 +440,7 @@ begin
   until false;
 end;
 
-procedure TPagedFile.UpdateCachedSize(CurrPos: Integer);
+procedure TPagedFile.UpdateCachedSize(CurrPos: TPagedFileOffset);
 begin
   // have we added a record?
   if CurrPos > FCachedSize then
@@ -389,18 +473,51 @@ begin
 end;
 
 procedure TPagedFile.SynchronizeBuffer(IntRecNum: Integer);
+var
+  BufferPageMin: Integer;
 begin
   // record outside buffer, flush previous buffer
   FlushBuffer;
   // read new set of records
-  FBufferPage := IntRecNum;
-  FBufferOffset := CalcPageOffset(IntRecNum);
-  if FBufferOffset + FBufferMaxSize > FCachedSize then
-    FBufferReadSize := FCachedSize - FBufferOffset
+//FBufferPage := IntRecNum;
+//FBufferOffset := CalcPageOffset(IntRecNum);
+//if FBufferOffset + FBufferMaxSize > FCachedSize then
+//  FBufferReadSize := FCachedSize - FBufferOffset
+//else
+//  FBufferReadSize := FBufferMaxSize;
+  if (FBufferPage >= 0) and ((IntRecNum < Pred(FBufferPage)) or (IntRecNum > FBufferPage + (FBufferSize div PageSize))) then // 10/28/2011 pb  CR 19176
+    FBufferReadSize := RecordSize
   else
     FBufferReadSize := FBufferMaxSize;
+  if IntRecNum < FBufferPage then
+  begin
+    if FPageOffsetByHeader then
+      BufferPageMin := 1
+    else
+      BufferPageMin := 0;
+    FBufferPage := (IntRecNum + 1) - (FBufferReadSize div PageSize);
+    if FBufferPage < BufferPageMin then
+    begin
+      Dec(FBufferReadSize, (BufferPageMin - FBufferPage) * PageSize);
+      FBufferPage := BufferPageMin;
+    end;
+  end
+  else
+    FBufferPage := IntRecNum;
+  FBufferOffset := CalcPageOffset(FBufferPage);
+  if FBufferOffset + FBufferReadSize > FCachedSize then
+    FBufferReadSize := FCachedSize - FBufferOffset;
   FBufferSize := FBufferReadSize;
-  FBufferReadSize := ReadBlock(FBufferPtr, FBufferReadSize, FBufferOffset);
+//if FBufferReadSize <> 0 then
+//  FBufferReadSize := ReadBlock(FBufferPtr, FBufferReadSize, FBufferOffset);
+  ReadBuffer;
+end;
+
+function TPagedFile.ReadBuffer: Boolean;
+begin
+  Result := FBufferAhead and (FBufferReadSize <> 0);
+  if Result then
+    FBufferReadSize := ReadBlock(FBufferPtr, FBufferReadSize, FBufferOffset);
 end;
 
 function TPagedFile.IsRecordPresent(IntRecNum: Integer): boolean;
@@ -414,13 +531,14 @@ end;
 
 function TPagedFile.ReadRecord(IntRecNum: Integer; Buffer: Pointer): Integer;
 var
-  Offset: Integer;
+  Offset: TPagedFileOffset;
 begin
   if FBufferAhead then
   begin
-    Offset := (IntRecNum - FBufferPage) * PageSize;
+    Offset := TPagedFileOffset(IntRecNum - FBufferPage) * PageSize;
     if (FBufferPage <> -1) and (FBufferPage <= IntRecNum) and
-        (Offset+RecordSize <= FBufferReadSize) then
+//      (Offset+RecordSize <= FBufferReadSize) then
+        (Offset + RecordSize <= FBufferSize) then
     begin
       // have record in buffer, nothing to do here
     end else begin
@@ -433,7 +551,7 @@ begin
         exit;
       end;
       // reset offset into buffer
-      Offset := 0;
+      Offset := TPagedFileOffset(IntRecNum - FBufferPage) * PageSize;
     end;
     // now we have this record in buffer
     Move(PAnsiChar(FBufferPtr)[Offset], Buffer^, RecordSize); // Was PChar
@@ -447,13 +565,14 @@ end;
 
 procedure TPagedFile.WriteRecord(IntRecNum: Integer; Buffer: Pointer);
 var
-  RecEnd: Integer;
+  RecEnd: TPagedFileOffset;
 begin
   if FBufferAhead then
   begin
-    RecEnd := (IntRecNum - FBufferPage + PagesPerRecord) * PageSize;
+    RecEnd := TPagedFileOffset(IntRecNum - FBufferPage + PagesPerRecord) * PageSize;
     if (FBufferPage <> -1) and (FBufferPage <= IntRecNum) and
-        (RecEnd <= FBufferMaxSize) then
+//      (RecEnd <= FBufferMaxSize) then
+        (RecEnd <= FBufferMaxSize) and (RecEnd <= FBufferSize + RecordSize) then
     begin
       // extend buffer?
       if RecEnd > FBufferSize then
@@ -462,12 +581,14 @@ begin
       // record outside buffer, need to synchronize first
       SynchronizeBuffer(IntRecNum);
       RecEnd := PagesPerRecord * PageSize;
+      FBufferSize := RecEnd;
     end;
     // we can write this record to buffer
     Move(Buffer^, PAnsiChar(FBufferPtr)[RecEnd-RecordSize], RecordSize);
     FBufferModified := true;
     // update cached size
     UpdateCachedSize(FBufferOffset+RecEnd);
+    ResyncSharedFlushBuffer;
   end else begin
     // no buffering
     SingleWriteRecord(IntRecNum, Buffer);
@@ -504,7 +625,10 @@ begin
   begin
     FBufferMaxSize := 65536;
     if RecordSize <> 0 then
-      Dec(FBufferMaxSize, FBufferMaxSize mod PageSize);
+//    Dec(FBufferMaxSize, FBufferMaxSize mod PageSize);
+      Dec(FBufferMaxSize, FBufferMaxSize mod RecordSize);
+    if FBufferMaxSize < RecordSize then
+      FBufferMaxSize := RecordSize;
   end else begin
     FBufferMaxSize := 0;
   end;
@@ -544,10 +668,10 @@ begin
   end;
 end;
 
-procedure TPagedFile.ReadHeader;
+function TPagedFile.ReadHeader: Integer;
    { assumes header is large enough }
 var
-  size: Integer;
+  size: TPagedFileOffset;
 begin
   // save changes before reading new header
   FlushHeader;
@@ -576,7 +700,10 @@ begin
       size := 0;
     end;
     FillChar(FHeader[size], FHeaderSize-size, 0);
-  end;
+    Result := size;
+  end
+  else
+    Result := 0;
 end;
 
 procedure TPagedFile.TryExclusive;
@@ -682,7 +809,7 @@ end;
 
 function TPagedFile.GetRecordCount: Integer;
 var
-  currSize: Integer;
+  currSize: TPagedFileOffset;
 begin
   // file size changed?
   if FNeedLocks then
@@ -752,14 +879,14 @@ procedure TPagedFile.Flush;
 begin
 end;
 
-function TPagedFile.ReadBlock(const BlockPtr: Pointer; const ASize, APosition: Integer): Integer;
+function TPagedFile.ReadBlock(const BlockPtr: Pointer; const ASize: Integer; const APosition: TPagedFileOffset): Integer;
 begin
   FStream.Position := APosition;
   CheckCachedSize(APosition);
   Result := Read(BlockPtr, ASize);
 end;
 
-procedure TPagedFile.WriteBlock(const BlockPtr: Pointer; const ASize, APosition: Integer);
+procedure TPagedFile.WriteBlock(const BlockPtr: Pointer; const ASize: Integer; const APosition: TPagedFileOffset);
   // assumes a lock is held if necessary prior to calling this function
 begin
   FStream.Position := APosition;
@@ -772,20 +899,44 @@ begin
   FWriteError := false;
 end;
 
+function TPagedFile.ResyncSharedReadBuffer: Boolean;
+begin
+  Result := IsSharedAccess and (not FFileLocked);
+  if Result then
+    Result := ReadBuffer;
+end;
+
+function TPagedFile.ResyncSharedFlushBuffer: Boolean;
+begin
+  Result := IsSharedAccess;
+  if Result then
+    FlushBuffer;
+end;
+
+procedure TPagedFile.DoProgress(Position, Max: Integer; Msg: string);
+var
+  Aborted: Boolean;
+begin
+  Aborted:= False;
+  if Assigned(FOnProgress) then
+    FOnProgress(Self, Position, Max, Aborted, Msg);
+  if Aborted then
+    Abort;
+end;
+
 // BDE compatible lock offset found!
 const
 {$ifdef WINDOWS}
   LockOffset = $EFFFFFFE;       // BDE compatible
-  FileLockSize = 2;
 {$else}
-  LockOffset = $7FFFFFFF;
-  FileLockSize = 1;
+  LockOffset = $7FFFFFFE;
 {$endif}
+  FileLockSize = 2;
 
 // dBase supports maximum of a billion records
   LockStart  = LockOffset - 1000000000;
 
-function TPagedFile.LockSection(const Offset, Length: Cardinal; const Wait: Boolean): Boolean;
+function TPagedFile.LockSection(const Offset: TPagedFileOffset; const Length: Cardinal; const Wait: Boolean): Boolean;
   // assumes FNeedLock = true
 var
   Failed: Boolean;
@@ -793,7 +944,11 @@ begin
   // FNeedLocks => FStream is of type TFileStream
   Failed := false;
   repeat
+{$ifdef SUPPORT_INT64}
+    Result := LockFile(TFileStream(FStream).Handle, ULARGE_INTEGER(Offset).LowPart, ULARGE_INTEGER(Offset).HighPart, Length, 0);
+{$else}
     Result := LockFile(TFileStream(FStream).Handle, Offset, 0, Length, 0);
+{$endif}
     // test if lock violation, then wait a bit and try again
     if not Result and Wait then
     begin
@@ -805,9 +960,16 @@ begin
   until Result or not Wait or Failed;
 end;
 
-function TPagedFile.UnlockSection(const Offset, Length: Cardinal): Boolean;
+function TPagedFile.UnlockSection(const Offset: TPagedFileOffset; const Length: Cardinal): Boolean;
 begin
-  Result := UnlockFile(TFileStream(FStream).Handle, Offset, 0, Length, 0);
+  if Assigned(FStream) then
+{$ifdef SUPPORT_INT64}
+    Result := UnlockFile(TFileStream(FStream).Handle, ULARGE_INTEGER(Offset).LowPart, ULARGE_INTEGER(Offset).HighPart, Length, 0)
+{$else}
+    Result := UnlockFile(TFileStream(FStream).Handle, Offset, 0, Length, 0)
+{$endif}
+  else
+    Result := True;
 end;
 
 function TPagedFile.LockAllPages(const Wait: Boolean): Boolean;
@@ -820,14 +982,18 @@ begin
   begin
     if FVirtualLocks then
     begin
+//    Offset := LockStart;
+//    Length := LockOffset - LockStart + FileLockSize;
 {$ifdef SUPPORT_UINT32_CARDINAL}
-      Offset := LockStart;
-      Length := LockOffset - LockStart + FileLockSize;
+      Offset := LockOffset;
+      Length := FileLockSize;
 {$else}
       // delphi 3 has strange types:
       // cardinal 0..2 GIG ?? does it produce correct code?
-      Offset := Cardinal(LockStart);
-      Length := Cardinal(LockOffset) - Cardinal(LockStart) + FileLockSize;
+//    Offset := Cardinal(LockStart);
+//    Length := Cardinal(LockOffset) - Cardinal(LockStart) + FileLockSize;
+      Offset := Cardinal(LockOffset);
+      Length := Cardinal(FileLockSize);
 {$endif}
     end else begin
       Offset := 0;
@@ -835,6 +1001,14 @@ begin
     end;
     // lock requested section
     Result := LockSection(Offset, Length, Wait);
+    if FVirtualLocks and Result then
+    begin
+      Result := LockSection(LockStart, LockOffset - LockStart, Wait);
+      if Result then
+        UnlockSection(LockStart, LockOffset - LockStart)
+      else
+        UnlockSection(Offset, Length);
+    end;
     FFileLocked := Result;
   end else
     Result := true;
@@ -851,13 +1025,17 @@ begin
     if FVirtualLocks then
     begin
 {$ifdef SUPPORT_UINT32_CARDINAL}
-      Offset := LockStart;
-      Length := LockOffset - LockStart + FileLockSize;
+//    Offset := LockStart;
+//    Length := LockOffset - LockStart + FileLockSize;
+      Offset := LockOffset;
+      Length := FileLockSize;
 {$else}
       // delphi 3 has strange types:
       // cardinal 0..2 GIG ?? does it produce correct code?
-      Offset := Cardinal(LockStart);
-      Length := Cardinal(LockOffset) - Cardinal(LockStart) + FileLockSize;
+//    Offset := Cardinal(LockStart);
+//    Length := Cardinal(LockOffset) - Cardinal(LockStart) + FileLockSize;
+      Offset := Cardinal(LockOffset);
+      Length := Cardinal(FileLockSize);
 {$endif}
     end else begin
       Offset := 0;
@@ -875,11 +1053,14 @@ var
   Length: Cardinal;
 begin
   // do we need locking?
-  if FNeedLocks and not FFileLocked then
+  if FNeedLocks then
   begin
     if FVirtualLocks then
     begin
-      Offset := LockOffset - Cardinal(PageNo);
+      if PageNo >= 0 then
+        Offset := LockOffset - Cardinal(PageNo)
+      else
+        Offset := LockOffset + Cardinal(-PageNo);
       Length := 1;
     end else begin
       Offset := CalcPageOffset(PageNo);
@@ -897,12 +1078,15 @@ var
   Length: Cardinal;
 begin
   // do we need locking?
-  if FNeedLocks and not FFileLocked then
+  if FNeedLocks then
   begin
     // calc offset + length
     if FVirtualLocks then
     begin
-      Offset := LockOffset - Cardinal(PageNo);
+      if PageNo >= 0 then
+        Offset := LockOffset - Cardinal(PageNo)
+      else
+        Offset := LockOffset + Cardinal(-PageNo);
       Length := 1;
     end else begin
       Offset := CalcPageOffset(PageNo);

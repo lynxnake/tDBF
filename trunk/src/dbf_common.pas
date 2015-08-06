@@ -18,7 +18,7 @@ uses
 const
   TDBF_MAJOR_VERSION      = 6;
   TDBF_MINOR_VERSION      = 9;
-  TDBF_SUB_MINOR_VERSION  = 1;
+  TDBF_SUB_MINOR_VERSION  = 2;
 
   TDBF_TABLELEVEL_FOXPRO = 25;
 
@@ -97,6 +97,12 @@ type
   dword = cardinal;
 {$endif}
 
+{$ifdef SUPPORT_INT64}
+  TSequentialRecNo = Int64;
+{$else}
+  TSequentialRecNo = Integer;
+{$endif}
+
 //-------------------------------------
 
 {$ifndef SUPPORT_FREEANDNIL}
@@ -136,12 +142,6 @@ function GetCompleteFileName(const Base, FileName: string): string;
 function IsFullFilePath(const Path: string): Boolean; // full means not relative
 function DateTimeToBDETimeStamp(aDT: TDateTime): double;
 function BDETimeStampToDateTime(aBT: double): TDateTime;
-function  GetStrFromInt(Val: Integer; const Dst: PAnsiChar): Integer; // Was PChar
-procedure GetStrFromInt_Width(Val: Integer; const Width: Integer; const Dst: PAnsiChar; const PadChar: AnsiChar); // Was Char
-{$ifdef SUPPORT_INT64}
-function  GetStrFromInt64(Val: Int64; const Dst: PAnsiChar): Integer; // Was PChar
-procedure GetStrFromInt64_Width(Val: Int64; const Width: Integer; const Dst: PAnsiChar; const PadChar: AnsiChar); // Was Char
-{$endif}
 procedure FindNextName(BaseName: string; var OutName: string; var Modifier: Integer);
 {$ifdef USE_CACHE}
 function GetFreeMemory: Integer;
@@ -227,30 +227,6 @@ begin
   lpath := lpath + lfile;
   result := lpath;
 end;
-
-// it seems there is no pascal function to convert an integer into a PAnsiChar???
-
-procedure GetStrFromInt_Width(Val: Integer; const Width: Integer; const Dst: PAnsiChar; const PadChar: AnsiChar); // Was Char
-var
-  Temp: array[0..10] of AnsiChar;
-  I, J: Integer;
-  NegSign: boolean;
-begin
-  {$I getstrfromint.inc}
-end;
-
-{$ifdef SUPPORT_INT64}
-
-procedure GetStrFromInt64_Width(Val: Int64; const Width: Integer; const Dst: PAnsiChar; const PadChar: AnsiChar); // Was Char
-var            
-  Temp: array[0..19] of AnsiChar;
-  I, J: Integer;
-  NegSign: boolean;
-begin
-  {$I getstrfromint.inc}
-end;
-
-{$endif}
 
 // it seems there is no pascal function to convert an integer into a PAnsiChar???
 // NOTE: in dbf_dbffile.pas there is also a convert routine, but is slightly different
