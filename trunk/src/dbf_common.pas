@@ -170,6 +170,12 @@ function Max(x, y: integer): integer;
 {$endif}
 {$endif}
 
+{$ifndef DELPHI_7}
+type
+  PPAnsiChar = ^PAnsiChar;
+  PDouble = ^Double;
+{$ENDIF}
+
 implementation
 
 {$ifdef MSWINDOWS}
