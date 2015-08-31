@@ -4,7 +4,7 @@ unit dbf_wtil;
 
 interface
 
-{$ifndef MSWINDOWS}
+{$ifndef WINDOWS}
 uses
 {$ifdef FPC}
   BaseUnix,
@@ -282,7 +282,7 @@ procedure SetLastError(Value: Integer);
 
 implementation
 
-{$ifndef MSWINDOWS}
+{$ifndef WINDOWS}
 {$ifdef FPC}
 uses
   unix;
