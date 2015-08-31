@@ -2613,19 +2613,31 @@ begin
 end;
 
 procedure FuncRound_F_FF(Param: PExpressionRec);
+{$IFDEF SUPPORT_ROUNDTO}
 var
   TempInt: Integer;
+{$ENDIF}
 begin
+{$IFDEF SUPPORT_ROUNDTO}
   TempInt := Trunc(PDouble(Param^.Args[1])^);
   PDouble(Param^.Res.MemoryPos^)^ := RoundTo(PDouble(Param^.Args[0])^, -TempInt);
+{$ELSE}
+  PDouble(Param^.Res.MemoryPos^)^ := Round(PDouble(Param^.Args[0])^); // 2nd arg to be incorporated
+{$ENDIF}
 end;
 
 procedure FuncRound_F_FI(Param: PExpressionRec);
+{$IFDEF SUPPORT_ROUNDTO}
 var
   TempInt: integer;
+{$ENDIF}
 begin
+{$IFDEF SUPPORT_ROUNDTO}
   TempInt := PInteger(Param^.Args[1])^;
   PDouble(Param^.Res.MemoryPos^)^ := RoundTo(PDouble(Param^.Args[0])^, -TempInt);
+{$ELSE}
+  PDouble(Param^.Res.MemoryPos^)^ := Round(PDouble(Param^.Args[0])^); // 2nd arg to be incorporated
+{$ENDIF}
 end;
 
 procedure FuncRTrim(Param: PExpressionRec);
