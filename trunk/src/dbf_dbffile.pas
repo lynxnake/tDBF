@@ -1424,13 +1424,15 @@ function TDbfFile.GetFieldInfo(const FieldName: AnsiString): TDbfFieldDef;
 var
   I: Integer;
   lfi: TDbfFieldDef;
-  FieldNameUpper: AnsiString;
+  AFieldName: string;
 begin
-  FieldNameUpper := dbfStrUpper(PAnsiChar(FieldName));
+  AFieldName := FieldName;
+  UniqueString(AFieldName);
+  AFieldName := dbfStrUpper(PAnsiChar(AFieldName));
   for I := 0 to FFieldDefs.Count-1 do
   begin
     lfi := TDbfFieldDef(FFieldDefs.Items[I]);
-    if lfi.fieldName = FieldNameUpper then
+    if lfi.fieldName = AFieldName then
     begin
       Result := lfi;
       exit;
