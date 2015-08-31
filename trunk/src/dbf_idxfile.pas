@@ -1462,7 +1462,7 @@ end;
 function TMdxPage.GetEntry(AEntryNo: Integer): Pointer;
 begin
   // get base + offset
-  Result := PChar(@PMdxPage(PageBuffer)^.FirstEntry)
+  Result := PAnsiChar(@PMdxPage(PageBuffer)^.FirstEntry)
     + (SwapWordLE(PIndexHdr(IndexFile.IndexHeader)^.KeyRecLen) * AEntryNo);
 end;
 
@@ -3364,9 +3364,9 @@ begin
       // convert string to BCD
       I := 0;
       while I < NumDecimals do
-      begin
+      begin             
         // only one byte left?
-        if FloatRec.Digits[I+1] = ZERO_CHAR then
+        if I+1>=NumDecimals then
           BCDdigit := 0
         else
           BCDdigit := Byte(FloatRec.Digits[I+1]) - Byte('0');
