@@ -260,7 +260,6 @@ procedure Func_OR(Param: PExpressionRec);
 procedure Func_NOT(Param: PExpressionRec);
 
 procedure FuncAdd_S(Param: PExpressionRec);
-procedure FuncRecNo(Param: PExpressionRec);
 procedure FuncSub_S(Param: PExpressionRec);
 
 var
@@ -360,12 +359,10 @@ begin
       ExprTree := MakeTree(ExpColl, 0, ExpColl.Count - 1);
       FCurrentRec := nil;
       CheckArguments(ExprTree);
-//    LinkVariables(ExprTree);
+      LinkVariables(ExprTree);
       if Optimize then
-//      RemoveConstants(ExprTree);
         OptimizeExpr(ExprTree);
       // all constant expressions are evaluated and replaced by variables
-      LinkVariables(ExprTree);
       FCurrentRec := nil;
       FExpResultPos := FExpResult;
       MakeLinkedList(ExprTree, @FExpResult, @FExpResultPos, @FExpResultSize);
@@ -1291,6 +1288,7 @@ begin
   Result^.ExprWord := nil;
   Result^.ResetDest := false;
   Result^.ExpressionContext := @FExpressionContext;
+  Result^.IsNullPtr := nil;
 end;
 
 procedure TCustomExpressionParser.Evaluate(AnExpression: string);
@@ -2592,11 +2590,6 @@ begin
   Param^.Res.Append(Param^.Args[0], Len);
 end;
 
-procedure FuncRecNo(Param: PExpressionRec);
-begin
-  PInteger(Param^.Res.MemoryPos^)^ := -1;
-end;
-
 procedure FuncRight(Param: PExpressionRec);
 var
   srcLen, index, count: Integer;
@@ -2916,7 +2909,6 @@ initialization
     Add(TFunction.Create('LTRIM',     '',      'S',   1, etString,   FuncLTrim,      ''));
     Add(TFunction.Create('MONTH',     '',      'D',   1, etInteger,  FuncMonth,      ''));
     Add(TFunction.Create('PROPER',    '',      'S',   1, etString,   FuncProper,     ''));
-    Add(TVaryingFunction.Create('RECNO', '', '',      0, etInteger,  FuncRecNo,      ''));
     Add(TFunction.Create('RIGHT',     '',      'SI',  2, etString,   FuncRight,      ''));
     Add(TFunction.Create('ROUND',     '',      'FI',  2, etFloat,    FuncRound_F_FI, ''));
     Add(TFunction.Create('ROUND',     '',      'FF',  2, etFloat,    FuncRound_F_FF, ''));

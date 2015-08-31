@@ -155,6 +155,7 @@ following changes thx paulenandrew:
 - add checking of required fields (call inherited InternalPost)
 - fix exception in TDataSet.Post if State = dsSetKey (Free Pascal)
 - consistently use little endianness for bookmark (allows it to be passed between architectures to support middle-tier)
+- do not convert expression to upper case when parsing (in particular, effects string constants)
 
 ------------------------
 V6.9.1
