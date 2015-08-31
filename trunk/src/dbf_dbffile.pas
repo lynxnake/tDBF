@@ -356,7 +356,6 @@ begin
           if dbfStrLComp(LangStr+5, 'WIN', 3) = 0 then
             FFileCodePage := 1252
           else
-//          FFileCodePage := GetIntFromStrLength(LangStr+5, 3, 0)
             StrToInt32Width(Integer(FFileCodePage), LangStr+5, 3, 0);
         end else begin
           FFileCodePage := 0;
@@ -575,7 +574,7 @@ begin
       // write language string
       dbfStrPLCopy(
         @PAfterHdrVII(PAnsiChar(Header)+SizeOf(rDbfHdr))^.LanguageDriverName[32], // Was PChar!!!
-        ConstructLangName(FFileCodePage, lLocaleID, false), 
+        ConstructLangName(FFileCodePage, lLocaleID, false),
         63-32);
       lFieldDescPtr := @lFieldDescVII;
     end else begin
@@ -691,7 +690,7 @@ begin
     // add empty "back-link" info, whatever it is: 
     { A 263-byte range that contains the backlink, which is the relative path of 
       an associated database (.dbc) file, information. If the first byte is 0x00, 
-      the file is not associated with a database. Therefore, database files always 
+      the file is not associated with a database. Therefore, database files always
       contain 0x00. }
     if FDbfVersion = xFoxPro then
     begin
@@ -1425,12 +1424,13 @@ function TDbfFile.GetFieldInfo(const FieldName: AnsiString): TDbfFieldDef;
 var
   I: Integer;
   lfi: TDbfFieldDef;
+  FieldNameUpper: AnsiString;
 begin
-  FieldName := dbfStrUpper(PAnsiChar(FieldName));
+  FieldNameUpper := dbfStrUpper(PAnsiChar(FieldName));
   for I := 0 to FFieldDefs.Count-1 do
   begin
     lfi := TDbfFieldDef(FFieldDefs.Items[I]);
-    if lfi.fieldName = FieldName then
+    if lfi.fieldName = FieldNameUpper then
     begin
       Result := lfi;
       exit;
@@ -1450,7 +1450,7 @@ begin
 end;
 
 // NOTE: Dst may be nil!
-function TDbfFile.GetFieldDataFromDef(AFieldDef: TDbfFieldDef; DataType: TFieldType; 
+function TDbfFile.GetFieldDataFromDef(AFieldDef: TDbfFieldDef; DataType: TFieldType;
   Src, Dst: Pointer; NativeFormat: boolean): Boolean;
 var
   FieldOffset, FieldSize: Integer;
@@ -1572,7 +1572,7 @@ begin
         Result := PInt64(Src)^ <> 0;
 {$else}        
         Result := (PInteger(Src)^ <> 0) or (PInteger(PAnsiChar(Src)+4)^ <> 0);
-{$endif}        
+{$endif}
         if Result and (Dst <> nil) then
         begin
           timeStamp.Date := SwapIntLE(PInteger(Src)^) - JulianDateDelta;
@@ -1693,9 +1693,6 @@ begin
           if (AFieldDef.FieldType = ftDateTime) and (DataType = ftDateTime) then
           begin
             // get hour, minute, second
-//          lth := GetIntFromStrLength(PAnsiChar(Src) + 8,  2, 1);
-//          ltm := GetIntFromStrLength(PAnsiChar(Src) + 10, 2, 1);
-//          lts := GetIntFromStrLength(PAnsiChar(Src) + 12, 2, 1);
             StrToInt32Width(lth, PAnsiChar(Src) + 8,  2, 1);
             StrToInt32Width(ltm, PAnsiChar(Src) + 10, 2, 1);
             StrToInt32Width(lts, PAnsiChar(Src) + 12, 2, 1);
