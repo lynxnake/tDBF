@@ -6,7 +6,7 @@ interface
 
 uses
   SysUtils, Classes, DB
-{$ifndef MSWINDOWS}
+{$ifndef WINDOWS}
   , Types, dbf_wtil
 {$ifdef KYLIX}
   , Libc
@@ -119,7 +119,7 @@ function CharInSet(C: AnsiChar; const CharSet: TSysCharSet): Boolean;
 
 {$ifndef SUPPORT_PATHDELIM}
 const
-{$ifdef MSWINDOWS}
+{$ifdef WINDOWS}
   PathDelim = '\';
 {$else}
   PathDelim = '/';
@@ -178,7 +178,7 @@ type
 
 implementation
 
-{$ifdef MSWINDOWS}
+{$ifdef WINDOWS}
 uses
   dbf_AnsiStrings,
   Windows;
@@ -208,7 +208,7 @@ end;
 
 function IsFullFilePath(const Path: string): Boolean; // full means not relative
 begin
-{$ifdef MSWINDOWS}
+{$ifdef WINDOWS}
   Result := Length(Path) > 1;
   if Result then
     // check for 'x:' or '\\' at start of path
@@ -347,7 +347,7 @@ end;
 
 function IncludeTrailingPathDelimiter(const Path: string): string;
 begin
-{$ifdef MSWINDOWS}
+{$ifdef WINDOWS}
   Result := IncludeTrailingBackslash(Path);
 {$else}
   Result := IncludeTrailingSlash(Path);
