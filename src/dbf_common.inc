@@ -367,7 +367,7 @@
   {$define SUPPORT_INITDEFSFROMFIELDS}
   {$define SUPPORT_DEF_DELETE}
   {$define SUPPORT_FREEANDNIL}
-  {$define SUPPORT_TWODIGITYEARCENTURYWINDOW}  
+  {$define SUPPORT_TWODIGITYEARCENTURYWINDOW}
 {$endif}
 
 {$ifdef DELPHI_6}
@@ -401,6 +401,10 @@
   {$define SUPPORT_TRECORDBUFFER}
   {$define SUPPORT_CHARINSET}
   {$define SUPPORT_MAXLISTSIZEDEPRECATED}
+{$endif}
+
+{$ifdef Delphi_2010}
+  {$define SUPPORT_ROUNDTO} // RoundTo was included with 2010 it seems
 {$endif}
 
 {$ifdef Delphi_XE}
@@ -447,6 +451,7 @@
   {$define SUPPORT_MATH_UNIT}
   {$define SUPPORT_VARIANTS}
   {$define SUPPORT_SEPARATE_VARIANTS_UNIT}
+  {$define SUPPORT_ROUNDTO}
 
   // FPC 2.0.x improvements
   {$ifdef VER2}
