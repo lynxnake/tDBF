@@ -88,6 +88,7 @@ type
 
     function IsIndex: Boolean; override;
     procedure ValidateExpression(AExpression: string); override;
+    function ExceptionClass: TExceptionClass; override;
   public
     constructor Create(ADbfFile: Pointer); override;
     property ResultLen: Integer read FResultLen;
@@ -1808,7 +1809,12 @@ begin
 
   // check if expression not too long
   if FResultLen > MaxIndexKeyLen then
-    raise EDbfError.CreateFmt(STRING_INDEX_EXPRESSION_TOO_LONG, [AExpression, FResultLen]);
+    raise ExceptionClass.CreateFmt(STRING_INDEX_EXPRESSION_TOO_LONG, [AExpression, FResultLen]);
+end;
+
+function TDbfIndexParser.ExceptionClass: TExceptionClass;
+begin
+  Result := EDbfErrorInvalidIndex;
 end;
 
 function TDbfIndexParser.GetKeyType: Char;
@@ -1820,7 +1826,7 @@ begin
     etInteger, etLargeInt, etFloat: Result := 'N';
     etDateTime: Result := 'D';
   else
-    raise EParserException.Create(STRING_INVALID_INDEX_TYPE);
+    raise EDbfError.Create(STRING_INVALID_INDEX_TYPE);
   end;
   lDbfFieldDef:= DbfFieldDef;
   if Assigned(lDbfFieldDef) then
