@@ -700,14 +700,17 @@ begin
   // Isn't there an Unquote function for doing this, anyway?
   // --- 2014-07-13 twm
   Len := Length(AValue);
-  firstChar := AValue[1];
-  lastChar := AValue[Len];
-  if (firstChar = lastChar) and ((firstChar = '''') or (firstChar = '"')) then begin
-    s := Copy(AValue, 2, Len - 2);
-    s := StringReplace(s, firstChar + firstChar, firstChar, [rfReplaceAll, rfIgnoreCase]);
-    FValue := AnsiString(s);
-  end else
-    FValue := AnsiString(AValue); // AnsiString cast added
+  if Len <> 0 then
+  begin
+    firstChar := AValue[1];
+    lastChar := AValue[Len];
+    if (firstChar = lastChar) and ((firstChar = '''') or (firstChar = '"')) then begin
+      s := Copy(AValue, 2, Len - 2);
+      s := StringReplace(s, firstChar + firstChar, firstChar, [rfReplaceAll, rfIgnoreCase]);
+      FValue := AnsiString(s);
+    end else
+      FValue := AnsiString(AValue); // AnsiString cast added
+  end;
 end;
 
 function TStringConstant.AsPointer: PAnsiChar; // Was PChar
