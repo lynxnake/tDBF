@@ -31,8 +31,8 @@ initialization
   STRING_INVALID_VCL_FIELD_TYPE       := 'Невозможно создать поле "%s", Тип данных VCL[%x] не может быть записан в DBF.';
 
   STRING_INVALID_MDX_FILE             := 'Файл MDX поврежден или его структура не MDX.';
-  STRING_INDEX_BASED_ON_UNKNOWN_FIELD := 'Индекс ссылается на несуществующее поле "%s".';
-  STRING_INDEX_BASED_ON_INVALID_FIELD := 'Поле "%s" не может быть индексированно. Индексы не поддерживают такой тип поля.';
+  STRING_PARSER_UNKNOWN_FIELD         := 'Несуществующее поле "%s".';
+  STRING_PARSER_INVALID_FIELDTYPE     := 'Тип значения, затребованный полем "%s" невозможен.';
   STRING_INDEX_EXPRESSION_TOO_LONG    := '%s: Слишком длинное значение для индекса (%d). Должно быть не больше 100 символов.';
   STRING_INVALID_INDEX_TYPE           := 'Невозможный тип индекса: индексация возможно только по числу или строке';
   STRING_CANNOT_OPEN_INDEX            := 'Невозможно открыть индекс "%s".';

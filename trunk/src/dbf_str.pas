@@ -28,8 +28,8 @@ initialization
   STRING_INVALID_VCL_FIELD_TYPE       := 'Cannot create field "%s", VCL field type %x not supported by DBF.';
 
   STRING_INVALID_MDX_FILE             := 'Invalid MDX file.';
-  STRING_INDEX_BASED_ON_UNKNOWN_FIELD := 'Index based on unknown field "%s".';
-  STRING_INDEX_BASED_ON_INVALID_FIELD := 'Field "%s" is an invalid field type to base index on.';
+  STRING_PARSER_UNKNOWN_FIELD         := 'Unknown field "%s".';
+  STRING_PARSER_INVALID_FIELDTYPE     := 'Invalid field type for field ''%s''.';
   STRING_INDEX_EXPRESSION_TOO_LONG    := 'Index result for "%s" too long, >100 characters (%d).';
   STRING_INVALID_INDEX_TYPE           := 'Invalid index type: can only be string or float.';
   STRING_CANNOT_OPEN_INDEX            := 'Cannot open index: "%s".';

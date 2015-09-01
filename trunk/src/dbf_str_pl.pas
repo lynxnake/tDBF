@@ -28,8 +28,8 @@ initialization
   STRING_INVALID_VCL_FIELD_TYPE       := 'Nie mogê tworzyæ pola "%s", typ pola VCL %x nie wspierany przez DBF.';
 
   STRING_INVALID_MDX_FILE             := 'Uszkodzony plik bazy.';
-  STRING_INDEX_BASED_ON_UNKNOWN_FIELD := 'Kluczowe pole indeksu "%s" nie istnieje';
-  STRING_INDEX_BASED_ON_INVALID_FIELD := 'Typ pola "%s" niedozwolony dla indeksów';
+  STRING_PARSER_UNKNOWN_FIELD         := '"%s" nie istnieje';
+  STRING_PARSER_INVALID_FIELDTYPE     := 'B³êdny typ pola dla pola ''%s''.';
   STRING_INDEX_EXPRESSION_TOO_LONG    := 'Zbyt d³ugi wynik "%s", >100 znaków (%d).';
   STRING_INVALID_INDEX_TYPE           := 'Z³y typ indeksu: tylko string lub float';
   STRING_CANNOT_OPEN_INDEX            := 'Nie mogê otworzyæ indeksu: "%s"';
