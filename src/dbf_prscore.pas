@@ -80,6 +80,7 @@ type
     function GetResultType: TExpressionType; virtual;
     function IsIndex: Boolean; virtual;
     procedure OptimizeExpr(var ExprRec: PExpressionRec); virtual;
+    function ExceptionClass: TExceptionClass; virtual;
 
     property CurrentRec: PExpressionRec read FCurrentRec write FCurrentRec;
     property LastRec: PExpressionRec read FLastRec write FLastRec;
@@ -472,10 +473,10 @@ begin
 
   // fatal error?
   case error of
-    1: raise EParserException.Create('Function or operand has too few arguments');
-    2: raise EParserException.Create('Argument type mismatch');
-    3: raise EParserException.Create('Function or operand has too many arguments');
-    4: raise EParserException.Create('No function with this name, remove brackets for variable');
+    1: raise ExceptionClass.Create('Function or operand has too few arguments');
+    2: raise ExceptionClass.Create('Argument type mismatch');
+    3: raise ExceptionClass.Create('Function or operand has too many arguments');
+    4: raise ExceptionClass.Create('No function with this name, remove brackets for variable');
   end;
 end;
 
@@ -675,7 +676,7 @@ begin
   while I < LastItem do
   begin
     if (TExprWord(Expr.Items[I]).ResultType = etLeftBracket) and (TExprWord(Expr.Items[I + 1]).ResultType = etRightBracket) then
-      raise EParserError.Create('Empty parentheses');
+      raise ExceptionClass.Create('Empty parentheses');
     Inc(I);
   end;
 
@@ -810,7 +811,7 @@ begin
       Result^.ArgList[IArg] := MakeTree(Expr, IStart, IEnd-1);
     end;
   end else
-    raise EParserException.Create('Operator/function missing');
+    raise ExceptionClass.Create('Operator/function missing');
 end;
 
 procedure TCustomExpressionParser.ParseString(AnExpression: string; DestCollection: TExprCollection);
@@ -1018,7 +1019,7 @@ begin
         begin
           DestCollection.Add(FWordsList.Items[I])
         end else begin
-          raise EParserException.Create('Unknown variable '''+W+''' found.');
+          raise ExceptionClass.Create('Unknown variable '''+W+''' found.');
         end;
       end;
   until I2 > Len;
@@ -1028,7 +1029,7 @@ procedure TCustomExpressionParser.Check(AnExprList: TExprCollection);
 var
   I, J, K, L: Integer;
 begin
-  AnExprList.Check;
+  AnExprList.Check(ExceptionClass);
   with AnExprList do
   begin
     I := 0;
@@ -1112,18 +1113,18 @@ begin
       {-----MISC CHECKS-----}
       if (TExprWord(Items[I]).IsVariable) and ((I < Count - 1) and
         (TExprWord(Items[I + 1]).IsVariable)) then
-        raise EParserException.Create('Missing operator between '''+TExprWord(Items[I]).Name+''' and '''+TExprWord(Items[I]).Name+'''');
+        raise ExceptionClass.Create('Missing operator between '''+TExprWord(Items[I]).Name+''' and '''+TExprWord(Items[I]).Name+'''');
       if (TExprWord(Items[I]).ResultType = etLeftBracket) and (I >= Count - 1) then
-        raise EParserException.Create('Missing closing bracket');
+        raise ExceptionClass.Create('Missing closing bracket');
       if (TExprWord(Items[I]).ResultType = etRightBracket) and ((I < Count - 1) and
         (TExprWord(Items[I + 1]).ResultType = etLeftBracket)) then
-        raise EParserException.Create('Missing operator between )(');
+        raise ExceptionClass.Create('Missing operator between )(');
       if (TExprWord(Items[I]).ResultType = etRightBracket) and ((I < Count - 1) and
         (TExprWord(Items[I + 1]).IsVariable)) then
-        raise EParserException.Create('Missing operator between ) and constant/variable');
+        raise ExceptionClass.Create('Missing operator between ) and constant/variable');
       if (TExprWord(Items[I]).ResultType = etLeftBracket) and ((I > 0) and
         (TExprWord(Items[I - 1]).IsVariable)) then
-        raise EParserException.Create('Missing operator between constant/variable and (');
+        raise ExceptionClass.Create('Missing operator between constant/variable and (');
 
       {-----CHECK ON INTPOWER------}
       if (TExprWord(Items[I]).Name = '^') and ((I < Count - 1) and
@@ -1277,6 +1278,11 @@ end;
 procedure TCustomExpressionParser.OptimizeExpr(var ExprRec: PExpressionRec);
 begin
   RemoveConstants(ExprRec);
+end;
+
+function TCustomExpressionParser.ExceptionClass: TExceptionClass;
+begin
+  Result := EParserError;
 end;
 
 function TCustomExpressionParser.MakeRec: PExpressionRec;

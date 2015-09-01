@@ -539,7 +539,7 @@ begin
   // is this variable a fieldname?
   FieldInfo := GetVariableInfo(VarName);
   if FieldInfo = nil then
-    raise EDbfErrorInvalidIndex.CreateFmt(STRING_INDEX_BASED_ON_UNKNOWN_FIELD, [VarName]);
+    raise ExceptionClass.CreateFmt(STRING_INDEX_BASED_ON_UNKNOWN_FIELD, [VarName]);
 
   // define field in parser
   FillChar(VariableFieldInfo, SizeOf(VariableFieldInfo), 0);
@@ -588,7 +588,7 @@ begin
         TempFieldVar.ExprWord := DefineDateTimeVariable(VarName, TempFieldVar.FieldVal, TempFieldVar.IsNullPtr, @VariableFieldInfo);
       end;
   else
-    raise EParserException.CreateFmt(STRING_INDEX_BASED_ON_INVALID_FIELD, [VarName]);
+    raise ExceptionClass.CreateFmt(STRING_INDEX_BASED_ON_INVALID_FIELD, [VarName]);
   end;
 
   // add to our own list

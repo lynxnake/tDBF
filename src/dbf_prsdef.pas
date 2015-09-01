@@ -88,7 +88,7 @@ type
 
   TExprCollection = class(TNoOwnerCollection)
   public
-    procedure Check;
+    procedure Check(ExceptionClass: TExceptionClass);
     procedure EraseExtraBrackets;
   end;
 
@@ -994,7 +994,7 @@ end;
 
 { TExprCollection }
 
-procedure TExprCollection.Check;
+procedure TExprCollection.Check(ExceptionClass: TExceptionClass);
 var
   brCount, I: Integer;
 begin
@@ -1007,7 +1007,7 @@ begin
     end;
   end;
   if brCount <> 0 then
-    raise EParserException.Create('Unequal brackets');
+    raise ExceptionClass.Create('Unequal brackets');
 end;
 
 procedure TExprCollection.EraseExtraBrackets;
