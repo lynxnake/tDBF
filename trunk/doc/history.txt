@@ -159,6 +159,7 @@ following changes thx paulenandrew:
 - fix access violation parsing the expression ","
 - fix access violation parsing the expression "()", "(())", etc.
 - implement error "Empty parentheses" if empty parentheses are used in an expression, eg. "()" or "1 + ()"
+- fix access violation parsing an expression that creates an unquoted empty string constant, eg. "STR(0,0)"
 
 ------------------------
 V6.9.1
