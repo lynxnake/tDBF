@@ -722,8 +722,11 @@ begin
   if LastItem = FirstItem then
   begin
     Result^.ExprWord := TExprWord(Expr.Items[FirstItem]);
-    Result^.Oper := Result^.ExprWord.ExprFunc;
-    exit;
+    if Result^.ExprWord.ResultType <> etComma then
+    begin
+      Result^.Oper := Result^.ExprWord.ExprFunc;
+      exit;
+    end;
   end;
 
   // no...more complex, find operator with lowest precedence
