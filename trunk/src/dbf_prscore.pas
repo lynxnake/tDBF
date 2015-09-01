@@ -1288,6 +1288,7 @@ begin
   Result^.ExprWord := nil;
   Result^.ResetDest := false;
   Result^.ExpressionContext := @FExpressionContext;
+  Result^.IsNull := False;
   Result^.IsNullPtr := nil;
 end;
 
