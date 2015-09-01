@@ -606,6 +606,8 @@ var
 begin
   inherited;
 
+  FFieldType := etUnknown;
+
   // test if already freed
   if FFieldVarList <> nil then
   begin
@@ -679,11 +681,19 @@ begin
         IsNull := LastRec^.IsNullPtr^;
   end else begin
     // simple field, get field result
-    Result := TFieldVar(FFieldVarList.Objects[0]).FieldVal;
-    // if string then dereference
-    if FFieldType = etString then
-      Result := PAnsiChar(PPAnsiChar(Result)^); // Was PPChar
-    IsNull := TFieldVar(FFieldVarList.Objects[0]).IsNullPtr^;
+    if FFieldVarList.Count <> 0 then
+    begin
+      Result := TFieldVar(FFieldVarList.Objects[0]).FieldVal;
+      // if string then dereference
+      if FFieldType = etString then
+        Result := PAnsiChar(PPAnsiChar(Result)^); // Was PPChar
+      IsNull := TFieldVar(FFieldVarList.Objects[0]).IsNullPtr^;
+    end
+    else
+    begin
+      Result := PAnsiChar(ExpResult);
+      IsNull := False;
+    end;
   end;
 end;
 
