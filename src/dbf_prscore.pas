@@ -670,6 +670,15 @@ var
   I, IArg, IStart, IEnd, lPrec, brCount: Integer;
   ExprWord: TExprWord;
 begin
+  // detect empty brackets
+  I := FirstItem;
+  while I < LastItem do
+  begin
+    if (TExprWord(Expr.Items[I]).ResultType = etLeftBracket) and (TExprWord(Expr.Items[I + 1]).ResultType = etRightBracket) then
+      raise EParserError.Create('Empty parentheses');
+    Inc(I);
+  end;
+
   // remove redundant brackets
   brCount := 0;
   while (FirstItem+brCount < LastItem) and (TExprWord(

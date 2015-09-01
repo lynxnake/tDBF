@@ -157,6 +157,8 @@ following changes thx paulenandrew:
 - consistently use little endianness for bookmark (allows it to be passed between architectures to support middle-tier)
 - do not convert expression to upper case when parsing (in particular, effects string constants)
 - fix access violation parsing the expression ","
+- fix access violation parsing the expression "()", "(())", etc.
+- implement error "Empty parentheses" if empty parentheses are used in an expression, eg. "()" or "1 + ()"
 
 ------------------------
 V6.9.1
