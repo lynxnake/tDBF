@@ -676,7 +676,8 @@ begin
   while I < LastItem do
   begin
     if (TExprWord(Expr.Items[I]).ResultType = etLeftBracket) and (TExprWord(Expr.Items[I + 1]).ResultType = etRightBracket) then
-      raise ExceptionClass.Create('Empty parentheses');
+      if not((I > 0) and TExprWord(Expr.Items[I - 1]).IsFunction) then
+        raise ExceptionClass.Create('Empty parentheses');
     Inc(I);
   end;
 
