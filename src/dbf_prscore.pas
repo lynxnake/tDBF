@@ -81,6 +81,7 @@ type
     function IsIndex: Boolean; virtual;
     procedure OptimizeExpr(var ExprRec: PExpressionRec); virtual;
     function ExceptionClass: TExceptionClass; virtual;
+    procedure ReadWord(const AnExpr: string; var isConstant: Boolean; var I1, I2: Integer; Len: Integer); virtual;
 
     property CurrentRec: PExpressionRec read FCurrentRec write FCurrentRec;
     property LastRec: PExpressionRec read FLastRec write FLastRec;
@@ -821,164 +822,17 @@ var
   I, I1, I2, Len, DecSep: Integer;
   W, S: string;
   TempWord: TExprWord;
-
-  procedure ReadConstant(AnExpr: string; isHex: Boolean);
-  begin
-    isConstant := true;
-
-    while (I2 <= Len) and (CharInSet(AnExpr[I2], ['0'..'9']) or
-      (isHex and CharInSet(AnExpr[I2], ['a'..'f', 'A'..'F']))) do
-      Inc(I2);
-    if I2 <= Len then
-    begin
-      if AnExpr[I2] = FDecimalSeparator then
-      begin
-        Inc(I2);
-        while (I2 <= Len) and CharInSet(AnExpr[I2], ['0'..'9']) do
-          Inc(I2);
-      end;
-      if (I2 <= Len) and (AnExpr[I2] = 'e') then
-      begin
-        Inc(I2);
-        if (I2 <= Len) and CharInSet(AnExpr[I2], ['+', '-']) then
-          Inc(I2);
-        while (I2 <= Len) and CharInSet(AnExpr[I2], ['0'..'9']) do
-          Inc(I2);
-      end;
-    end;
-  end;
-
-  procedure ReadWord(AnExpr: string);
-  var
-    OldI2: Integer;
-    constChar: Char;
-  begin
-    isConstant := false;
-    I1 := I2;
-    while (I1 < Len) and (AnExpr[I1] = ' ') do
-      Inc(I1);
-    I2 := I1;
-    if I1 <= Len then
-    begin
-      if AnExpr[I2] = HexChar then
-      begin
-        Inc(I2);
-        OldI2 := I2;
-        ReadConstant(AnExpr, true);
-        if I2 = OldI2 then
-        begin
-          isConstant := false;
-          while (I2 <= Len) and CharInSet(AnExpr[I2], ['a'..'z', 'A'..'Z', '_', '0'..'9']) do
-            Inc(I2);
-        end;
-      end
-      else if AnExpr[I2] = FDecimalSeparator then
-        ReadConstant(AnExpr, false)
-      else
-        // String constants can be delimited by ' or "
-        // but need not be - see below
-        // To use a delimiter inside the string, double it up to escape it
-        case AnExpr[I2] of
-          '''', '"':
-            begin
-              isConstant := true;
-              constChar := AnExpr[I2];
-              Inc(I2);
-              while (I2 <= Len) do begin
-                // Regular character?
-                if (AnExpr[I2] <> constChar) then
-                  Inc(I2)
-                else begin
-                  // we do have a const, now check for escaped consts
-                  if (I2 + 1 <= Len) and
-                    (AnExpr[I2 + 1] = constChar) then begin
-                    Inc(I2,2) //skip past, deal with duplicates later
-                  end else begin
-                    // at the trailing delimiter
-                    Inc(I2); //move past delimiter
-                    break;
-                  end;
-                end;
-              end;
-            end;
-          // However string constants can also appear without delimiters
-          'a'..'z', 'A'..'Z', '_':
-            begin
-              while (I2 <= Len) and CharInSet(AnExpr[I2], ['a'..'z', 'A'..'Z', '_', '0'..'9']) do
-                Inc(I2);
-            end;
-          '>', '<':
-            begin
-              if (I2 <= Len) then
-                Inc(I2);
-              if CharInSet(AnExpr[I2], ['=', '<', '>']) then
-                Inc(I2);
-            end;
-          '=':
-            begin
-              if (I2 <= Len) then
-                Inc(I2);
-              if CharInSet(AnExpr[I2], ['=', '<', '>']) then
-                Inc(I2);
-            end;
-          '&':
-            begin
-              if (I2 <= Len) then
-                Inc(I2);
-              if CharInSet(AnExpr[I2], ['&']) then
-                Inc(I2);
-            end;
-          '|':
-            begin
-              if (I2 <= Len) then
-                Inc(I2);
-              if CharInSet(AnExpr[I2], ['|']) then
-                Inc(I2);
-            end;
-          ':':
-            begin
-              if (I2 <= Len) then
-                Inc(I2);
-              if AnExpr[I2] = '=' then
-                Inc(I2);
-            end;
-          '!':
-            begin
-              if (I2 <= Len) then
-                Inc(I2);
-              if AnExpr[I2] = '=' then //support for !=
-                Inc(I2);
-            end;
-          '+':
-            begin
-              Inc(I2);
-              if (AnExpr[I2] = '+') and FWordsList.Search(PChar('++'), I) then // PChar intended here
-                Inc(I2);
-            end;
-          '-':
-            begin
-              Inc(I2);
-              if (AnExpr[I2] = '-') and FWordsList.Search(PChar('--'), I) then // PChar intended here
-                Inc(I2);
-            end;
-          '^', '/', '\', '*', '(', ')', '%', '~', '$':
-            Inc(I2);
-          '0'..'9':
-            ReadConstant(AnExpr, false);
-        else
-          begin
-            Inc(I2);
-          end;
-        end;
-    end;
-  end;
-
 begin
   I2 := 1;
   S := Trim(AnExpression);
   Len := Length(S);
   repeat
-    ReadWord(S);
+    isConstant := false;
+    I1 := I2;
+    while (I1 < Len) and (S[I1] = ' ') do
+      Inc(I1);
+    I2 := I1;
+    ReadWord(S, isConstant, I1, I2, Len);
     W := Trim(Copy(S, I1, I2 - I1));
     if isConstant then
     begin
@@ -1284,6 +1138,155 @@ end;
 function TCustomExpressionParser.ExceptionClass: TExceptionClass;
 begin
   Result := EParserError;
+end;
+
+procedure TCustomExpressionParser.ReadWord(const AnExpr: string;
+  var isConstant: Boolean; var I1, I2: Integer; Len: Integer);
+var
+  I: Integer;
+  OldI2: Integer;
+  constChar: Char;
+
+  procedure ReadConstant(AnExpr: string; isHex: Boolean);
+  begin
+    isConstant := true;
+
+    while (I2 <= Len) and (CharInSet(AnExpr[I2], ['0'..'9']) or
+      (isHex and CharInSet(AnExpr[I2], ['a'..'f', 'A'..'F']))) do
+      Inc(I2);
+    if I2 <= Len then
+    begin
+      if AnExpr[I2] = FDecimalSeparator then
+      begin
+        Inc(I2);
+        while (I2 <= Len) and CharInSet(AnExpr[I2], ['0'..'9']) do
+          Inc(I2);
+      end;
+      if (I2 <= Len) and (AnExpr[I2] = 'e') then
+      begin
+        Inc(I2);
+        if (I2 <= Len) and CharInSet(AnExpr[I2], ['+', '-']) then
+          Inc(I2);
+        while (I2 <= Len) and CharInSet(AnExpr[I2], ['0'..'9']) do
+          Inc(I2);
+      end;
+    end;
+  end;
+
+begin
+  if I1 <= Len then
+  begin
+    if AnExpr[I2] = HexChar then
+    begin
+      Inc(I2);
+      OldI2 := I2;
+      ReadConstant(AnExpr, true);
+      if I2 = OldI2 then
+      begin
+        isConstant := false;
+        while (I2 <= Len) and CharInSet(AnExpr[I2], ['a'..'z', 'A'..'Z', '_', '0'..'9']) do
+          Inc(I2);
+      end;
+    end
+    else if AnExpr[I2] = FDecimalSeparator then
+      ReadConstant(AnExpr, false)
+    else
+      // String constants can be delimited by ' or "
+      // but need not be - see below
+      // To use a delimiter inside the string, double it up to escape it
+      case AnExpr[I2] of
+        '''', '"':
+          begin
+            isConstant := true;
+            constChar := AnExpr[I2];
+            Inc(I2);
+            while (I2 <= Len) do begin
+              // Regular character?
+              if (AnExpr[I2] <> constChar) then
+                Inc(I2)
+              else begin
+                // we do have a const, now check for escaped consts
+                if (I2 + 1 <= Len) and
+                  (AnExpr[I2 + 1] = constChar) then begin
+                  Inc(I2,2) //skip past, deal with duplicates later
+                end else begin
+                  // at the trailing delimiter
+                  Inc(I2); //move past delimiter
+                  break;
+                end;
+              end;
+            end;
+          end;
+        // However string constants can also appear without delimiters
+        'a'..'z', 'A'..'Z', '_':
+          begin
+            while (I2 <= Len) and CharInSet(AnExpr[I2], ['a'..'z', 'A'..'Z', '_', '0'..'9']) do
+              Inc(I2);
+          end;
+        '>', '<':
+          begin
+            if (I2 <= Len) then
+              Inc(I2);
+            if CharInSet(AnExpr[I2], ['=', '<', '>']) then
+              Inc(I2);
+          end;
+        '=':
+          begin
+            if (I2 <= Len) then
+              Inc(I2);
+            if CharInSet(AnExpr[I2], ['=', '<', '>']) then
+              Inc(I2);
+          end;
+        '&':
+          begin
+            if (I2 <= Len) then
+              Inc(I2);
+            if CharInSet(AnExpr[I2], ['&']) then
+              Inc(I2);
+          end;
+        '|':
+          begin
+            if (I2 <= Len) then
+              Inc(I2);
+            if CharInSet(AnExpr[I2], ['|']) then
+              Inc(I2);
+          end;
+        ':':
+          begin
+            if (I2 <= Len) then
+              Inc(I2);
+            if AnExpr[I2] = '=' then
+              Inc(I2);
+          end;
+        '!':
+          begin
+            if (I2 <= Len) then
+              Inc(I2);
+            if AnExpr[I2] = '=' then //support for !=
+              Inc(I2);
+          end;
+        '+':
+          begin
+            Inc(I2);
+            if (AnExpr[I2] = '+') and FWordsList.Search(PChar('++'), I) then // PChar intended here
+              Inc(I2);
+          end;
+        '-':
+          begin
+            Inc(I2);
+            if (AnExpr[I2] = '-') and FWordsList.Search(PChar('--'), I) then // PChar intended here
+              Inc(I2);
+          end;
+        '^', '/', '\', '*', '(', ')', '%', '~', '$':
+          Inc(I2);
+        '0'..'9':
+          ReadConstant(AnExpr, false);
+      else
+        begin
+          Inc(I2);
+        end;
+      end;
+  end;
 end;
 
 function TCustomExpressionParser.MakeRec: PExpressionRec;
