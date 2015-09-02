@@ -43,7 +43,7 @@ type
 
     procedure FillExpressList; override;
     procedure HandleUnknownVariable(VarName: string); override;
-    function  GetVariableInfo(VarName: AnsiString): TDbfFieldDef;
+    function  GetVariableInfo(VarName: AnsiString): TDbfFieldDef; virtual;
     function  CurrentExpression: string; override;
     procedure ValidateExpression(AExpression: string); virtual;
     function  GetResultType: TExpressionType; override;
