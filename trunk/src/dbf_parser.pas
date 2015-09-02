@@ -675,10 +675,10 @@ begin
     // execute expression
     EvaluateCurrent;
     Result := PAnsiChar(ExpResult);
-    IsNull := False;
     if LastRec <> nil then
-      if LastRec^.IsNullPtr <> nil then
-        IsNull := LastRec^.IsNullPtr^;
+      IsNull := LastRec^.IsNullPtr^
+    else
+      IsNull := False;
   end else begin
     // simple field, get field result
     if FFieldVarList.Count <> 0 then
