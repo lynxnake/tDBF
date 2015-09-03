@@ -82,6 +82,7 @@ type
     procedure OptimizeExpr(var ExprRec: PExpressionRec); virtual;
     function ExceptionClass: TExceptionClass; virtual;
     procedure ReadWord(const AnExpr: string; var isConstant: Boolean; var I1, I2: Integer; Len: Integer); virtual;
+    function CreateConstant(W: string): TConstant; virtual;
 
     property CurrentRec: PExpressionRec read FCurrentRec write FCurrentRec;
     property LastRec: PExpressionRec read FLastRec write FLastRec;
@@ -530,6 +531,7 @@ begin
             etLargeInt:ExprWord := TLargeIntConstant.Create(PInt64(FExpResult)^);
 {$endif}
             etString: ExprWord := TStringConstant.Create(string(FExpResult)); // Added string cast
+            etDateTime: ExprWord := TDateTimeConstant.Create(EmptyStr, PDateTime(FExpResult)^);
           end;
 
           // fill in structure
@@ -819,7 +821,7 @@ end;
 procedure TCustomExpressionParser.ParseString(AnExpression: string; DestCollection: TExprCollection);
 var
   isConstant: Boolean;
-  I, I1, I2, Len, DecSep: Integer;
+  I, I1, I2, Len: Integer;
   W, S: string;
   TempWord: TExprWord;
 begin
@@ -836,31 +838,12 @@ begin
     W := Trim(Copy(S, I1, I2 - I1));
     if isConstant then
     begin
-      if W[1] = HexChar then
+      if W <> '' then
       begin
-        // convert hexadecimal to decimal
-        W[1] := '$';
-        W := IntToStr(StrToInt(W));
+        TempWord := CreateConstant(W);
+        DestCollection.Add(TempWord);
+        FConstantsList.Add(TempWord);
       end;
-      if (W[1] = '''') or (W[1] = '"') then begin
-         // StringConstant will handle any escaped quotes
-        TempWord := TStringConstant.Create(W);
-      end else begin
-        DecSep := Pos(FDecimalSeparator, W);
-        if (DecSep > 0) then
-        begin
-{$IFDEF ENG_NUMBERS}
-          // we'll have to convert FDecimalSeparator into DecimalSeparator
-          // otherwise the OS will not understand what we mean
-          W[DecSep] := DecimalSeparator;
-{$ENDIF}
-          TempWord := TFloatConstant.Create(W, W)
-        end else begin
-          TempWord := TIntegerConstant.Create(StrToInt(W));
-        end;
-      end;
-      DestCollection.Add(TempWord);
-      FConstantsList.Add(TempWord);
     end
     else if Length(W) > 0 then
       if FWordsList.Search(PChar(W), I) then // PChar intended here
@@ -1286,6 +1269,35 @@ begin
           Inc(I2);
         end;
       end;
+  end;
+end;
+
+function TCustomExpressionParser.CreateConstant(W: string): TConstant;
+var
+  DecSep: Integer;
+begin
+  if W[1] = HexChar then
+  begin
+    // convert hexadecimal to decimal
+    W[1] := '$';
+    W := IntToStr(StrToInt(W));
+  end;
+  if (W[1] = '''') or (W[1] = '"') then begin
+     // StringConstant will handle any escaped quotes
+    Result := TStringConstant.Create(W);
+  end else begin
+    DecSep := Pos(FDecimalSeparator, W);
+    if (DecSep > 0) then
+    begin
+  {$IFDEF ENG_NUMBERS}
+      // we'll have to convert FDecimalSeparator into DecimalSeparator
+      // otherwise the OS will not understand what we mean
+      W[DecSep] := DecimalSeparator;
+  {$ENDIF}
+      Result := TFloatConstant.Create(W, W)
+    end else begin
+      Result := TIntegerConstant.Create(StrToInt(W));
+    end;
   end;
 end;
 
