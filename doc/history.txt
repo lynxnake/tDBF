@@ -163,6 +163,7 @@ following changes thx paulenandrew:
 - fix "List index out of bounds (0)" trying to evaluate a field-based expression after 'Field "<...>" is an invalid field type to based index on'
 - change STRING_INDEX_BASED_ON_UNKNOWN_FIELD and STRING_INDEX_BASED_ON_INVALID_FIELD messages so that they make sense for a filter as well as for an index
 - add flexibility to the parser allowing ReadWord and GetVariableInfo to be overriden
+- add flexibility to the parser allowing custom parsing of constants and date/time constants
 
 ------------------------
 V6.9.1

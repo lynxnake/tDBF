@@ -248,6 +248,15 @@ type
     property Value: Boolean read FValue write FValue;
   end;
 
+  TDateTimeConstant = class(TConstant)
+  private
+    FValue: TDateTime;
+  public
+    constructor Create(AName: string; AValue: TDateTime);
+    function AsPointer: PAnsiChar; override;
+    property Value: TDateTime read FValue write FValue;
+  end;
+
   TVariableFieldInfo = record
     DbfFieldDef: Pointer;
     NativeFieldType: Char;
@@ -761,6 +770,20 @@ begin
   Result := PAnsiChar(@FValue);
 end;
 {$endif}
+
+{ TDateTimeConstant }
+
+constructor TDateTimeConstant.Create(AName: string; AValue: TDateTime);
+begin
+  inherited Create(AName, etDateTime, _DateTimeVariable);
+
+  FValue := AValue;
+end;
+
+function TDateTimeConstant.AsPointer: PAnsiChar;
+begin
+  Result := PAnsiChar(@FValue);
+end;
 
 { TVariable }
 
