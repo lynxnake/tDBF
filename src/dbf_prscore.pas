@@ -27,7 +27,9 @@ interface
 uses
   SysUtils,
   Classes,
+  {$ifndef FPC_VERSION}
   Db,
+  {$endif}
   Math,
   dbf_Common,
   dbf_prssupp,

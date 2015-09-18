@@ -12,7 +12,9 @@ uses
 {$endif}
   SysUtils,
   Classes,
-  db,
+{$ifndef FPC_VERSION}
+  Db,
+{$endif}
   dbf_common,
   dbf_prssupp;
 
