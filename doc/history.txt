@@ -165,6 +165,7 @@ following changes thx paulenandrew:
 - add flexibility to the parser allowing custom parsing of constants and date/time constants
 - fix compiler errors in Delphi XE, mostly related to use of PChar instead of PAnsiChar
 - fix to allow all 32 characters of a level 7 index tag name to be used
+- fix compiler information and warning messages in Free Pascal, mostly related to unused parameters or uninitialized var parameters
 
 ------------------------
 V6.9.1

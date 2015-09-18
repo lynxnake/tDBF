@@ -283,11 +283,11 @@ begin
 {$ifdef SUPPORT_FIELDDEF_ATTRIBUTES}
     DbDest.Attributes := [];
     DbDest.ChildDefs.Clear;
+{$endif}
     DbDest.DataType := FFieldType;
     DbDest.Required := FRequired;
     DbDest.Size := FSize;
     DbDest.Name := string(FFieldName);
-{$endif}
   end else
 {$endif}
     inherited AssignTo(Dest);

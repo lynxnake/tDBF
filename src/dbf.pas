@@ -137,7 +137,7 @@ type
     procedure ActiveChanged; override;
     procedure CheckBrowseMode; override;
     procedure LayoutChanged; override;
-    procedure RecordChanged(Field: TField); override;
+    procedure RecordChanged({%H-}Field: TField); override;
 
   public
     constructor Create(ADataSet: TDbf);
@@ -207,7 +207,7 @@ type
     FKeyBuffer: Pointer;
     function GetKeyBuffer: PAnsiChar;
     function InitKeyBuffer(Buffer: PAnsiChar): PAnsiChar;
-    procedure PostKeyBuffer(Commit: Boolean);
+    procedure PostKeyBuffer({%H-}Commit: Boolean);
 
     function GetIndexName: string;
     function GetVersion: string;
@@ -224,7 +224,7 @@ type
     procedure SetDbfIndexDefs(const Value: TDbfIndexDefs);
     procedure SetFilePath(const Value: string);
     procedure SetTableName(const S: string);
-    procedure SetVersion(const S: string);
+    procedure SetVersion(const {%H-}S: string);
     procedure SetLanguageID(NewID: Byte);
     procedure SetDataSource(Value: TDataSource);
     procedure SetMasterFields(const Value: string);
@@ -254,9 +254,9 @@ type
     procedure FreeRecordBuffer(var Buffer: TDbfRecordBuffer); override; {virtual abstract}
     procedure GetBookmarkData(Buffer: TDbfRecordBuffer; Data: Pointer); override; {virtual abstract}
     function  GetBookmarkFlag(Buffer: TDbfRecordBuffer): TBookmarkFlag; override; {virtual abstract}
-    function  GetRecord(Buffer: TDbfRecBuf; GetMode: TGetMode; DoCheck: Boolean): TGetResult; override; {virtual abstract}
+    function  GetRecord(Buffer: TDbfRecBuf; GetMode: TGetMode; {%H-}DoCheck: Boolean): TGetResult; override; {virtual abstract}
     function  GetRecordSize: Word; override; {virtual abstract}
-    procedure InternalAddRecord(Buffer: Pointer; AAppend: Boolean); override; {virtual abstract}
+    procedure InternalAddRecord(Buffer: Pointer; {%H-}AAppend: Boolean); override; {virtual abstract}
     procedure InternalClose; override; {virtual abstract}
     procedure InternalDelete; override; {virtual abstract}
     procedure InternalFirst; override; {virtual abstract}
@@ -281,7 +281,7 @@ type
     function  IsCursorOpen: Boolean; override; {virtual abstract}
     procedure SetBookmarkFlag(Buffer: TDbfRecordBuffer; Value: TBookmarkFlag); override; {virtual abstract}
     procedure SetBookmarkData(Buffer: TDbfRecordBuffer; Data: Pointer); override; {virtual abstract}
-    procedure SetFieldData(Field: TField; Buffer: TDbfValueBuffer);
+    procedure {%H-}SetFieldData(Field: TField; Buffer: TDbfValueBuffer);
 	  {$ifdef SUPPORT_OVERLOAD}overload;{$ENDIF} override; {virtual abstract}
 
     { virtual methods (mostly optionnal) }
@@ -304,7 +304,7 @@ type
 
 {$ifdef SUPPORT_VARIANTS}
     function  LocateRecordLinear(const KeyFields: String; const KeyValues: Variant; Options: TLocateOptions): Boolean;
-    function  LocateRecordIndex(const KeyFields: String; const KeyValues: Variant; Options: TLocateOptions): Boolean;
+    function  LocateRecordIndex(const {%H-}KeyFields: String; const KeyValues: Variant; Options: TLocateOptions): Boolean;
     function  LocateRecord(const KeyFields: String; const KeyValues: Variant; Options: TLocateOptions): Boolean;
 {$endif}
 
@@ -366,7 +366,7 @@ type
 
     // index support (use same syntax as ttable but is not related)
 {$ifdef SUPPORT_DEFAULT_PARAMS}
-    procedure AddIndex(const AIndexName, AFields: String; Options: TIndexOptions; const DescFields: String='');
+    procedure AddIndex(const AIndexName, AFields: String; Options: TIndexOptions; const {%H-}DescFields: String='');
 {$else}
     procedure AddIndex(const AIndexName, AFields: String; Options: TIndexOptions);
 {$endif}
@@ -549,7 +549,7 @@ uses
 const
   // TODO: move these to DBConsts
   SNotEditing = 'Dataset not in edit or insert mode';
-  SCircularDataLink = 'Circular datalinks are not allowed';
+//SCircularDataLink = 'Circular datalinks are not allowed';
 {$endif}
 
 function TableLevelToDbfVersion(TableLevel: integer): TXBaseVersion;
@@ -2286,6 +2286,7 @@ begin
 
   checkmatch := false;
   repeat
+    acceptable := True;
     if ReadCurrentRecord(TDbfRecordBuffer(TempBuffer), acceptable) = grError then
     begin
       Result := false;

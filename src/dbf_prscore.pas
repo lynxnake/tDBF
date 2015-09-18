@@ -846,6 +846,8 @@ begin
       end;
     end
     else if Length(W) > 0 then
+    begin
+      I := -1;
       if FWordsList.Search(PChar(W), I) then // PChar intended here
       begin
         DestCollection.Add(FWordsList.Items[I])
@@ -860,6 +862,7 @@ begin
           raise ExceptionClass.Create('Unknown variable '''+W+''' found.');
         end;
       end;
+    end;
   until I2 > Len;
 end;
 
@@ -1251,12 +1254,14 @@ begin
         '+':
           begin
             Inc(I2);
+            I := -1;
             if (AnExpr[I2] = '+') and FWordsList.Search(PChar('++'), I) then // PChar intended here
               Inc(I2);
           end;
         '-':
           begin
             Inc(I2);
+            I := -1;
             if (AnExpr[I2] = '-') and FWordsList.Search(PChar('--'), I) then // PChar intended here
               Inc(I2);
           end;
@@ -1292,7 +1297,7 @@ begin
   {$IFDEF ENG_NUMBERS}
       // we'll have to convert FDecimalSeparator into DecimalSeparator
       // otherwise the OS will not understand what we mean
-      W[DecSep] := DecimalSeparator;
+      W[DecSep] := DecimalSeparator{%H-};
   {$ENDIF}
       Result := TFloatConstant.Create(W, W)
     end else begin
@@ -1363,6 +1368,7 @@ begin
   p := Pos('(', S);
   if p > 0 then
     S := Copy(S, 1, p - 1);
+  I := -1;
   if FWordsList.Search(pchar(S), I) then // PChar intended here
     Result := TExprWord(FWordsList.Items[I]).Description
   else

@@ -26,7 +26,7 @@ type
 
   TNoOwnerCollection = class(TOCollection)
   public
-    procedure FreeItem(Item: Pointer); override;
+    procedure FreeItem({%H-}Item: Pointer); override;
   end;
 
   { TSortedCollection object }
@@ -129,6 +129,7 @@ var
   I: Integer;
 begin
   IndexOf := -1;
+  I := -1;
   if Search(KeyOf(Item), I) then
   begin
     while (I < Count) and (Item <> Items[I]) do
@@ -141,6 +142,7 @@ procedure TSortedCollection.AddReplace(Item: Pointer);
 var
   Index: Integer;
 begin
+  Index := -1;
   if Search(KeyOf(Item), Index) then
     Delete(Index);
   Add(Item);
@@ -150,6 +152,7 @@ procedure TSortedCollection.Add(Item: Pointer);
 var
   I: Integer;
 begin
+  I := -1;
   Search(KeyOf(Item), I);
   Insert(I, Item);
 end;
@@ -353,7 +356,8 @@ var
   Buffer: array[0..{$ifdef SUPPORT_INT64}18{$else}9{$endif}] of AnsiChar;
   P: PAnsiChar;
 begin
-  FillChar(FloatResult, SizeOf(FloatResult), 0);
+  FillChar(Buffer{%H-}, SizeOf(Buffer), 0);
+  FillChar(FloatResult{%H-}, SizeOf(FloatResult), 0);
   FloatResult.Dest := Buffer;
   FloatResult.FieldSize := FieldSize;
   FloatReset(FloatResult);
@@ -398,7 +402,7 @@ var
   FloatResult: TFloatResult;
   FloatRec: TFloatRec;
 begin
-  FillChar(FloatResult, SizeOf(FloatResult), 0);
+  FillChar(FloatResult{%H-}, SizeOf(FloatResult), 0);
   FloatResult.Dest := Dest;
   FloatResult.FieldSize := FieldSize;
   FloatToDecimal(FloatRec, Val, fvExtended, 15, FieldPrec);
@@ -460,6 +464,7 @@ begin
     until (P = PAnsiChar(Src) + Size) or (not Result);
     if not Result then
     begin
+      FloatValue := 0;
       Result := StrToFloatWidth(FloatValue, Src, Size, Default);
       if Result then
         IntValue:= Round(FloatValue);
@@ -474,6 +479,7 @@ function StrToInt32Width(var IntValue: Integer; Src: Pointer; Size: Integer; Def
 var
   AIntValue: Int64;
 begin
+  AIntValue := 0;
   Result := StrToIntWidth(AIntValue, Src, Size, Default);
   if Result then
   begin
@@ -499,6 +505,7 @@ begin
   Result := Size < SizeOf(Buffer);
   if Result then
   begin
+    FillChar(Buffer{%H-}, SizeOf(Buffer), 0);
     Move(Src^, Buffer, Size);
     Buffer[Size] := #0;
 {$ifdef SUPPORT_FORMATSETTINGSTYPE}
@@ -519,7 +526,7 @@ end;
 
 initialization
 {$IFDEF SUPPORT_FORMATSETTINGSTYPE}
-  FillChar(DbfFormatSettings, SizeOf(DbfFormatSettings), 0);
+  FillChar(DbfFormatSettings{%H-}, SizeOf(DbfFormatSettings), 0);
   DbfFormatSettings.DecimalSeparator:= DBF_DECIMAL;
 {$ENDIF}
 

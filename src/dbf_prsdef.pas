@@ -129,7 +129,7 @@ type
     function GetDescription: string; virtual;
     function GetTypeSpec: string; virtual;
     function GetShortName: string; virtual;
-    procedure SetFixedLen(NewLen: integer); virtual;
+    procedure SetFixedLen({%H-}NewLen: integer); virtual;
   public
     constructor Create(AName: string; AExprFunc: TExprFunc); overload;
     constructor Create(AName: string; AExprFunc: TExprFunc; AIsNullPtr: PBoolean); overload;
@@ -158,7 +158,7 @@ type
   public
     function KeyOf(Item: Pointer): Pointer; override;
     function Compare(Key1, Key2: Pointer): Integer; override;
-    procedure FreeItem(Item: Pointer); override;
+    procedure FreeItem({%H-}Item: Pointer); override;
   end;
 
   TExpressList = class(TSortedCollection)
@@ -970,6 +970,7 @@ begin
   { also add ShortName as reference }
   if Length(TExprWord(Item).ShortName) > 0 then
   begin
+    I := -1;
     FShortList.Search(FShortList.KeyOf(Item), I);
     FShortList.Insert(I, Item);
   end;
@@ -999,6 +1000,7 @@ begin
   Result := inherited Search(Key, Index);
   if not Result then
   begin
+    SecIndex := -1;
     Result := FShortList.Search(Key, SecIndex);
     if Result then
       Index := IndexOf(FShortList.Items[SecIndex]);

@@ -765,7 +765,7 @@ const
     025, 023, 027, 029, 128, 134, 126, 035, 045, 043, 047, 049, 061, 059, 063, 065,
     039, 077, 084, 082, 086, 088, 132, 020, 130, 107, 105, 109, 122, 119, 101, 120
   );
-  BLLT1DA0 :PCollationTable = @_BLLT1DA0;
+  {%H-}BLLT1DA0 :PCollationTable = @_BLLT1DA0;
 
 
 
@@ -790,17 +790,17 @@ const
     024, 022, 026, 032, 030, 028, 034, 040, 050, 048, 052, 054, 066, 064, 068, 070,
     044, 082, 089, 087, 091, 095, 093, 018, 097, 116, 114, 118, 120, 130, 110, 132
   );
-  BLLT1NL0 :PCollationTable = @_BLLT1NL0;
+  {%H-}BLLT1NL0 :PCollationTable = @_BLLT1NL0;
 
-  BLLT1CA0 :PCollationTable = @_BLLT1NL0;
+  {%H-}BLLT1CA0 :PCollationTable = @_BLLT1NL0;
 
-  BLLT1IT0 :PCollationTable = @_BLLT1NL0;
+  {%H-}BLLT1IT0 :PCollationTable = @_BLLT1NL0;
 
-  BLLT1ES0 :PCollationTable = @_BLLT1NL0;
+  {%H-}BLLT1ES0 :PCollationTable = @_BLLT1NL0;
 
-  BLLT1UK0 :PCollationTable = @_BLLT1NL0;
+  {%H-}BLLT1UK0 :PCollationTable = @_BLLT1NL0;
 
-  BLLT1PT0 :PCollationTable = @_BLLT1NL0;
+  {%H-}BLLT1PT0 :PCollationTable = @_BLLT1NL0;
 
 
 
@@ -825,9 +825,9 @@ const
     024, 022, 026, 028, 127, 125, 129, 034, 044, 042, 046, 048, 060, 058, 062, 064,
     038, 076, 083, 081, 085, 087, 131, 018, 133, 106, 104, 108, 121, 118, 100, 120
   );
-  BLLT1FI0 :PCollationTable = @_BLLT1FI0;
+  {%H-}BLLT1FI0 :PCollationTable = @_BLLT1FI0;
 
-  BLLT1SV0 :PCollationTable = @_BLLT1FI0;
+  {%H-}BLLT1SV0 :PCollationTable = @_BLLT1FI0;
 
 
 
@@ -852,9 +852,9 @@ const
     137, 135, 139, 145, 143, 141, 147, 153, 163, 161, 165, 167, 179, 177, 181, 183,
     157, 195, 202, 200, 204, 208, 206, 097, 210, 229, 227, 231, 233, 243, 223, 245
   );
-  BLLT1FR0 :PCollationTable = @_BLLT1FR0;
+  {%H-}BLLT1FR0 :PCollationTable = @_BLLT1FR0;
 
-  BLLT1DE0 :PCollationTable = @_BLLT1FR0;
+  {%H-}BLLT1DE0 :PCollationTable = @_BLLT1FR0;
 
 
 
@@ -879,7 +879,7 @@ const
     022, 032, 024, 030, 028, 026, 129, 038, 046, 052, 048, 050, 062, 068, 064, 066,
     042, 080, 085, 091, 087, 089, 131, 018, 133, 106, 112, 108, 110, 123, 127, 122
   );
-  BLLT1IS0 :PCollationTable = @_BLLT1IS0;
+  {%H-}BLLT1IS0 :PCollationTable = @_BLLT1IS0;
 
 
 
@@ -904,7 +904,7 @@ const
     024, 022, 026, 030, 028, 133, 129, 036, 046, 044, 048, 050, 062, 060, 064, 066,
     040, 078, 085, 083, 087, 091, 089, 020, 131, 110, 108, 112, 114, 124, 104, 126
   );
-  BLLT1NO0 :PCollationTable = @_BLLT1NO0;
+  {%H-}BLLT1NO0 :PCollationTable = @_BLLT1NO0;
 
 
 
@@ -1186,11 +1186,11 @@ const
     096, 097, 098, 099, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111,
     112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127
   );
-  china :PCollationTable = @_china;
+  {%H-}china :PCollationTable = @_china;
 
-  korea :PCollationTable = @_china;
+  {%H-}korea :PCollationTable = @_china;
 
-  taiwan :PCollationTable = @_china;
+  {%H-}taiwan :PCollationTable = @_china;
 
   DB936CN0 :PCollationTable = @_china;
 
@@ -1221,7 +1221,7 @@ const
     247, 248, 249, 250, 251, 195, 196, 176, 177, 178, 179, 180, 181, 182, 197, 198, 
     199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 252, 253, 254, 255
   );
-  thai :PCollationTable = @_thai;
+  {%H-}thai :PCollationTable = @_thai;
 
   db874th0 :PCollationTable = @_thai;
 
@@ -1300,7 +1300,7 @@ const
     083, 084, 085, 087, 086, 088, 089, 092, 096, 097, 098, 099, 104, 105, 106, 107,
     094, 113, 115, 116, 117, 119, 118, 071, 141, 129, 130, 131, 132, 137, 140, 138
   );
-  ACCGEN :PCollationTable = @_ACCGEN;
+  {%H-}ACCGEN :PCollationTable = @_ACCGEN;
 
 
 
@@ -1325,7 +1325,7 @@ const
     083, 082, 084, 085, 137, 141, 136, 088, 093, 092, 094, 095, 101, 100, 102, 103,
     090, 109, 112, 111, 113, 114, 139, 071, 138, 126, 125, 127, 134, 132, 123, 133
   );
-  ACCNRDAN :PCollationTable = @_ACCNRDAN;
+  {%H-}ACCNRDAN :PCollationTable = @_ACCNRDAN;
 
 
 
@@ -1350,7 +1350,7 @@ const
     084, 083, 085, 086, 139, 138, 087, 090, 095, 094, 096, 097, 103, 102, 104, 105,
     092, 111, 114, 113, 115, 116, 140, 071, 141, 128, 127, 129, 136, 134, 125, 135
   );
-  ACCSWFIN :PCollationTable = @_ACCSWFIN;
+  {%H-}ACCSWFIN :PCollationTable = @_ACCSWFIN;
 
 
 
@@ -1536,7 +1536,7 @@ const
     065, 067, 069, 065, 071, 065, 065, 077, 081, 083, 081, 085, 093, 095, 097, 093,
     079, 107, 109, 111, 113, 109, 115, 167, 109, 130, 132, 130, 134, 144, 035, 142
   );
-  il2czw :PCollationTable = @_il2czw;
+  {%H-}il2czw :PCollationTable = @_il2czw;
 
 
 
@@ -1648,7 +1648,7 @@ const
     180, 149, 154, 157, 160, 161, 168, 176, 175, 181, 118, 123, 126, 129, 136, 142, 
     147, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255
   );
-  grcp437 :PCollationTable = @_grcp437;
+  {%H-}grcp437 :PCollationTable = @_grcp437;
 
   db437gr0 :PCollationTable = @_grcp437;
 
@@ -1677,7 +1677,7 @@ const
   );
   dbhebrew :PCollationTable = @_dbhebrew;
 
-  Hebrew :PCollationTable = @_dbhebrew;
+  {%H-}Hebrew :PCollationTable = @_dbhebrew;
 
 
 
@@ -1702,7 +1702,7 @@ const
     142, 158, 143, 133, 130, 131, 163, 162, 153, 177, 150, 178, 187, 189, 166, 242, 
     243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 173, 154, 151, 254, 255
   );
-  slovene :PCollationTable = @_slovene;
+  {%H-}slovene :PCollationTable = @_slovene;
 
   db852sl0 :PCollationTable = @_slovene;
 
@@ -1791,9 +1791,9 @@ const
     065, 067, 065, 065, 069, 065, 065, 073, 077, 079, 077, 077, 087, 089, 087, 087,
     075, 099, 101, 103, 105, 101, 107, 157, 101, 121, 123, 121, 125, 135, 035, 133
   );
-  cskamenw :PCollationTable = @_cskamenw;
+  {%H-}cskamenw :PCollationTable = @_cskamenw;
 
-  cskamen :PCollationTable = @_cskamenw;
+  {%H-}cskamen :PCollationTable = @_cskamenw;
 
 
 
@@ -1905,9 +1905,9 @@ const
     172, 117, 121, 123, 125, 127, 131, 133, 137, 139, 146, 148, 150, 152, 154, 156,
     160, 162, 165, 164, 167, 169, 176, 178, 180, 182, 141, 171, 157, 170, 183, 255
   );
-  angreek1 :PCollationTable = @_angreek1;
+  {%H-}angreek1 :PCollationTable = @_angreek1;
 
-  ACCGREEK :PCollationTable = @_angreek1;
+  {%H-}ACCGREEK :PCollationTable = @_angreek1;
 
 
 
@@ -1932,7 +1932,7 @@ const
     150, 067, 068, 069, 066, 120, 085, 080, 083, 095, 097, 094, 096, 110, 111, 088,
     091, 130, 131, 137, 138, 139, 136, 248, 151, 174, 172, 173, 171, 187, 166, 249
   );
-  ansislov :PCollationTable = @_ansislov;
+  {%H-}ansislov :PCollationTable = @_ansislov;
 
 
 
@@ -1957,7 +1957,7 @@ const
     067, 069, 068, 070, 079, 066, 071, 085, 093, 090, 091, 092, 111, 110, 109, 108,
     103, 128, 133, 132, 134, 135, 141, 246, 247, 158, 159, 157, 164, 107, 152, 173
   );
-  ANTURK :PCollationTable = @_ANTURK;
+  {%H-}ANTURK :PCollationTable = @_ANTURK;
 
 
 
@@ -2057,7 +2057,7 @@ const
     171, 167, 163, 197, 175, 183, 186, 152, 172, 168, 164, 176, 188, 184, 180, 192,
     199, 154, 173, 169, 165, 205, 177, 035, 185, 174, 170, 166, 178, 149, 212, 210
   );
-  BLROM800 :PCollationTable = @_BLROM800;
+  {%H-}BLROM800 :PCollationTable = @_BLROM800;
 
 
 
@@ -2082,7 +2082,7 @@ const
     106, 104, 108, 112, 110, 114, 116, 122, 132, 130, 134, 136, 148, 146, 150, 152,
     126, 164, 170, 168, 172, 176, 174, 092, 178, 197, 195, 199, 201, 211, 191, 212
   );
-  ORAWE850 :PCollationTable = @_ORAWE850 ;
+  {%H-}ORAWE850 :PCollationTable = @_ORAWE850 ;
 
 
 
@@ -2107,7 +2107,7 @@ const
     114, 116, 118, 120, 122, 124, 126, 132, 138, 140, 142, 144, 154, 156, 158, 160,
     222, 172, 176, 178, 180, 182, 184, 092, 186, 201, 203, 205, 207, 217, 223, 218
   );
-  SYDC850 :PCollationTable = @_SYDC850;
+  {%H-}SYDC850 :PCollationTable = @_SYDC850;
 
 
 
@@ -2132,7 +2132,7 @@ const
     097, 098, 099, 096, 101, 103, 105, 111, 116, 118, 119, 120, 129, 130, 131, 132,
     113, 144, 147, 148, 149, 146, 151, 080, 146, 164, 165, 166, 168, 176, 035, 177
   );
-  SYDC437 :PCollationTable = @_SYDC437;
+  {%H-}SYDC437 :PCollationTable = @_SYDC437;
 
 
 
@@ -2157,7 +2157,7 @@ const
     078, 084, 076, 183, 077, 079, 082, 090, 099, 096, 097, 098, 111, 112, 110, 109,
     186, 123, 129, 131, 127, 198, 128, 218, 201, 147, 149, 146, 145, 208, 203, 158
   );
-  db2andeu :PCollationTable = @_db2andeu;
+  {%H-}db2andeu :PCollationTable = @_db2andeu;
 
 initialization
 

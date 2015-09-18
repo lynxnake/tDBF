@@ -2,13 +2,13 @@
 const
 
 //====================================================================
-  FieldPropType_Required    = $01;
-  FieldPropType_Min         = $02;
-  FieldPropType_Max         = $03;
-  FieldPropType_Default     = $04;
-  FieldPropType_Constraint  = $06;
+  {%H-}FieldPropType_Required    = $01;
+  {%H-}FieldPropType_Min         = $02;
+  {%H-}FieldPropType_Max         = $03;
+  {%H-}FieldPropType_Default     = $04;
+//FieldPropType_Constraint  = $06;
 
-  FieldDescVII_AutoIncOffset = 42;
+  {%H-}FieldDescVII_AutoIncOffset = 42;
 
 //====================================================================
 // File structures
@@ -16,7 +16,7 @@ const
 
 type
 
-  PDbfHdr = ^rDbfHdr;
+  PDbfHdr = {%H-}^rDbfHdr;
   rDbfHdr = packed record
     VerDBF      : Byte;     // 0
     Year        : Byte;     // 1
@@ -36,17 +36,17 @@ type
     Dummy3      : Word;     // 30-31
   end;
 //====================================================================
-  PAfterHdrIII = ^rAfterHdrIII;
+  PAfterHdrIII = {%H-}^rAfterHdrIII;
   rAfterHdrIII = packed record // Empty
   end;
 //====================================================================
-  PAfterHdrVII = ^rAfterHdrVII;
+  PAfterHdrVII = {%H-}^rAfterHdrVII;
   rAfterHdrVII = packed record
     LanguageDriverName  : array[32..63] of AnsiChar;
     Dummy               : array[64..67] of Byte;
   end;
 //====================================================================
-  PFieldDescIII = ^rFieldDescIII;
+  PFieldDescIII = {%H-}^rFieldDescIII;
   rFieldDescIII = packed record
     FieldName       : array[0..10] of AnsiChar;
     FieldType       : AnsiChar;     // 11
@@ -58,7 +58,7 @@ type
   end;
 //====================================================================
 // OH 2000-11-15 dBase7 support. Header Update (add fields like Next AutoInc Value)
-  rFieldDescVII = packed record
+  rFieldDescVII = {%H-}packed record
     FieldName      : array [0..31] of AnsiChar;
     FieldType      : AnsiChar;  // 32
     FieldSize      : Byte;  // 33
@@ -73,7 +73,7 @@ type
     Reserved3      : Word; // 46-47
   end;
 //====================================================================
-  PFieldPropsHdr = ^rFieldPropsHdr;
+  PFieldPropsHdr = {%H-}^rFieldPropsHdr;
   rFieldPropsHdr = packed record
     NumStdProps      : Word;  // 0..1
     StartStdProps    : Word;  // 2..3
@@ -85,7 +85,7 @@ type
     Size             : Word;  // 14..15 ; Actual size of structure, including data
   end;
 //====================================================================
-  PStdPropEntry = ^rStdPropEntry;
+  PStdPropEntry = {%H-}^rStdPropEntry;
   rStdPropEntry = packed record
     GenNumber    : Word;  // 0..1   ; Generational number. More than one value may exist for a property. The current value is the value with the highest generational number.
     FieldOffset  : Word;  // 2..3   ; Table field offset - base one. 01 for the first field in the table, 02 for the second field, etc. Note: this will be 0 in the case of a constraint.
@@ -115,7 +115,7 @@ type
     DataSize     : Word;  // 13..14 ; Width of database field associated with the property, and hence size of the data (includes 0 terminator in the case of a constraint).
   end;
 //====================================================================
-  PCustomPropEntry = ^rCustomPropEntry;
+  PCustomPropEntry = {%H-}^rCustomPropEntry;
   rCustomPropEntry = packed record
     GenNumber    : Word;  // 0..1   ; same as standard
     FieldOffset  : Word;  // 2..3   ; same as standard
@@ -127,7 +127,7 @@ type
     DataLength   : Word;  // 12..13 ; Length of the Custom property data (does not include null terminator).
   end;
 //====================================================================
-  PRIPropEntry = ^rRIPropEntry;
+  PRIPropEntry = {%H-}^rRIPropEntry;
   rRIPropEntry = packed record
     RelationType    : Byte;  // 0      ; 0x07 if Master (parent), 0x08 if Dependent (child).
     Number          : Word;  // 1..2   ; Sequential number, 1 based counting. If this number is 0, this RI rule has been dropped.
