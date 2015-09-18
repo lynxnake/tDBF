@@ -265,6 +265,7 @@ type
     procedure InternalInitFieldDefs; override; {virtual abstract}
     procedure InternalInitRecord(Buffer: TDbfRecordBuffer); override; {virtual abstract}
     procedure InternalLast; override; {virtual abstract}
+    function DbfDefaultFields: Boolean;
     procedure InternalOpen; override; {virtual abstract}
     procedure InternalEdit; override; {virtual}
     procedure InternalCancel; override; {virtual}
@@ -520,6 +521,9 @@ var
 implementation
 
 uses
+{$ifdef SUPPORT_GENERICS_FIELDLIST}
+  System.Generics.Collections,
+{$endif}
   SysUtils,
 {$ifndef FPC}
   DBConsts,
@@ -1042,7 +1046,7 @@ begin
   // disconnect field objects
   BindFields(false);
   // Destroy field object (if not persistent)
-  if DefaultFields then
+  if DbfDefaultFields then
     DestroyFields;
 
   if FParser <> nil then
@@ -1253,6 +1257,15 @@ begin
     FTranslationMode := tmNoneAvailable;
 end;
 
+function TDbf.DbfDefaultFields: Boolean;
+begin
+{$ifdef SUPPORT_FIELD_LIFECYCLES}
+  Result := (FieldOptions.AutoCreateMode <> acExclusive) or not (lcPersistent in Fields.LifeCycles);
+{$else}
+  Result := DefaultFields;
+{$endif}
+end;
+
 procedure TDbf.InternalOpen; {override virtual abstract from TDataset}
 const
   DbfOpenMode: array[Boolean, Boolean] of TPagedFileMode =
@@ -1334,7 +1347,7 @@ begin
   {$endif}
 
     // create the fields dynamically
-    if DefaultFields then
+    if DbfDefaultFields then
       CreateFields; // Create fields from fielddefs.
 
     BindFields(true);
@@ -1790,9 +1803,9 @@ var                                                                             
       with lFieldDefs.AddFieldDef do
       begin
         if Length(lSrcField.Name) > 0 then
-          FieldName := lSrcField.Name
+          FieldName := AnsiString(lSrcField.Name)
         else
-          FieldName := lSrcField.FieldName;
+          FieldName := AnsiString(lSrcField.FieldName);
         FieldType := lSrcField.DataType;
         Required := lSrcField.Required;
         if (1 <= lSrcField.FieldNo)
@@ -2108,7 +2121,11 @@ begin
       // FFilterBuffer contains record buffer
       saveState := SetTempState(dsCalcFields);
       try
+{$ifdef SUPPORT_CALCULATEFIELDS_NATIVEINT}
+        CalculateFields(NativeInt(FFilterBuffer));
+{$else}
         CalculateFields(FFilterBuffer);
+{$endif}
         if KeyValues = FieldValues[KeyFields] then
            Result := FieldValues[ResultFields];
       finally
@@ -2148,7 +2165,11 @@ end;
 function TDbf.LocateRecordLinear(const KeyFields: String; const KeyValues: Variant;
     Options: TLocateOptions): Boolean;
 var
+{$ifdef SUPPORT_GENERICS_FIELDLIST}
+  lstKeys              : TList<TField>;
+{$else}
   lstKeys              : TList;
+{$endif}
   iIndex               : Integer;
   Field                : TField;
   bMatchedData         : Boolean;
@@ -2195,7 +2216,11 @@ var
 begin
   Result := false;
   bVarIsArray := false;
+{$ifdef SUPPORT_GENERICS_FIELDLIST}
+  lstKeys := TList<TField>.Create;
+{$else}
   lstKeys := TList.Create;
+{$endif}
   FFilterBuffer := TDbfRecordBuffer(TempBuffer);
   SaveState := SetTempState(dsFilter);
   try
@@ -3117,6 +3142,7 @@ function TDbf.ResyncSharedReadCurrentRecord: Boolean;
 var
   Buffer: PAnsiChar;
 begin
+  Buffer := nil;
   Result := FDbfFile.ResyncSharedReadBuffer;
   if Result then
   begin
@@ -3174,7 +3200,7 @@ begin
   if FCursor is TIndexCursor then
     TIndexCursor(FCursor).IndexFile.ExtractKey(KeyBuffer)
   else
-    KeyBuffer^ := #0;
+    FillChar(KeyBuffer^, 1, 0); // FillChar handles the full range FPC/D5-XE8 etc.
 end;
 
 function TDbf.CompareKeys(Key1, Key2: PAnsiChar): Integer;
@@ -3371,7 +3397,7 @@ end;
 function TDbf.InitKeyBuffer(Buffer: PAnsiChar): PAnsiChar;
 begin
   FillChar(Buffer^, RecordSize, 0);
-  InitRecord(TDbfRecordBuffer(Buffer));
+  InitRecord(TDbfRecBuf(Buffer));
   Result := Buffer;
 end;
 
