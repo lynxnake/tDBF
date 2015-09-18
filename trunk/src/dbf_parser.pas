@@ -537,7 +537,7 @@ var
   VariableFieldInfo: TVariableFieldInfo;
 begin
   // is this variable a fieldname?
-  FieldInfo := GetVariableInfo(VarName);
+  FieldInfo := GetVariableInfo(AnsiString(VarName));
   if FieldInfo = nil then
     raise ExceptionClass.CreateFmt(STRING_PARSER_UNKNOWN_FIELD, [VarName]);
 
