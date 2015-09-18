@@ -2491,7 +2491,7 @@ begin
         FLeaves[I] := FLeaves[I].LowerPage;
       // parse expression
       try
-        FParsers[I].ParseExpression(AnsiString(PIndexHdr(FIndexHeader)^.KeyDesc));
+        FParsers[I].ParseExpression(string(AnsiString(PIndexHdr(FIndexHeader)^.KeyDesc)));
       except
         {$IFDEF TDBF_IGNORE_INVALID_INDICES}
         on E: EDbfErrorInvalidIndex do
@@ -2930,6 +2930,7 @@ begin
     EntryMax := FProgressMax;
   BufferMax := BulkLoadMemoryAllocSize div KeyRecLen;
   GetMem(PPEntries, EntryMax * SizeOf(Pointer));
+  PEntry := nil;
   try
     FillChar(PPEntries^, EntryMax * SizeOf(Pointer), 0);
     BufferList := TList.Create;
@@ -3503,7 +3504,7 @@ begin
   SetLength(InfoKey, KeyLen);
   CopyCurrentKey(FUserKey, PAnsiChar(InfoKey));
   FInsertError := Format(STRING_KEY_VIOLATION, [GetName,
-    PhysicalRecNo, TrimRight(InfoKey)]);
+    PhysicalRecNo, dbfTrimRight(InfoKey)]);
 end;
 
 procedure TIndexFile.InsertError;
