@@ -415,7 +415,11 @@ procedure ExprTrailingNulsToSpace(P: PAnsiChar; Len: Integer);
 implementation
 
 uses
-  dbf_AnsiStrings;
+  dbf_AnsiStrings
+{$IFDEF DELPHI_XE2}
+  , System.Types
+{$ENDIF}
+  ;
 
 function ExprCharToExprType(ExprChar: Char): TExpressionType;
 begin
