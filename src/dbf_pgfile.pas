@@ -50,7 +50,7 @@ type
   public
     function Read(var Buffer; Count: Longint): Longint; override;
     function Write(const Buffer; Count: Longint): Longint; override;
-{$ifdef SUPPORT_INT64}
+{$ifdef SUPPORT_INT64_SEEK}
     function Seek(const Offset: Int64; Origin: TSeekOrigin): Int64; override;
 {$else}
     function Seek(Offset: Longint; Origin: Word): Longint; override;
@@ -181,8 +181,10 @@ uses
   Windows,
 {$ifdef KYLIX}
   Libc, 
-{$endif}  
+{$endif}
+{$IFDEF Delphi_7}
   Types,
+{$ENDIF}
 {$else}
   dbf_wtil,
 {$endif}
@@ -205,7 +207,7 @@ begin
     raise EPagedFile.Create(STRING_WRITE_ERROR);
 end;
 
-{$ifdef SUPPORT_INT64}
+{$ifdef SUPPORT_INT64_SEEK}
 function TPagedFileStream.Seek(const Offset: Int64; Origin: TSeekOrigin): Int64;
 begin
   Result := FileSeek(Handle, Offset, Ord(Origin));
