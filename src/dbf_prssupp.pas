@@ -200,8 +200,10 @@ begin
   StrDispose(PChar(Item));
 end;
 
+{$IFDEF SUPPORT_FORMATSETTINGSTYPE}
 var
   DbfFormatSettings: TFormatSettings;
+{$ENDIF}
 
 type
   TFloatResult = record
@@ -490,25 +492,36 @@ end;
 function StrToFloatWidth(var FloatValue: Extended; const Src: PAnsiChar; const Size: Integer; Default: Extended): Boolean;
 var
   Buffer: array[0..20] of AnsiChar;
+{$ifndef SUPPORT_FORMATSETTINGSTYPE}
+  i: Integer;
+{$endif}
 begin
   Result := Size < SizeOf(Buffer);
   if Result then
   begin
     Move(Src^, Buffer, Size);
     Buffer[Size] := #0;
-    {$ifdef VER1_0}
-    Result:= dbfTextToFloat(@Buffer, FloatValue, DbfFormatSettings);
-    {$else}
-    Result:= dbfTextToFloatFmt(@Buffer, FloatValue, fvExtended, DbfFormatSettings);
-    {$endif}
+{$ifdef SUPPORT_FORMATSETTINGSTYPE}
+    Result := dbfTextToFloatFmt(@Buffer, FloatValue, fvExtended, DbfFormatSettings);
+{$else}
+    for i:=0 to Size-1 do
+      if Buffer[i]=DBF_DECIMAL then
+      begin
+        Buffer[i] := DecimalSeparator;
+        Break;
+      end;
+    Result := dbfTextToFloat(@Buffer, FloatValue, fvExtended);
+{$endif}
   end;
   if not Result then
     FloatValue := Default;
 end;
 
 initialization
+{$IFDEF SUPPORT_FORMATSETTINGSTYPE}
   FillChar(DbfFormatSettings, SizeOf(DbfFormatSettings), 0);
   DbfFormatSettings.DecimalSeparator:= DBF_DECIMAL;
+{$ENDIF}
 
 end.
 
