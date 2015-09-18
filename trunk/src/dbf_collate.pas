@@ -64,9 +64,9 @@ begin
     end;
 end;
 
-function DbfCompareString( CollationTable :PCollationTable; String1 :PChar; nLength1 :integer; String2 :PChar; nLength2 :integer ) :integer;
+function DbfCompareString(CollationTable: PCollationTable; String1: PAnsiChar; nLength1: Integer; String2: PAnsiChar; nLength2: Integer): Integer;
 var
-  nCnt, nMax, nVal1, nVal2 :integer;
+  nCnt, nMax, nVal1, nVal2: Integer;
 const
   ONE_LESS_THAN_TWO  = 1;
   EQUAL              = 2;

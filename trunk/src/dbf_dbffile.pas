@@ -1310,7 +1310,7 @@ begin
           // if restructure, initialize dest
           if DbfFieldDefs <> nil then
           begin
-            DestDbfFile.InitRecord(pDestBuff);
+            DestDbfFile.InitRecord(PAnsiChar(pDestBuff));
             // copy deleted mark (the first byte)
             pDestBuff^ := pBuff^;
           end;
@@ -1424,7 +1424,7 @@ function TDbfFile.GetFieldInfo(const FieldName: AnsiString): TDbfFieldDef;
 var
   I: Integer;
   lfi: TDbfFieldDef;
-  AFieldName: string;
+  AFieldName: AnsiString;
 begin
   AFieldName := FieldName;
   UniqueString(AFieldName);
@@ -1578,7 +1578,7 @@ begin
         if Result and (Dst <> nil) then
         begin
           timeStamp.Date := SwapIntLE(PInteger(Src)^) - JulianDateDelta;
-          timeStamp.Time := SwapIntLE(PInteger(PChar(Src)+4)^);
+          timeStamp.Time := SwapIntLE(PInteger(PAnsiChar(Src)+4)^);
           date := TimeStampToDateTime(timeStamp);
           SaveDateToDst;
         end;
@@ -1676,14 +1676,14 @@ begin
 //        ldy := GetIntFromStrLength(PAnsiChar(Src) + 0, 4, 1);
 //        ldm := GetIntFromStrLength(PAnsiChar(Src) + 4, 2, 1);
 //        ldd := GetIntFromStrLength(PAnsiChar(Src) + 6, 2, 1);
-          StrToInt32Width(ldy, PChar(Src) + 0, 4, 1);
-          StrToInt32Width(ldm, PChar(Src) + 4, 2, 1);
-          StrToInt32Width(ldd, PChar(Src) + 6, 2, 1);
+          StrToInt32Width(ldy, PAnsiChar(Src) + 0, 4, 1);
+          StrToInt32Width(ldm, PAnsiChar(Src) + 4, 2, 1);
+          StrToInt32Width(ldd, PAnsiChar(Src) + 6, 2, 1);
           //if (ly<1900) or (ly>2100) then ly := 1900;
           //Year from 0001 to 9999 is possible
           //everyting else is an error, an empty string too
           //Do DateCorrection with Delphis possibillities for one or two digits
-          if (ldy < 100) and (PChar(Src)[0] = #32) and (PChar(Src)[1] = #32) then
+          if (ldy < 100) and (PAnsiChar(Src)[0] = #32) and (PAnsiChar(Src)[1] = #32) then
             CorrectYear(ldy);
           try
             date := EncodeDate(ldy, ldm, ldd);
@@ -1918,19 +1918,19 @@ begin
           end;
         ftSmallInt:
 //        GetStrFromInt_Width(PSmallInt(Src)^, FieldSize, PAnsiChar(Dst), #32);
-          IntToStrWidth(PSmallInt(Src)^, FieldSize, PChar(Dst), True, #32);
+          IntToStrWidth(PSmallInt(Src)^, FieldSize, PAnsiChar(Dst), True, #32);
 {$ifdef SUPPORT_INT64}
         ftLargeInt:
 //        GetStrFromInt64_Width(PLargeInt(Src)^, FieldSize, PAnsiChar(Dst), #32);
-          IntToStrWidth(PInt64(Src)^, FieldSize, PChar(Dst), True, #32);
+          IntToStrWidth(PInt64(Src)^, FieldSize, PAnsiChar(Dst), True, #32);
 {$endif}
         ftFloat, ftCurrency:
 //        FloatToDbfStr(PDouble(Src)^, FieldSize, FieldPrec, PAnsiChar(Dst));
-          FloatToStrWidth(PDouble(Src)^, FieldSize, FieldPrec, PChar(Dst), True);
+          FloatToStrWidth(PDouble(Src)^, FieldSize, FieldPrec, PAnsiChar(Dst), True);
         ftInteger:
 //        GetStrFromInt_Width(PInteger(Src)^, FieldSize, PAnsiChar(Dst),
 //          IsBlobFieldToPadChar[TempFieldDef.IsBlob]);
-          IntToStrWidth(PInteger(Src)^, FieldSize, PChar(Dst), True, IsBlobFieldToPadChar[TempFieldDef.IsBlob]);
+          IntToStrWidth(PInteger(Src)^, FieldSize, PAnsiChar(Dst), True, IsBlobFieldToPadChar[TempFieldDef.IsBlob]);
         ftDate, ftDateTime:
           begin
             LoadDateFromSrc;
@@ -1940,9 +1940,9 @@ begin
 //          GetStrFromInt_Width(year,  4, PAnsiChar(Dst),   '0');
 //          GetStrFromInt_Width(month, 2, PAnsiChar(Dst)+4, '0');
 //          GetStrFromInt_Width(day,   2, PAnsiChar(Dst)+6, '0');
-            IntToStrWidth(year,  4, PChar(Dst),   True, DBF_ZERO);
-            IntToStrWidth(month, 2, PChar(Dst)+4, True, DBF_ZERO);
-            IntToStrWidth(day,   2, PChar(Dst)+6, True, DBF_ZERO);
+            IntToStrWidth(year,  4, PAnsiChar(Dst),   True, DBF_ZERO);
+            IntToStrWidth(month, 2, PAnsiChar(Dst)+4, True, DBF_ZERO);
+            IntToStrWidth(day,   2, PAnsiChar(Dst)+6, True, DBF_ZERO);
             // do time too if datetime
             if DataType = ftDateTime then
             begin
@@ -1951,9 +1951,9 @@ begin
 //            GetStrFromInt_Width(hour,   2, PAnsiChar(Dst)+8,  '0');
 //            GetStrFromInt_Width(minute, 2, PAnsiChar(Dst)+10, '0');
 //            GetStrFromInt_Width(sec,    2, PAnsiChar(Dst)+12, '0');
-              IntToStrWidth(hour,   2, PChar(Dst)+8,  True, DBF_ZERO);
-              IntToStrWidth(minute, 2, PChar(Dst)+10, True, DBF_ZERO);
-              IntToStrWidth(sec,    2, PChar(Dst)+12, True, DBF_ZERO);
+              IntToStrWidth(hour,   2, PAnsiChar(Dst)+8,  True, DBF_ZERO);
+              IntToStrWidth(minute, 2, PAnsiChar(Dst)+10, True, DBF_ZERO);
+              IntToStrWidth(sec,    2, PAnsiChar(Dst)+12, True, DBF_ZERO);
             end;
           end;
         ftString:
@@ -2198,7 +2198,7 @@ begin
       tempExclusive := IsSharedAccess;
       if tempExclusive then TryExclusive;
       // always uppercase index expression
-//    IndexField := AnsiUpperCase(IndexField);
+      IndexField := AnsiUpperCase(IndexField);
       try
         try
           // create index if asked

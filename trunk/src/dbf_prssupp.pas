@@ -60,16 +60,19 @@ const
   DBF_NINE = '9';
 
 
-function IntToStrWidth(Val: {$ifdef SUPPORT_INT64}Int64{$else}Integer{$endif}; const FieldSize: Integer; const Dest: PChar; Pad: Boolean; PadChar: Char): Integer;
-function FloatToStrWidth(const Val: Extended; const FieldSize, FieldPrec: Integer; const Dest: PChar; Pad: Boolean): Integer;
+function IntToStrWidth(Val: {$ifdef SUPPORT_INT64}Int64{$else}Integer{$endif}; const FieldSize: Integer; const Dest: PAnsiChar; Pad: Boolean; PadChar: AnsiChar): Integer;
+function FloatToStrWidth(const Val: Extended; const FieldSize, FieldPrec: Integer; const Dest: PAnsiChar; Pad: Boolean): Integer;
 
 function StrToIntWidth(var IntValue: {$ifdef SUPPORT_INT64}Int64{$else}Integer{$endif}; Src: Pointer; Size: Integer; Default: Integer): Boolean;
 function StrToInt32Width(var IntValue: Integer; Src: Pointer; Size: Integer; Default: Integer): Boolean;
-function StrToFloatWidth(var FloatValue: Extended; const Src: PChar; const Size: Integer; Default: Extended): Boolean;
+function StrToFloatWidth(var FloatValue: Extended; const Src: PAnsiChar; const Size: Integer; Default: Extended): Boolean;
 
 implementation
 
-uses SysUtils;
+uses
+  SysUtils,
+  dbf_AnsiStrings,
+  dbf_common;
 
 destructor TOCollection.Destroy;
 begin
@@ -202,14 +205,14 @@ var
 
 type
   TFloatResult = record
-    Dest: PChar;
-    P: PChar;
+    Dest: PAnsiChar;
+    P: PAnsiChar;
     FieldSize: Integer;
     FieldPrec: Integer;
     Len: Integer;
   end;
 
-procedure FloatPutChar(var FloatResult: TFloatResult; C: Char);
+procedure FloatPutChar(var FloatResult: TFloatResult; C: AnsiChar);
 begin
   Inc(FloatResult.Len);
   if FloatResult.Len <= FloatResult.FieldSize then
@@ -231,13 +234,13 @@ var
   DigitCount: SmallInt;
   DigitMin: SmallInt;
   DigitMax: SmallInt;
-  DigitChar: Char;
+  DigitChar: AnsiChar;
   DecCount: Integer;
 begin
   FloatReset(FloatResult);
   if FloatRec.Negative then
     FloatPutChar(FloatResult, DBF_NEGATIVESIGN);
-  DigitCount := StrLen(FloatRec.Digits);
+  DigitCount := dbfStrLen(@FloatRec.Digits);
   if Exponent <= 0 then
   begin
     DigitMin := Exponent;
@@ -254,7 +257,7 @@ begin
   while (Digit < DigitMax) or ((FieldPrec <> 0) and (DecCount < FieldPrec) and (FloatResult.Len < FloatResult.FieldSize - Ord(DecCount<0))) do
   begin
     if (Digit >= 0) and (Digit < DigitCount) then
-      DigitChar := FloatRec.Digits[Digit]
+      DigitChar := AnsiChar(FloatRec.Digits[Digit])
     else
       DigitChar := DBF_ZERO;
     if Digit=Exponent then
@@ -272,7 +275,7 @@ end;
 procedure DecimalToDbfStrFormat(var FloatResult: TFloatResult; const FloatRec: TFloatRec; Format: TFloatFormat; FieldPrec: Integer);
 var
   Exponent: SmallInt;
-  ExponentBuffer: array[1..5] of Char;
+  ExponentBuffer: array[1..5] of AnsiChar;
   Index: Byte;
 begin
   if Format=ffExponent then
@@ -291,7 +294,7 @@ begin
       while Exponent<>0 do
       begin
         Inc(Index);
-        ExponentBuffer[Index] := Char(Ord(DBF_ZERO) + (Exponent mod 10));
+        ExponentBuffer[Index] := AnsiChar(Ord(DBF_ZERO) + (Exponent mod 10));
         Exponent := Exponent div 10;
       end;
       while Index>0 do
@@ -311,7 +314,7 @@ var
   Precision: Integer;
 begin
   DecimalToDbfStrFormat(FloatResult, FloatRec, Format, FieldPrec);
-  Precision:= Integer(StrLen(FloatRec.Digits));
+  Precision:= Integer(dbfStrLen(@FloatRec.Digits));
   if FloatResult.Len > FloatResult.FieldSize then
   begin
     Precision:= Precision - (FloatResult.Len - FloatResult.FieldSize);
@@ -329,7 +332,7 @@ begin
   end;
 end;
 
-function NumberPad(const FloatResult: TFloatResult; const Dest: PChar; Pad: Boolean; PadChar: Char): Integer;
+function NumberPad(const FloatResult: TFloatResult; const Dest: PAnsiChar; Pad: Boolean; PadChar: AnsiChar): Integer;
 begin
   Result:= FloatResult.Len;
   if Pad and (FloatResult.Len <> FloatResult.FieldSize) then
@@ -340,13 +343,13 @@ begin
   end;
 end;
 
-function IntToStrWidth(Val: {$ifdef SUPPORT_INT64}Int64{$else}Integer{$endif}; const FieldSize: Integer; const Dest: PChar; Pad: Boolean; PadChar: Char): Integer;
+function IntToStrWidth(Val: {$ifdef SUPPORT_INT64}Int64{$else}Integer{$endif}; const FieldSize: Integer; const Dest: PAnsiChar; Pad: Boolean; PadChar: AnsiChar): Integer;
 var
   FloatResult: TFloatResult;
   Negative: Boolean;
   IntValue: Integer;
-  Buffer: array[0..{$ifdef SUPPORT_INT64}18{$else}9{$endif}] of Char;
-  P: PChar;
+  Buffer: array[0..{$ifdef SUPPORT_INT64}18{$else}9{$endif}] of AnsiChar;
+  P: PAnsiChar;
 begin
   FillChar(FloatResult, SizeOf(FloatResult), 0);
   FloatResult.Dest := Buffer;
@@ -358,10 +361,10 @@ begin
   else
     IntValue := Val;
   repeat
-    FloatPutChar(FloatResult, Char(Ord(DBF_ZERO) + (IntValue mod 10)));
+    FloatPutChar(FloatResult, AnsiChar(Ord(DBF_ZERO) + (IntValue mod 10)));
     IntValue := IntValue div 10;
   until IntValue = 0;
-  P:= FloatResult.P;
+  P := FloatResult.P;
   FloatResult.Dest := Dest;
   if FloatResult.Len+Ord(Negative) > FieldSize then
   begin
@@ -383,12 +386,12 @@ begin
   Result:= NumberPad(FloatResult, Dest, Pad, PadChar);
 end;
 
-function Int64ToStrWidth(Val: Int64; const FieldSize: Integer; const Dest: PChar; Pad: Boolean; PadChar: Char): Integer;
+function Int64ToStrWidth(Val: Int64; const FieldSize: Integer; const Dest: PAnsiChar; Pad: Boolean; PadChar: AnsiChar): Integer;
 begin
   Result:= IntToStrWidth(Val, FieldSize, Dest, Pad, PadChar);
 end;
 
-function FloatToStrWidth(const Val: Extended; const FieldSize, FieldPrec: Integer; const Dest: PChar; Pad: Boolean): Integer;
+function FloatToStrWidth(const Val: Extended; const FieldSize, FieldPrec: Integer; const Dest: PAnsiChar; Pad: Boolean): Integer;
 var
   FloatResult: TFloatResult;
   FloatRec: TFloatRec;
@@ -406,13 +409,13 @@ end;
 
 function StrToIntWidth(var IntValue: {$ifdef SUPPORT_INT64}Int64{$else}Integer{$endif}; Src: Pointer; Size: Integer; Default: Integer): Boolean;
 var
-  P: PChar;
+  P: PAnsiChar;
   Negative: Boolean;
   Digit: Byte;
   FloatValue: Extended;
 begin
   P := Src;
-  while (P < PChar(Src) + Size) and (P^ = ' ') do
+  while (P < PAnsiChar(Src) + Size) and (P^ = ' ') do
     Inc(P);
   Dec(Size, P - Src);
   Src := P;
@@ -452,7 +455,7 @@ begin
       else
         Result := False;
       Inc(P);
-    until (P = PChar(Src) + Size) or (not Result);
+    until (P = PAnsiChar(Src) + Size) or (not Result);
     if not Result then
     begin
       Result := StrToFloatWidth(FloatValue, Src, Size, Default);
@@ -484,16 +487,20 @@ begin
 {$endif}
 end;
 
-function StrToFloatWidth(var FloatValue: Extended; const Src: PChar; const Size: Integer; Default: Extended): Boolean;
+function StrToFloatWidth(var FloatValue: Extended; const Src: PAnsiChar; const Size: Integer; Default: Extended): Boolean;
 var
-  Buffer: array[0..20] of Char;
+  Buffer: array[0..20] of AnsiChar;
 begin
   Result := Size < SizeOf(Buffer);
   if Result then
   begin
     Move(Src^, Buffer, Size);
     Buffer[Size] := #0;
-    Result:= TextToFloat(@Buffer, FloatValue {$ifndef VER1_0}, fvExtended{$endif}, DbfFormatSettings);
+    {$ifdef VER1_0}
+    Result:= dbfTextToFloat(@Buffer, FloatValue, DbfFormatSettings);
+    {$else}
+    Result:= dbfTextToFloatFmt(@Buffer, FloatValue, fvExtended, DbfFormatSettings);
+    {$endif}
   end;
   if not Result then
     FloatValue := Default;
