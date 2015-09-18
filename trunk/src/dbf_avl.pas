@@ -4,9 +4,6 @@ interface
 
 {$I dbf_common.inc}
 
-uses
-  dbf_common;
-
 type
   TBal = -1..1;
 
