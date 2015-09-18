@@ -82,17 +82,17 @@ type
 
   TDbfIndexParser = class(TDbfParser)
   private
-    function GetKeyType: Char;
+    function GetKeyType: AnsiChar;
   protected
     FResultLen: Integer; 
 
     function IsIndex: Boolean; override;
     procedure ValidateExpression(AExpression: string); override;
-    function ExceptionClass: TExceptionClass; override;
+    function ExceptionClass: ExceptClass; override;
   public
     constructor Create(ADbfFile: Pointer); override;
     property ResultLen: Integer read FResultLen;
-    property KeyType: Char read GetKeyType;
+    property KeyType: AnsiChar read GetKeyType;
   end;
 //===========================================================================
   TIndexFile = class;
@@ -121,7 +121,7 @@ type
     FHighPage: Integer;
     FHighPageTemp: Integer;
 
-    procedure LocalInsert(RecNo: Integer; Buffer: PChar; LowerPageNo: Integer);
+    procedure LocalInsert(RecNo: Integer; Buffer: PAnsiChar; LowerPageNo: Integer);
     procedure LocalDelete;
     procedure Delete;
 
@@ -1477,7 +1477,7 @@ begin
   Result := Integer(SwapIntLE(DWORD(PMdxEntry(Entry)^.RecBlockNo)));
 end;
 
-function TMdxPage.GetKeyData: PChar;
+function TMdxPage.GetKeyData: PAnsiChar;
 begin
   Result := @PMdxEntry(Entry)^.KeyData;
 end;
@@ -1493,7 +1493,7 @@ begin
   end;
 end;
 
-function TMdxPage.GetKeyDataFromEntry(AEntry: Integer): PChar;
+function TMdxPage.GetKeyDataFromEntry(AEntry: Integer): PAnsiChar;
 begin
   Result := @PMdxEntry(GetEntry(AEntry))^.KeyData;
 end;
@@ -1737,7 +1737,7 @@ end;
 
 procedure TMdx7Tag.SetTagName(NewName: string);
 begin
-  dbfStrPLCopy(PMdx7Tag(Tag)^.TagName, AnsiString(NewName), 10); // was PChar, AnsiString cast added
+  dbfStrPLCopy(PMdx7Tag(Tag)^.TagName, AnsiString(NewName), 32); // was PChar, AnsiString cast added
   PMdx7Tag(Tag)^.TagName[32] := #0;
 end;
 
@@ -1812,12 +1812,12 @@ begin
     raise ExceptionClass.CreateFmt(STRING_INDEX_EXPRESSION_TOO_LONG, [AExpression, FResultLen]);
 end;
 
-function TDbfIndexParser.ExceptionClass: TExceptionClass;
+function TDbfIndexParser.ExceptionClass: ExceptClass;
 begin
   Result := EDbfErrorInvalidIndex;
 end;
 
-function TDbfIndexParser.GetKeyType: Char;
+function TDbfIndexParser.GetKeyType: AnsiChar;
 var
   lDbfFieldDef: TDbfFieldDef;
 begin
@@ -2491,7 +2491,7 @@ begin
         FLeaves[I] := FLeaves[I].LowerPage;
       // parse expression
       try
-        FParsers[I].ParseExpression(PIndexHdr(FIndexHeader)^.KeyDesc);
+        FParsers[I].ParseExpression(AnsiString(PIndexHdr(FIndexHeader)^.KeyDesc));
       except
         {$IFDEF TDBF_IGNORE_INVALID_INDICES}
         on E: EDbfErrorInvalidIndex do
@@ -2964,7 +2964,7 @@ begin
               end;
             end
             else
-              Inc(PChar(PEntry), KeyRecLen);
+              Inc(PAnsiChar(PEntry), KeyRecLen);
             PMdxEntry(PPEntry^) := PEntry;
           end
           else
@@ -2980,7 +2980,7 @@ begin
             if (FCurrentParser.ResultType=etString) and (Len>FCurrentParser.ResultBufferSize) then
               Len:= FCurrentParser.ResultBufferSize;
             Move(FUserKey^, PEntry^.KeyData, Len);
-            Inc(PChar(PPEntry), SizeOf(Pointer));
+            Inc(PAnsiChar(PPEntry), SizeOf(Pointer));
             Inc(EntryCount);
           end;
           DoProgress(FProgressPosition, FProgressMax, STRING_PROGRESS_READINGRECORDS);
@@ -3000,7 +3000,7 @@ begin
           FUserRecNo := PEntry^.RecBlockNo;
           FUserKey := @PEntry^.KeyData;
           InsertCurrent(AUniqueMode);
-          Inc(PChar(PPEntry), SizeOf(Pointer));
+          Inc(PAnsiChar(PPEntry), SizeOf(Pointer));
           Inc(EntryIndex);
           DoProgress(FProgressPosition, FProgressMax, STRING_PROGRESS_WRITING_RECORDS);
         end;
@@ -3073,7 +3073,7 @@ begin
     MergeSort2(List, TempList, L, L1);
     MergeSort2(List, TempList, R0, R);
     MergeSort3(List, TempList, L, L1, R0, R);
-    Move(TempList[L], List[L], C * SizeOf(Pointer));
+    Move(TempList^[L], List^[L], C * SizeOf(Pointer));
   end;
 end;
 
@@ -3084,7 +3084,7 @@ var
   procedure MergeAppend(var J: Integer);
   begin
     MergeSortCheckCancel;
-    TempList[I] := List[J];
+    TempList^[I] := List^[J];
     Inc(I);
     Inc(J);
   end;
@@ -3093,7 +3093,7 @@ begin
   I := L0;
   while (L0 <= L1) and (R0 <= R1) do
   begin
-    if MergeSortCompare(List[L0], List[R0]) <= 0 then
+    if MergeSortCompare(List^[L0], List^[R0]) <= 0 then
       MergeAppend(L0)
     else
       MergeAppend(R0);
@@ -3111,8 +3111,8 @@ end;
 
 function TIndexFile.MergeSortCompare(Item1, Item2: Pointer): Integer;
 var
-  KeyData1: PChar;
-  KeyData2: PChar;
+  KeyData1: PAnsiChar;
+  KeyData2: PAnsiChar;
 begin
   KeyData1 := @PMdxEntry(Item1).KeyData;
   KeyData2 := @PMdxEntry(Item2).KeyData;
@@ -3407,16 +3407,16 @@ begin
     DbfFieldDef := FCurrentParser.DbfFieldDef;
     if Assigned(DbfFieldDef) then
       if DbfFieldDef.NativeFieldType = PIndexHdr(FIndexHeader)^.KeyType then
-        Result := Buffer + DbfFieldDef.Offset;
+        Result := PAnsiChar(Buffer) + DbfFieldDef.Offset;
   end
   else
   begin
 //  KeyBuffer := FCurrentParser.ExtractFromBuffer(Buffer);
-    KeyBuffer := FCurrentParser.ExtractFromBuffer(Buffer, RecNo, IsNull);
+    KeyBuffer := FCurrentParser.ExtractFromBuffer(PAnsiChar(Buffer), RecNo, IsNull);
 //  if (KeyType = 'D') and (FCurrentParser.ExtractIsNull(Buffer)) then
     if (KeyType = 'D') and IsNull then
       PDouble(KeyBuffer)^ := 1E100;
-    Result := PrepareKey(KeyBuffer, FCurrentParser.ResultType);
+    Result := PAnsiChar(PrepareKey(TDbfRecordBuffer(KeyBuffer), FCurrentParser.ResultType));
   end;
   if not Assigned(Result) then
     raise EDbfError.Create(STRING_INVALID_INDEX_TYPE);
@@ -3497,11 +3497,11 @@ end;
 
 procedure TIndexFile.ConstructInsertErrorMsg;
 var
-  InfoKey: string;
+  InfoKey: AnsiString;
 begin
   if Length(FInsertError) > 0 then exit;
   SetLength(InfoKey, KeyLen);
-  CopyCurrentKey(FUserKey, PChar(InfoKey));
+  CopyCurrentKey(FUserKey, PAnsiChar(InfoKey));
   FInsertError := Format(STRING_KEY_VIOLATION, [GetName,
     PhysicalRecNo, TrimRight(InfoKey)]);
 end;
@@ -3748,7 +3748,7 @@ begin
   FRoot.PageNo := SwapIntLE(PIndexHdr(FIndexHeader)^.RootPage);
 end;
 
-function TIndexFile.SearchKey(Key: PChar; SearchType: TSearchKeyType): Boolean;
+function TIndexFile.SearchKey(Key: PAnsiChar; SearchType: TSearchKeyType): Boolean;
 var
   findres: Integer;
   currRecNo: TSequentialRecNo;

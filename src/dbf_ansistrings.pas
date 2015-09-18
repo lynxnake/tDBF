@@ -26,6 +26,8 @@ type
   TdbfTextToFloat = function(Buffer: PAnsiChar; var Value; ValueType: TFloatValue): Boolean;
   TdbfTextToFloatFmt = function(Buffer: PAnsiChar; var Value; ValueType: TFloatValue; const FormatSettings: TFormatSettings): Boolean;
   TdbfStrPLCopy = function(Dest: PAnsiChar; const Source: AnsiString; MaxLen: Cardinal): PAnsiChar;
+  TdbfTrimLeft = function(const S: AnsiString): AnsiString;
+  TdbfTrimRight = function(const S: AnsiString): AnsiString;
 
 var
   dbfStrLen: TdbfStrLen = nil;
@@ -44,6 +46,8 @@ var
   dbfTextToFloatFmt: TdbfTextToFloatFmt = nil;
   dbfTextToFloat: TdbfTextToFloat = nil;
   dbfStrPLCopy: TdbfStrPLCopy = nil;
+  dbfTrimLeft: TdbfTrimLeft = nil;
+  dbfTrimRight: TdbfTrimRight = nil;
 
 implementation
 
@@ -72,6 +76,8 @@ begin
   dbfTextToFloatFmt := AnsiStrings.TextToFloat;
   dbfTextToFloat := AnsiStrings.TextToFloat;
   dbfStrPLCopy := AnsiStrings.StrPLCopy;
+  dbfTrimLeft := AnsiStrings.TrimLeft;
+  dbfTrimRight := AnsiStrings.TrimRight;
 end;
 {$ELSE}
 
@@ -94,6 +100,8 @@ begin
   dbfTextToFloatFmt := @SysUtils.TextToFloat;
   dbfTextToFloat := @SysUtils.TextToFloat;
   dbfStrPLCopy := @SysUtils.StrPLCopy;
+  dbfTrimLeft := @SysUtils.TrimLeft;
+  dbfTrimRight := @SysUtils.TrimRight;
 end;
 {$else}
 procedure Init;
@@ -114,6 +122,8 @@ begin
   dbfTextToFloatFmt := SysUtils.TextToFloat;
   dbfTextToFloat := SysUtils.TextToFloat;
   dbfStrPLCopy := SysUtils.StrPLCopy;
+  dbfTrimLeft := SysUtils.TrimLeft;
+  dbfTrimRight := SysUtils.TrimRight;
 end;
 {$endif}
 

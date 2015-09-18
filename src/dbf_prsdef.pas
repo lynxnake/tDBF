@@ -88,7 +88,7 @@ type
 
   TExprCollection = class(TNoOwnerCollection)
   public
-    procedure Check(ExceptionClass: TExceptionClass);
+    procedure Check(ExceptionClass: ExceptClass);
     procedure EraseExtraBrackets;
   end;
 
@@ -259,7 +259,7 @@ type
 
   TVariableFieldInfo = record
     DbfFieldDef: Pointer;
-    NativeFieldType: Char;
+    NativeFieldType: AnsiChar;
     Size: Integer;
     Precision: Integer;
   end;
@@ -287,7 +287,7 @@ type
 //  constructor Create(AName: string; AValue: PDouble);
     constructor Create(AName: string; AValue: PDouble; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo);
 
-    function AsPointer: PChar; override;
+    function AsPointer: PAnsiChar; override;
   end;
 
   TStringVariable = class(TVariable)
@@ -302,7 +302,7 @@ type
     constructor Create(AName: string; AValue: PPAnsiChar; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo);
 
     function LenAsPointer: PInteger; override;
-    function AsPointer: PChar; override;
+    function AsPointer: PAnsiChar; override;
 
     property FixedLen: Integer read FFixedLen;
   end;
@@ -347,7 +347,7 @@ type
 //  constructor Create(AName: string; AValue: PBoolean);
     constructor Create(AName: string; AValue: PBoolean; AIsNullPtr: PBoolean; AFieldInfo: PVariableFieldInfo);
 
-    function AsPointer: PChar; override;
+    function AsPointer: PAnsiChar; override;
   end;
 
   TLeftBracket = class(TExprWord)
@@ -433,7 +433,7 @@ end;
 
 function ExprStrLen(P: PAnsiChar; IncludeTrailingSpaces: Boolean): Integer;
 begin
-  Result := StrLen(P);
+  Result := dbfStrLen(P);
   if not IncludeTrailingSpaces then
     while (Result > 0) and ((P + Pred(Result))^ = ' ') do
       Dec(Result);
@@ -1017,7 +1017,7 @@ end;
 
 { TExprCollection }
 
-procedure TExprCollection.Check(ExceptionClass: TExceptionClass);
+procedure TExprCollection.Check(ExceptionClass: ExceptClass);
 var
   brCount, I: Integer;
 begin

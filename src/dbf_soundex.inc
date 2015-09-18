@@ -2,10 +2,10 @@ function Soundex(const aString: AnsiString): AnsiString;
 const
   soundextable:packed array['A'..'Z'] of AnsiChar = '.123.12..22455.12623.1.2.2';
 var
-   SoundString: string;
-   I1: integer;      // input
-   I2: INTEGER;      // output
-   C2: CHAR;
+   SoundString: AnsiString;
+   I1: Integer;      // input
+   I2: Integer;      // output
+   C2: AnsiChar;
    len: integer;
 begin
   len := Length(aString);
@@ -16,7 +16,7 @@ begin
       I1 := 0;
       repeat
         Inc(I1);
-        C2 := UPCASE(aString[I1]);
+        C2 := UpCase(aString[I1]);
       until (I1 >= len) or (C2 <> ' ');
 
       // if first non-blank is not alphabetic, result is 0000

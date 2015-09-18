@@ -353,7 +353,11 @@ type
     function CompareBookmarks(Bookmark1, Bookmark2: TBookmark): Integer; override;
     procedure CheckDbfFieldDefs(ADbfFieldDefs: TDbfFieldDefs);
 
+    {$ifdef DELPHI_XE}
+    procedure DataEvent(Event: TDataEvent; Info: NativeInt); override;
+    {$else}
     procedure DataEvent(Event: TDataEvent; Info: {$ifdef FPC_VERSION}Ptrint{$else}Longint{$endif}); override;
+    {$endif}
 
     // my own methods and properties
     // most look like ttable functions but they are not tdataset related
@@ -755,7 +759,7 @@ begin
   case State of
     dsFilter:     Result := TDbfRecordBuffer(FFilterBuffer);
     dsCalcFields: Result := TDbfRecordBuffer(CalcBuffer);
-    dsSetKey:     Result := GetKeyBuffer;
+    dsSetKey:     Result := TDbfRecordBuffer(GetKeyBuffer);
   else
     if IsEmpty then
     begin
@@ -942,7 +946,7 @@ begin
 
     if (Result = grOK) then
     begin
-      Result := ReadCurrentRecord(Buffer, acceptable);
+      Result := ReadCurrentRecord(TDbfRecordBuffer(Buffer), acceptable);
       if lSequentialRecNo = 0 then
         lSequentialRecNo := FCursor.SequentialRecNo;
     end;
@@ -1757,8 +1761,8 @@ var                                                                             
   DestinationName: string;
   lSrcFieldDef, lDestFieldDef: TDbfFieldDef;
   CopyLen: Integer;
-  SrcBuffer: PChar;
-  DestBuffer: PChar;
+  SrcBuffer: PAnsiChar;
+  DestBuffer: PAnsiChar;
   CopyBlob: Boolean;
   BlobStream: TMemoryStream;
   lBlobPageNo: Integer;
@@ -1947,8 +1951,8 @@ begin
                     lSrcFieldDef := nil;
                     lDestFieldDef := nil;
                   end;
-                  SrcBuffer := PChar(@pDbfRecord(DataSet.ActiveBuffer).DeletedFlag);
-                  DestBuffer := PChar(@pDbfRecord(ActiveBuffer).DeletedFlag);
+                  SrcBuffer := PAnsiChar(@pDbfRecord(DataSet.ActiveBuffer).DeletedFlag);
+                  DestBuffer := PAnsiChar(@pDbfRecord(ActiveBuffer).DeletedFlag);
                   if CopyBlob then
                   begin
                     if FDbfFile.GetFieldDataFromDef(lSrcFieldDef, ftInteger, SrcBuffer, @lBlobPageNo, false) and (lBlobPageNo > 0) then
@@ -3111,12 +3115,12 @@ end;
 
 function TDbf.ResyncSharedReadCurrentRecord: Boolean;
 var
-  Buffer: PChar;
+  Buffer: PAnsiChar;
 begin
   Result := FDbfFile.ResyncSharedReadBuffer;
   if Result then
   begin
-    Buffer := GetCurrentBuffer;
+    Buffer := PAnsiChar(GetCurrentBuffer);
     Result := Assigned(Buffer);
   end;
   if Result then
@@ -3274,7 +3278,11 @@ begin
   FieldDefs.Update;
 end;
 
+{$ifdef DELPHI_XE}
+procedure TDbf.DataEvent(Event: TDataEvent; Info: NativeInt);
+{$else}
 procedure TDbf.DataEvent(Event: TDataEvent; Info: {$ifdef FPC_VERSION}Ptrint{$else}Longint{$endif});
+{$endif}
 begin
   if ((Event = deDataSetChange) or (Event = deLayoutChange)) and Assigned(FDbfFile) and (not ControlsDisabled) then
     FDbfFile.ResyncSharedFlushBuffer;
@@ -3363,7 +3371,7 @@ end;
 function TDbf.InitKeyBuffer(Buffer: PAnsiChar): PAnsiChar;
 begin
   FillChar(Buffer^, RecordSize, 0);
-  InitRecord(Buffer);
+  InitRecord(TDbfRecordBuffer(Buffer));
   Result := Buffer;
 end;
 

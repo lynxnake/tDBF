@@ -60,8 +60,8 @@ type
     procedure ClearExpressions; override;
 
     procedure ParseExpression(const AExpression: string); virtual;
-    function ExtractFromBuffer(Buffer: PChar; RecNo: Integer): PAnsiChar; overload; virtual;
-    function ExtractFromBuffer(Buffer: PChar; RecNo: Integer; var IsNull: Boolean): PAnsiChar; overload; virtual;
+    function ExtractFromBuffer(Buffer: PAnsiChar; RecNo: Integer): PAnsiChar; overload; virtual;
+    function ExtractFromBuffer(Buffer: PAnsiChar; RecNo: Integer; var IsNull: Boolean): PAnsiChar; overload; virtual;
 
     property DbfFile: Pointer read FDbfFile write FDbfFile;
     property Expression: string read FCurrentExpression;

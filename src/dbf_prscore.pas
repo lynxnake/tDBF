@@ -80,7 +80,7 @@ type
     function GetResultType: TExpressionType; virtual;
     function IsIndex: Boolean; virtual;
     procedure OptimizeExpr(var ExprRec: PExpressionRec); virtual;
-    function ExceptionClass: TExceptionClass; virtual;
+    function ExceptionClass: ExceptClass; virtual;
     procedure ReadWord(const AnExpr: string; var isConstant: Boolean; var I1, I2: Integer; Len: Integer); virtual;
     function CreateConstant(W: string): TConstant; virtual;
 
@@ -1118,7 +1118,7 @@ begin
   RemoveConstants(ExprRec);
 end;
 
-function TCustomExpressionParser.ExceptionClass: TExceptionClass;
+function TCustomExpressionParser.ExceptionClass: ExceptClass;
 begin
   Result := EParserError;
 end;
@@ -1499,7 +1499,7 @@ procedure FuncStr(Param: PExpressionRec);
 var
   Size: Integer;
   Precision: Integer;
-  PadChar: Char;
+  PadChar: AnsiChar;
 {$ifdef SUPPORT_INT64}
   IntValue: Int64;
 {$else}
@@ -1551,14 +1551,14 @@ end;
 
 procedure FuncDateToStr(Param: PExpressionRec);
 var
-  TempStr: string;
+  TempStr: AnsiString;
 begin
   // create in temporary string
-  DateTimeToString(TempStr, 'yyyymmdd', PDateTimeRec(Param^.Args[0])^.DateTime);
+  TempStr := FormatDateTime('YYYYMMDD', PDateTimeRec(Param^.Args[0])^.DateTime);
   if Param^.ArgList[0]^.IsNullPtr^ then
     FillChar(PAnsiChar(TempStr)^, Length(TempStr), ' ');
   // copy to buffer
-  Param^.Res.Append(PAnsiChar(AnsiString(TempStr)), Length(TempStr)); // Was PChar
+  Param^.Res.Append(PAnsiChar(TempStr), Length(TempStr)); // Was PChar
 end;
 
 procedure FuncSubString(Param: PExpressionRec);
@@ -2313,12 +2313,12 @@ procedure FuncConcatenate_S(Param: PExpressionRec; Pad: Boolean);
 var
   ArgIndex: Integer;
   FloatValue: Extended;
-  StringValue: string;
-  Buffer: array[0..19] of Char;
+  StringValue: AnsiString;
+  Buffer: array[0..19] of AnsiChar;
   Len: Integer;
-  ResSource: PChar;
+  ResSource: PAnsiChar;
   ResLength: Integer;
-  Arg: PChar;
+  Arg: PAnsiChar;
   ArgType: TExpressionType;
   ArgIsNull: Boolean;
   Precision: Integer;
@@ -2392,7 +2392,7 @@ begin
             begin
               StringValue := FormatDateTime('YYYYMMDD', PDateTime(Arg)^);
               Len := ResLength;
-              ResSource := pChar(StringValue);
+              ResSource := PAnsiChar(StringValue);
             end;
           end;
         end;
@@ -2461,11 +2461,19 @@ end;
 procedure FuncCDOW(Param: PExpressionRec);
 var
   ADate: TDateTime;
+  ADayOfWeek: Word;
   TempStr: AnsiString;
 begin
   ADate := PDateTimeRec(Param^.Args[0])^.DateTime;
   if ADate <> 0 then
-    TempStr := ShortDayNames[DayOfWeek(ADate)]
+  begin
+    ADayOfWeek := DayOfWeek(ADate);
+    {$ifdef DELPHI_XE}
+    TempStr := FormatSettings.ShortDayNames[ADayOfWeek];
+    {$else}
+    TempStr := ShortDayNames[ADayOfWeek];
+    {$endif}
+  end
   else
     TempStr := '   ';
   Param^.Res.Append(PAnsiChar(TempStr), Length(TempStr));
@@ -2573,8 +2581,8 @@ begin
     Param^.Res.Append(Param^.Args[0], dbfStrLen(Param^.Args[0]))
   else
   begin
-    TempStr := TrimLeft(Param^.Args[0]);
-    Param^.Res.Append(PChar(TempStr), Length(TempStr));
+    TempStr := dbfTrimLeft(Param^.Args[0]);
+    Param^.Res.Append(PAnsiChar(TempStr), Length(TempStr));
   end;
 end;
 
@@ -2676,22 +2684,22 @@ begin
     Param^.Res.Append(Param^.Args[0], dbfStrLen(Param^.Args[0]))
   else
   begin
-    TempStr := TrimRight(Param^.Args[0]);
-    Param^.Res.Append(pchar(TempStr), Length(TempStr));
+    TempStr := dbfTrimRight(Param^.Args[0]);
+    Param^.Res.Append(PAnsiChar(TempStr), Length(TempStr));
   end;
 end;
 
 {$I dbf_soundex.inc}
 procedure FuncSoundex(Param: PExpressionRec);
 var
-  Src: pchar;
+  Src: PAnsiChar;
   Dest: AnsiString;
 begin
   with Param^ do
   begin
     Src := Param^.Args[0];
     Dest := Soundex(src);
-    Param^.Res.Append(pchar(Dest), Length(Dest));
+    Param^.Res.Append(PAnsiChar(Dest), Length(Dest));
   end;
 end;
 
@@ -2706,7 +2714,7 @@ var
   TempStr: AnsiString;
   Code: Integer;
 begin
-  TempStr := TrimLeft(Param^.Args[0]);
+  TempStr := dbfTrimLeft(Param^.Args[0]);
   Index := 0;
   while (Index<Length(TempStr)) and (TempStr[Succ(Index)] in [DBF_ZERO..DBF_NINE, DBF_POSITIVESIGN, DBF_NEGATIVESIGN, DBF_DECIMAL]) do
     Inc(Index);
