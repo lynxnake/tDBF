@@ -351,7 +351,7 @@ begin
 //          FFileCodePage := GetIntFromStrLength(LangStr+2, 3, 0);
             StrToInt32Width(Integer(FFileCodePage), LangStr+2, 3, 0);
             if (Ord(LangStr[5]) >= Ord('0')) and (Ord(LangStr[5]) <= Ord('9')) then
-              FFileCodePage := FFileCodePage * 10 + Ord(LangStr[5]) - Ord('0');
+              FFileCodePage := FFileCodePage * 10 + Ord(LangStr[5]) {%H-}- Ord('0');
           end;
         end else
         if dbfStrLComp(LangStr, 'FOX', 3) = 0 then
@@ -802,7 +802,7 @@ begin
 
   //FillHeader(0);
   lDataHdr := PDbfHdr(Header);
-  GetLocalTime(SystemTime);
+  GetLocalTime(SystemTime{%H-});
   lDataHdr^.Year := SystemTime.wYear - 1900;
   lDataHdr^.Month := SystemTime.wMonth;
   lDataHdr^.Day := SystemTime.wDay;
@@ -953,7 +953,7 @@ begin
       for I := 0 to lFieldPropsHdr.NumStdProps - 1 do
       begin
         // read property data
-        ReadBlock(@lStdProp, SizeOf(lStdProp), lFieldOffset+I*SizeOf(lStdProp));
+        ReadBlock(@lStdProp, SizeOf(lStdProp), lFieldOffset+I*SizeOf(lStdProp)){%H-};
         // is this a constraint?
         if lStdProp.FieldOffset = 0 then
         begin
@@ -986,7 +986,7 @@ begin
           end;
           // get data for this property
           if dataPtr <> nil then
-            ReadBlock(dataPtr, lStdProp.DataSize, lPropHdrOffset + lStdProp.DataOffset);
+            ReadBlock(dataPtr, lStdProp.DataSize, lPropHdrOffset + lStdProp.DataOffset){%H-};
         end;
       end;
       // read custom properties...not implemented
@@ -1128,6 +1128,7 @@ begin
       SysUtils.DeleteFile(DestFileName);
       SysUtils.DeleteFile(ChangeFileExt(DestFileName, GetMemoExt));
     end else begin
+      NewBaseName:= '';
       I := 0;
       FindNextName(DestFileName, NewBaseName, I);
       SysUtils.RenameFile(DestFileName, NewBaseName);
@@ -1183,6 +1184,7 @@ begin
   CheckExclusiveAccess;
 
   // make up some temporary filenames
+  NewBaseName := '';
   lRecNo := 0;
   FindNextName(FileName, NewBaseName, lRecNo);
 
@@ -1652,6 +1654,7 @@ begin
       ftSmallInt:
       begin
 //      PSmallInt(Dst)^ := GetIntFromStrLength(Src, FieldSize, 0);
+        IntValue := 0;
         Result := StrToInt32Width(IntValue, Src, FieldSize, 0);
         if Result then
           Result := (IntValue >= Low(SmallInt)) and (IntValue <= High(SmallInt));
@@ -1669,6 +1672,7 @@ begin
       ftFloat, ftCurrency:
       begin
 //      PDouble(Dst)^ := DbfStrToFloat(Src, FieldSize);
+        FloatValue := 0;
         Result := StrToFloatWidth(FloatValue, Src, FieldSize, 0);
         if Result then
           PDouble(Dst)^ := FloatValue;
@@ -1679,8 +1683,11 @@ begin
 //        ldy := GetIntFromStrLength(PAnsiChar(Src) + 0, 4, 1);
 //        ldm := GetIntFromStrLength(PAnsiChar(Src) + 4, 2, 1);
 //        ldd := GetIntFromStrLength(PAnsiChar(Src) + 6, 2, 1);
+          ldy := 0;
           StrToInt32Width(ldy, PAnsiChar(Src) + 0, 4, 1);
+          ldm := 0;
           StrToInt32Width(ldm, PAnsiChar(Src) + 4, 2, 1);
+          ldd := 0;
           StrToInt32Width(ldd, PAnsiChar(Src) + 6, 2, 1);
           //if (ly<1900) or (ly>2100) then ly := 1900;
           //Year from 0001 to 9999 is possible
@@ -1698,8 +1705,11 @@ begin
           if (AFieldDef.FieldType = ftDateTime) and (DataType = ftDateTime) then
           begin
             // get hour, minute, second
+            lth := 0;
             StrToInt32Width(lth, PAnsiChar(Src) + 8,  2, 1);
+            ltm := 0;
             StrToInt32Width(ltm, PAnsiChar(Src) + 10, 2, 1);
+            lts := 0;
             StrToInt32Width(lts, PAnsiChar(Src) + 12, 2, 1);
             // encode
             try
@@ -2850,8 +2860,9 @@ begin
   TempCodePageList.Add(Pointer(StrToIntDef(string(CodePageString), -1))); // Avoid conversion to AnsiString
 {$ELSE}
 //TempCodePageList.Add(Pointer(GetIntFromStrLength(CodePageString, dbfStrLen(CodePageString), -1)));
+  IntValue := 0;
   if StrToInt32Width(IntValue, CodePageString, dbfStrLen(CodePageString), -1) then
-    TempCodePageList.Add(Pointer(IntValue));
+    TempCodePageList.Add({%H-}Pointer(IntValue));
 {$ENDIF}
 
   // continue enumeration
@@ -2919,7 +2930,7 @@ end;
 
 function TDbfGlobals.CodePageInstalled(ACodePage: Integer): Boolean;
 begin
-  Result := FCodePages.IndexOf(Pointer(ACodePage)) >= 0;
+  Result := FCodePages.IndexOf({%H-}Pointer(ACodePage)) >= 0;
 end;
 
 {$ifdef SUPPORT_FORMATSETTINGSTYPE}
@@ -2929,7 +2940,11 @@ begin
   Result := TFormatSettings.Create('');
 {$else}
 //  Result := TFormatSettings.Create(GetUserDefaultLCID);
+{$ifdef FPC}
+  Result := FormatSettings;
+{$else}
   GetLocaleFormatSettings(GetUserDefaultLCID, Result);
+{$endif}
 {$endif}
 end;
 {$endif SUPPORT_FORMATSETTINGSTYPE}

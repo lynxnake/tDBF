@@ -5,7 +5,7 @@ interface
 {$I dbf_common.inc}
 
 uses
-  Dbf_Common;
+  dbf_common;
 
 type
   TBal = -1..1;
@@ -101,6 +101,7 @@ begin
     Result := true;
     H := 0;
   end else begin
+    HR := 0;
     Result := CheckTree_T(X^.Left, H) and CheckTree_T(X^.Right, HR) and
         ((X^.Left = nil) or (X^.Left^.Data.ID < X^.Data.ID)) and
         ((X^.Right = nil) or (X^.Right^.Data.ID > X^.Data.ID)) and
@@ -114,6 +115,7 @@ function  CheckTree(X: PNode): Boolean;
 var
   H: Integer;
 begin
+  H := 0;
   Result := CheckTree_T(X, H);
 end;
 

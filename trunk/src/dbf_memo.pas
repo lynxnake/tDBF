@@ -66,12 +66,12 @@ type
 
   TNullMemoFile = class(TMemoFile)
   protected
-    procedure SetHeaderOffset(NewValue: Integer); override;
-    procedure SetRecordSize(NewValue: Integer); override;
-    procedure SetHeaderSize(NewValue: Integer); override;
+    procedure SetHeaderOffset({%H-}NewValue: Integer); override;
+    procedure SetRecordSize({%H-}NewValue: Integer); override;
+    procedure SetHeaderSize({%H-}NewValue: Integer); override;
 
-    function  LockSection(const Offset: TPagedFileOffset; const Length: Cardinal; const Wait: Boolean): Boolean; override;
-    function  UnlockSection(const Offset: TPagedFileOffset; const Length: Cardinal): Boolean; override;
+    function  LockSection(const {%H-}Offset: TPagedFileOffset; const {%H-}Length: Cardinal; const {%H-}Wait: Boolean): Boolean; override;
+    function  UnlockSection(const {%H-}Offset: TPagedFileOffset; const {%H-}Length: Cardinal): Boolean; override;
 
     function  GetBlockLen: Integer; override;
     function  GetMemoSize: Integer; override;

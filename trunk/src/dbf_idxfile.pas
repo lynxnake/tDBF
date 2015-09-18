@@ -22,7 +22,6 @@ uses
 {$endif}
   dbf_parser,
   dbf_prsdef,
-  dbf_cursor,
   dbf_collate,
   dbf_common;
 
@@ -367,8 +366,8 @@ type
     function  Update(RecNo: Integer; PrevBuffer, NewBuffer: TDbfRecordBuffer): Boolean;
     procedure Delete(RecNo: Integer; Buffer: TDbfRecordBuffer);
     function  CheckKeyViolation(Buffer: TDbfRecordBuffer; RecNo: Integer): Boolean;
-    procedure RecordDeleted(RecNo: Integer; Buffer: TDbfRecordBuffer);
-    function  RecordRecalled(RecNo: Integer; Buffer: TDbfRecordBuffer): Boolean;
+    procedure RecordDeleted({%H-}RecNo: Integer; {%H-}Buffer: TDbfRecordBuffer);
+    function  RecordRecalled({%H-}RecNo: Integer; {%H-}Buffer: TDbfRecordBuffer): Boolean;
     procedure DeleteIndex(const AIndexName: string);
     procedure RepageFile;
     procedure CompactFile;
@@ -459,7 +458,7 @@ const
   RecBOF = 0;
   RecEOF = MaxInt;
 
-  lcidBinary = $0A03;
+//lcidBinary = $0A03;
 
   KeyFormat_Expression = $00;
   KeyFormat_Data       = $10;
@@ -700,7 +699,7 @@ end;
 
 function LocaleCallBack(LocaleString: PAnsiChar): Integer; stdcall;
 begin
-  LCIDList.Add(Pointer(StrToInt(String('$'+LocaleString))));
+  LCIDList.Add({%H-}Pointer(StrToInt(String('$'+LocaleString))));
   Result := 1;
 end;
 
@@ -3413,6 +3412,7 @@ begin
   else
   begin
 //  KeyBuffer := FCurrentParser.ExtractFromBuffer(Buffer);
+    IsNull := False;
     KeyBuffer := FCurrentParser.ExtractFromBuffer(PAnsiChar(Buffer), RecNo, IsNull);
 //  if (KeyType = 'D') and (FCurrentParser.ExtractIsNull(Buffer)) then
     if (KeyType = 'D') and IsNull then
@@ -3655,6 +3655,7 @@ begin
   if FCanEdit and (PIndexHdr(FIndexHeader)^.KeyLen <> 0) then
   begin
     DeleteKey := ExtractKeyFromBuffer(PrevBuffer, RecNo);
+    FillChar(TempBuffer{%H-}, SizeOf(TempBuffer), 0);
     Move(DeleteKey^, TempBuffer, SwapWordLE(PIndexHdr(FIndexHeader)^.KeyLen));
     DeleteKey := @TempBuffer[0];
     InsertKey := ExtractKeyFromBuffer(NewBuffer, RecNo);
@@ -4160,7 +4161,7 @@ end;
 
 function TIndexFile.GetSequentialRecordCount: TSequentialRecNo;
 begin
-  Result := FRoot.Weight * (FRoot.HighIndex + 1);
+  Result := TSequentialRecNo(FRoot.Weight) * (TSequentialRecNo(FRoot.HighIndex) + 1);
 end;
 
 function TIndexFile.GetSequentialRecNo: TSequentialRecNo;
@@ -4473,7 +4474,7 @@ end;
 
 function TIndexFile.VersionPosition: TPagedFileOffset;
 begin
-  Result := TPagedFileOffset(FMdxTag.HeaderPageNo) * PageSize + Integer(@PIndexHdr(nil)^.Version);
+  Result := TPagedFileOffset(FMdxTag.HeaderPageNo) * PageSize + {%H-}TPagedFileOffset(@PIndexHdr(nil)^.Version);
 end;
 
 function TIndexFile.ReadVersion(PVersion: PByte): Boolean;

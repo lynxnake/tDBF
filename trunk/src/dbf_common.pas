@@ -391,7 +391,7 @@ begin
 {$ifdef SUPPORT_FORMATSETTINGS}
   Result := FormatSettings.DecimalSeparator;
 {$else SUPPORT_FORMATSETTINGS}
-  Result := SysUtils.DecimalSeparator;
+  Result := SysUtils.DecimalSeparator{%H-};
 {$endif SUPPORT_FORMATSETTINGS}
 end;
 
