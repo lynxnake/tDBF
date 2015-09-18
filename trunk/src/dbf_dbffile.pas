@@ -214,6 +214,9 @@ uses
 {$ifdef SUPPORT_MATH_UNIT}
   Math,
 {$endif}
+{$IFDEF DELPHI_XE2}
+  System.Types,
+{$ENDIF}
   dbf_AnsiStrings,
   dbf_str, dbf_lang, dbf_prssupp, dbf_prsdef;
 
@@ -2837,8 +2840,10 @@ var
 // PChar = PWideChar for Unicode, PAnsiChar otherwise
 
 function CodePagesProc(CodePageString: PChar): Cardinal; stdcall; // PChar intended here
+{$IFNDEF WINAPI_IS_UNICODE}
 var
   IntValue: Integer;
+{$ENDIF}
 begin
   // add codepage to list
 {$IFDEF WINAPI_IS_UNICODE}
