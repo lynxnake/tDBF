@@ -1554,7 +1554,7 @@ var
   TempStr: AnsiString;
 begin
   // create in temporary string
-  TempStr := FormatDateTime('YYYYMMDD', PDateTimeRec(Param^.Args[0])^.DateTime);
+  TempStr := AnsiString(FormatDateTime('YYYYMMDD', PDateTimeRec(Param^.Args[0])^.DateTime));
   if Param^.ArgList[0]^.IsNullPtr^ then
     FillChar(PAnsiChar(TempStr)^, Length(TempStr), ' ');
   // copy to buffer
@@ -2390,7 +2390,7 @@ begin
               ResSource := @Buffer
             else
             begin
-              StringValue := FormatDateTime('YYYYMMDD', PDateTime(Arg)^);
+              StringValue := AnsiString(FormatDateTime('YYYYMMDD', PDateTime(Arg)^));
               Len := ResLength;
               ResSource := PAnsiChar(StringValue);
             end;
@@ -2469,9 +2469,9 @@ begin
   begin
     ADayOfWeek := DayOfWeek(ADate);
     {$ifdef DELPHI_XE}
-    TempStr := FormatSettings.ShortDayNames[ADayOfWeek];
+    TempStr := AnsiString(FormatSettings.ShortDayNames[ADayOfWeek]);
     {$else}
-    TempStr := ShortDayNames[ADayOfWeek];
+    TempStr := AnsiString(ShortDayNames[ADayOfWeek]);
     {$endif}
   end
   else
@@ -2720,10 +2720,10 @@ begin
     Inc(Index);
   SetLength(TempStr, Index);
   case Param^.ExprWord.ResultType of
-    etFloat: Val(TempStr, PDouble(Param^.Res.MemoryPos^)^, Code);
-    etInteger: Val(TempStr, PInteger(Param^.Res.MemoryPos^)^, Code);
+    etFloat: Val(string(TempStr), PDouble(Param^.Res.MemoryPos^)^, Code);
+    etInteger: Val(string(TempStr), PInteger(Param^.Res.MemoryPos^)^, Code);
 {$ifdef SUPPORT_INT64}
-    etLargeInt: Val(TempStr, PLargeInt(Param^.Res.MemoryPos^)^, Code);
+    etLargeInt: Val(string(TempStr), PLargeInt(Param^.Res.MemoryPos^)^, Code);
 {$endif}
   end;
 end;
