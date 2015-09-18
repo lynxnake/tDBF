@@ -384,6 +384,7 @@
 
 {$ifdef Delphi_7}
   {$define SUPPORT_NATIVEINT}
+  {$define SUPPORT_INT64_SEEK}
 {$endif}
 
 {$ifdef Delphi_2007}
@@ -415,12 +416,18 @@
 {$ifdef DELPHI_XE3}
   {$define FLOATREC_DIGITS_IS_BYTE}
   {$define SUPPORT_TVALUEBUFFER}
+  {$define SUPPORT_GENERICS_FIELDLIST}
 {$endif}
 
 {$ifdef DELPHI_XE4}
   {$define SUPPORT_TRECBUF}
   {$define SUPPORT_ANSISTRINGS_UNIT}
   {$define SUPPORT_TVALUEBUFFER_VAR}
+  {$define SUPPORT_CALCULATEFIELDS_NATIVEINT}
+{$endif}
+
+{$ifdef DELPHI_XE6}
+  {$define SUPPORT_FIELD_LIFECYCLES}
 {$endif}
 
 //------------------------------------------------------
@@ -452,6 +459,8 @@
   {$define SUPPORT_VARIANTS}
   {$define SUPPORT_SEPARATE_VARIANTS_UNIT}
   {$define SUPPORT_ROUNDTO}
+  {$define SUPPORT_INT64_SEEK}
+  {$define SUPPORT_FORMATSETTINGSTYPE}
 
   // FPC 2.0.x improvements
   {$ifdef VER2}
