@@ -76,8 +76,8 @@ type
     function  GetBlockLen: Integer; override;
     function  GetMemoSize: Integer; override;
     function  GetNextFreeBlock: Integer; override;
-    procedure SetNextFreeBlock(BlockNo: Integer); override;
-    procedure SetBlockLen(BlockLen: Integer); override;
+    procedure SetNextFreeBlock({%H-}BlockNo: Integer); override;
+    procedure SetBlockLen({%H-}BlockLen: Integer); override;
 
   public
     constructor Create(ADbfFile: pointer);
@@ -85,8 +85,8 @@ type
     procedure CloseFile; override;
     procedure OpenFile; override;
 
-    function  ReadRecord(IntRecNum: Integer; Buffer: Pointer): Integer; override;
-    procedure WriteRecord(IntRecNum: Integer; Buffer: Pointer); override;
+    function  ReadRecord({%H-}IntRecNum: Integer; {%H-}Buffer: Pointer): Integer; override;
+    procedure WriteRecord({%H-}IntRecNum: Integer; {%H-}Buffer: Pointer); override;
   end;
 
   PInteger = ^Integer;
