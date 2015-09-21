@@ -34,32 +34,39 @@ type
   TdbfTrimRight = function(const S: AnsiString): AnsiString;
 
 var
-  dbfStrLen: TdbfStrLen = nil;
-  dbfStrCopy: TdbfStrCopy = nil;
-  dbfStrLCopy: TdbfStrLCopy = nil;
-  dbfFloatToText: TdbfFloatToText = nil;
+  dbfStrLen: TdbfStrLen{ = nil};
+  dbfStrCopy: TdbfStrCopy{ = nil};
+  dbfStrLCopy: TdbfStrLCopy{ = nil};
+  dbfFloatToText: TdbfFloatToText{ = nil};
 {$IFDEF SUPPORT_FORMATSETTINGSTYPE}
-  dbfFloatToTextFmt: TdbfFloatToTextFmt = nil;
+  dbfFloatToTextFmt: TdbfFloatToTextFmt{ = nil};
 {$ENDIF}
-  dbfStrUpper: TdbfStrUpper = nil;
-  dbfStrLower: TdbfStrLower = nil;
-  dbfStrIComp: TdbfStrIComp = nil;
-  dbfStrLIComp: TdbfStrLIComp = nil;
-  dbfStrPos: TdbfStrPos = nil;
-  dbfStrLComp: TdbfStrLComp = nil;
-  dbfStrComp: TdbfStrComp = nil;
-  dbfStrScan: TdbfStrScan = nil;
+  dbfStrUpper: TdbfStrUpper{ = nil};
+  dbfStrLower: TdbfStrLower{ = nil};
+  dbfStrIComp: TdbfStrIComp{ = nil};
+  dbfStrLIComp: TdbfStrLIComp{ = nil};
+  dbfStrPos: TdbfStrPos{ = nil};
+  dbfStrLComp: TdbfStrLComp{ = nil};
+  dbfStrComp: TdbfStrComp{ = nil};
+  dbfStrScan: TdbfStrScan{ = nil};
 {$IFDEF SUPPORT_FORMATSETTINGSTYPE}
-  dbfTextToFloatFmt: TdbfTextToFloatFmt = nil;
+  dbfTextToFloatFmt: TdbfTextToFloatFmt{ = nil};
 {$ENDIF}
-  dbfTextToFloat: TdbfTextToFloat = nil;
-  dbfStrPLCopy: TdbfStrPLCopy = nil;
-  dbfTrimLeft: TdbfTrimLeft = nil;
-  dbfTrimRight: TdbfTrimRight = nil;
+  dbfTextToFloat: TdbfTextToFloat{ = nil};
+  dbfStrPLCopy: TdbfStrPLCopy{ = nil};
+  dbfTrimLeft: TdbfTrimLeft{ = nil};
+  dbfTrimRight: TdbfTrimRight{ = nil};
 
 implementation
 
 {$IFDEF SUPPORT_ANSISTRINGS_UNIT}
+uses
+  AnsiStrings;
+{$ENDIF}
+
+// XE2 has PAnsiChar versions of TrimLeft/TrimRight in AnsiStrings,
+// the other string manipulation functions are still in SysUtils
+{$IFDEF DELPHI_XE2}
 uses
   AnsiStrings;
 {$ENDIF}
@@ -142,8 +149,13 @@ begin
 {$ENDIF}
   dbfTextToFloat := SysUtils.TextToFloat;
   dbfStrPLCopy := SysUtils.StrPLCopy;
+{$IFDEF DELPHI_XE2}
+  dbfTrimLeft := AnsiStrings.TrimLeft;
+  dbfTrimRight := AnsiStrings.TrimRight;
+{$ELSE}
   dbfTrimLeft := SysUtils.TrimLeft;
   dbfTrimRight := SysUtils.TrimRight;
+{$ENDIF}
 end;
 {$endif}
 
