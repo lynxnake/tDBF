@@ -3201,7 +3201,7 @@ begin
   if FCursor is TIndexCursor then
     TIndexCursor(FCursor).IndexFile.ExtractKey(KeyBuffer)
   else
-    FillChar(KeyBuffer^, 1, 0); // FillChar handles the full range FPC/D5-XE8 etc.
+    KeyBuffer^ := #0;
 end;
 
 function TDbf.CompareKeys(Key1, Key2: PAnsiChar): Integer;
