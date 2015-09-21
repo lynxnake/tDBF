@@ -23,8 +23,8 @@ package tdbf_d5r;
 {$MINENUMSIZE 1}
 {$IMAGEBASE $400000}
 {$DESCRIPTION 'TDbf for Delphi 5 -runtime-'}
-{$IMPLICITBUILD OFF}
 {$RUNONLY}
+{$IMPLICITBUILD OFF}
 
 requires
   vcl50,
@@ -49,6 +49,7 @@ contains
   dbf_avl in '..\..\src\dbf_avl.pas',
   dbf_pgcfile in '..\..\src\dbf_pgcfile.pas',
   dbf_wtil in '..\..\src\dbf_wtil.pas',
-  dbf in '..\..\src\dbf.pas';
-  
+  dbf in '..\..\src\dbf.pas',
+  dbf_AnsiStrings in '..\..\src\dbf_ansistrings.pas';
+
 end.
