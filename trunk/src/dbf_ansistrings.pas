@@ -1,4 +1,4 @@
-unit dbf_AnsiStrings;
+unit dbf_ansistrings;
 
 {$I dbf_common.inc}
 

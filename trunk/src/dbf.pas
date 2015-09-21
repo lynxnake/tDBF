@@ -540,7 +540,7 @@ uses
 {$ifdef SUPPORT_SEPARATE_VARIANTS_UNIT}
   Variants,
 {$endif}
-  dbf_AnsiStrings,
+  dbf_ansistrings,
   dbf_idxcur,
   dbf_memo,
   dbf_str;

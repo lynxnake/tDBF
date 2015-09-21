@@ -56,7 +56,7 @@ type
 implementation
 
 uses
-  dbf_AnsiStrings;
+  dbf_ansistrings;
 
 //==========================================================
 //============ TIndexCursor

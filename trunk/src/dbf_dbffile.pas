@@ -217,7 +217,7 @@ uses
 {$IFDEF DELPHI_XE2}
   System.Types,
 {$ENDIF}
-  dbf_AnsiStrings,
+  dbf_ansistrings,
   dbf_str, dbf_lang, dbf_prssupp, dbf_prsdef;
 
 const

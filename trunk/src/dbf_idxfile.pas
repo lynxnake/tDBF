@@ -442,7 +442,7 @@ function IndexNameNormalize(Value: string): string;
 implementation
 
 uses
-  dbf_AnsiStrings,
+  dbf_ansistrings,
   dbf_dbffile,
   dbf_fields,
   dbf_str,

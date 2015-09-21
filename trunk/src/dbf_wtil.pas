@@ -11,7 +11,7 @@ uses
 {$else}
   Libc, 
 {$endif}
-  dbf_AnsiStrings,
+  dbf_ansistrings,
   Types, SysUtils, Classes;
 
 const
