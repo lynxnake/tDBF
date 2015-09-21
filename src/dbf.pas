@@ -1482,7 +1482,9 @@ var
   I, newRecord: Integer;
 begin
   // inherited method checks required fields
+{$ifdef DELPHI_7} // perhaps ifdef DELPHI_6
   inherited;
+{$endif}
   // if internalpost is called, we know we are active
   pRecord := pDbfRecord(ActiveBuffer);
   // commit blobs
