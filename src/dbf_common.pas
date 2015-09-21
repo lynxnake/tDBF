@@ -180,11 +180,11 @@ implementation
 
 {$ifdef WINDOWS}
 uses
-  dbf_AnsiStrings,
+  dbf_ansistrings,
   Windows;
 {$else}
 uses
-  dbf_AnsiStrings;
+  dbf_ansistrings;
 {$endif}
 
 //====================================================================

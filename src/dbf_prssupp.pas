@@ -71,7 +71,7 @@ implementation
 
 uses
   SysUtils,
-  dbf_AnsiStrings;
+  dbf_ansistrings;
 
 destructor TOCollection.Destroy;
 begin

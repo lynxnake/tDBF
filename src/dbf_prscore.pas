@@ -276,7 +276,7 @@ var
 implementation
 
 uses
-  dbf_AnsiStrings;
+  dbf_ansistrings;
 
 procedure LinkVariable(ExprRec: PExpressionRec);
 begin
