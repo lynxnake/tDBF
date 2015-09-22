@@ -421,6 +421,8 @@
 
 {$ifdef DELPHI_XE4}
   {$define SUPPORT_TRECBUF}
+  // Note for SUPPORT_ANSISTRINGS_UNIT: AnsiStrings.pas was shipped since D2009,
+  // but SysUtils supported PAnsiChar until XE3
   {$define SUPPORT_ANSISTRINGS_UNIT}
   {$define SUPPORT_TVALUEBUFFER_VAR}
   {$define SUPPORT_CALCULATEFIELDS_NATIVEINT}
