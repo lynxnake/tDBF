@@ -61,14 +61,15 @@ implementation
 
 {$IFDEF SUPPORT_ANSISTRINGS_UNIT}
 uses
-  AnsiStrings;
-{$ENDIF}
-
+  AnsiStrings;  // For XE4 and up, not for FPC
+{$ELSE}
 // XE2 has PAnsiChar versions of TrimLeft/TrimRight in AnsiStrings,
-// the other string manipulation functions are still in SysUtils
-{$IFDEF DELPHI_XE2}
+// the other string manipulation functions are still in SysUtils.
+// It is assumed that the same applies for D2009-XE3 (but this is not tested!).
+{$IFDEF WINAPI_IS_UNICODE}
 uses
   AnsiStrings;
+{$ENDIF}
 {$ENDIF}
 
 {$IFDEF SUPPORT_ANSISTRINGS_UNIT}
@@ -149,7 +150,7 @@ begin
 {$ENDIF}
   dbfTextToFloat := SysUtils.TextToFloat;
   dbfStrPLCopy := SysUtils.StrPLCopy;
-{$IFDEF DELPHI_XE2}
+{$IFDEF WINAPI_IS_UNICODE}
   dbfTrimLeft := AnsiStrings.TrimLeft;
   dbfTrimRight := AnsiStrings.TrimRight;
 {$ELSE}
