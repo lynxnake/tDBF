@@ -2789,7 +2789,7 @@ end;
 
 function TDbf.GetVersion: string;
 begin
-  Result := Format('%d.%02d', [TDBF_MAJOR_VERSION, TDBF_MINOR_VERSION]);
+  Result := DbfVersionString;
 end;
 
 procedure TDbf.SetVersion(const S: string);

@@ -12,7 +12,6 @@ implementation
 initialization
 
   STRING_FILE_NOT_FOUND               := 'Openen: bestand niet gevonden: "%s"';
-  STRING_VERSION                      := 'TDbf V%d.%d';
 
   STRING_RECORD_LOCKED                := 'Record in gebruik.';
   STRING_READ_ERROR                   := 'Error tijdens lezen.';

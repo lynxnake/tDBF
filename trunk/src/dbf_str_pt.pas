@@ -12,7 +12,6 @@ implementation
 initialization
 
   STRING_FILE_NOT_FOUND               := 'Abertura: arquivo não encontrado: "%s".';
-  STRING_VERSION                      := 'TDbf V%d.%d';
 
   STRING_RECORD_LOCKED                := 'Registro bloqueado.';
   STRING_READ_ERROR                   := 'Erro de leitura.';
