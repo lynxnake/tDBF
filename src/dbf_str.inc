@@ -1,6 +1,5 @@
 var
   STRING_FILE_NOT_FOUND: string;
-  STRING_VERSION: string;
 
   STRING_RECORD_LOCKED: string;
   STRING_READ_ERROR: string;

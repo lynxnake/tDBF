@@ -15,7 +15,6 @@ implementation
 initialization
 
   STRING_FILE_NOT_FOUND               := 'Файл "%s" не существует. Открыть невозможно.';
-  STRING_VERSION                      := 'TDbf V%d.%d';
 
   STRING_RECORD_LOCKED                := 'Запись (строка таблицы) заблокирована.';
   STRING_READ_ERROR                   := 'Ошибка чтения с диска.';

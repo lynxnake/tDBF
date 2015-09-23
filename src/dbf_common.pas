@@ -16,10 +16,13 @@ uses
 
 
 const
-  TDBF_MAJOR_VERSION      = 6;
-  TDBF_MINOR_VERSION      = 9;
-  TDBF_SUB_MINOR_VERSION  = 2;
+  TDBF_MAJOR_VERSION      = 7;
+  TDBF_MINOR_VERSION      = 0;
+  TDBF_SUB_MINOR_VERSION  = 0;
 
+function DbfVersionString: string;
+
+const
   TDBF_TABLELEVEL_FOXPRO = 25;
 
   JulianDateDelta = 1721425; { number of days between 1.1.4714 BC and "0" }
@@ -186,6 +189,15 @@ uses
 uses
   dbf_ansistrings;
 {$endif}
+
+//====================================================================
+
+function DbfVersionString: string;
+begin
+  Result := Format('TDbf %d.%d', [TDBF_MAJOR_VERSION, TDBF_MINOR_VERSION]);
+  if TDBF_SUB_MINOR_VERSION <> 0 then
+    {%H-}Result := Result + Format('.%d', [TDBF_SUB_MINOR_VERSION]);
+end;
 
 //====================================================================
 

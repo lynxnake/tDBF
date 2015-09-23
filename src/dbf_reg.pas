@@ -265,7 +265,7 @@ type
 procedure TVersionProperty.Edit; {override;}
 begin
   ShowMessage(
-    Format(STRING_VERSION,[TDBF_MAJOR_VERSION, TDBF_MINOR_VERSION]) +
+      DbfVersionString +
       ' : a dBase component'+#13+
       'for Delphi and c++ builder with no BDE.'+#13+
       #13 +

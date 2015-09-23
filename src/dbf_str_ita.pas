@@ -12,7 +12,6 @@ implementation
 initialization
 
   STRING_FILE_NOT_FOUND               := 'Apertura: file non trovato: "%s"';
-  STRING_VERSION                      := 'TDbf V%d.%d';
 
   STRING_RECORD_LOCKED                := 'Record già in uso.';
   STRING_READ_ERROR                   := 'Errore di lettura.';
