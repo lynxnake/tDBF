@@ -1042,7 +1042,7 @@ begin
       FBlobStreams^[I].Free;
     FreeMemAndNil(Pointer(FBlobStreams));
   end;
-  FreeRecordBuffer(TdbfRecordBuffer(FTempBuffer));
+  FreeRecordBuffer(FTempBuffer);
   // disconnect field objects
   BindFields(false);
   // Destroy field object (if not persistent)
@@ -2072,10 +2072,10 @@ begin
     if GoForward then
     begin
       if Restart then FCursor.First;
-      Result := GetRecord(FTempBuffer, gmNext, false) = grOK;
+      Result := GetRecord(TDbfRecBuf(FTempBuffer), gmNext, false) = grOK;
     end else begin
       if Restart then FCursor.Last;
-      Result := GetRecord(FTempBuffer, gmPrior, false) = grOK;
+      Result := GetRecord(TDbfRecBuf(FTempBuffer), gmPrior, false) = grOK;
     end;
   finally
     FFindRecordFilter := false;
