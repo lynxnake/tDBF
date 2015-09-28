@@ -2579,7 +2579,7 @@ begin
   FCursor.First;
   repeat
     // repeatedly retrieve next record until eof encountered
-    getRes := GetRecord(FTempBuffer, gmNext, true);
+    getRes := GetRecord(TDbfRecBuf(FTempBuffer), gmNext, true);
     if getRes = grOk then
       inc(Result);
   until getRes <> grOk;
