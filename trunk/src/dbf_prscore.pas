@@ -2627,9 +2627,9 @@ begin
       NewWord := True
     else
     begin
+      Buffer[0] := P^;
       if NewWord then
       begin
-        Buffer[0] := P^;
         P^ := dbfStrUpper(Buffer)^;
         NewWord := False;
       end
