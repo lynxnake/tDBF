@@ -1,0 +1,60 @@
+package tdbf;
+
+{$R *.res}
+{$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO OFF}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION OFF}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES ON}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DEFINE DEBUG}
+{$ENDIF IMPLICITBUILDING}
+{$DESCRIPTION 'TDbf for Delphi XE8 runtime'}
+{$LIBSUFFIX '230'}
+{$RUNONLY}
+{$IMPLICITBUILD OFF}
+
+requires
+  rtl,
+  dbrtl,
+  vcl;
+
+contains
+  dbf_collate in '..\..\src\dbf_collate.pas',
+  dbf_common in '..\..\src\dbf_common.pas',
+  dbf_str in '..\..\src\dbf_str.pas',
+  dbf_cursor in '..\..\src\dbf_cursor.pas',
+  dbf_parser in '..\..\src\dbf_parser.pas',
+  dbf_prsdef in '..\..\src\dbf_prsdef.pas',
+  dbf_prscore in '..\..\src\dbf_prscore.pas',
+  dbf_prssupp in '..\..\src\dbf_prssupp.pas',
+  dbf_pgfile in '..\..\src\dbf_pgfile.pas',
+  dbf_memo in '..\..\src\dbf_memo.pas',
+  dbf_lang in '..\..\src\dbf_lang.pas',
+  dbf_fields in '..\..\src\dbf_fields.pas',
+  dbf_idxfile in '..\..\src\dbf_idxfile.pas',
+  dbf_idxcur in '..\..\src\dbf_idxcur.pas',
+  dbf_dbffile in '..\..\src\dbf_dbffile.pas',
+  dbf_avl in '..\..\src\dbf_avl.pas',
+  dbf_pgcfile in '..\..\src\dbf_pgcfile.pas',
+  dbf_wtil in '..\..\src\dbf_wtil.pas',
+  dbf in '..\..\src\dbf.pas',
+  dbf_AnsiStrings in '..\..\src\dbf_AnsiStrings.pas';
+
+end.
