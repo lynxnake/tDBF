@@ -1482,8 +1482,12 @@ var
   I, newRecord: Integer;
 begin
   // inherited method checks required fields
+{$ifdef FPC}
+  inherited;
+{$else}
 {$ifdef DELPHI_7} // perhaps ifdef DELPHI_6
   inherited;
+{$endif}
 {$endif}
   // if internalpost is called, we know we are active
   pRecord := pDbfRecord(ActiveBuffer);
