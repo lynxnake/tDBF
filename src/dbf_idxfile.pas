@@ -2309,7 +2309,7 @@ begin
   // parse index expression; if it cannot be parsed, why bother making index?
   TempParser := TDbfIndexParser.Create(FDbfFile);
   try
-    TempParser.ParseExpression(String(FieldDesc));
+    TempParser.ParseExpression(FieldDesc);
     // check if result type is correct
     fieldType := TempParser.KeyType;
   finally
@@ -2357,7 +2357,7 @@ begin
     WriteFileHeader;
     // store selected index
     FSelectedIndex := tagNo;
-    FIndexName := String(TagName);
+    FIndexName := TagName;
     // store new headerno
     FHeaderPageNo := GetNewPageNo;
     FTempMdxTag.HeaderPageNo := FHeaderPageNo;
@@ -2372,7 +2372,7 @@ begin
   ClearIndex;
 
   // parse expression, we know it's parseable, we've checked that
-  FCurrentParser.ParseExpression(String(FieldDesc));
+  FCurrentParser.ParseExpression(FieldDesc);
 
   // looked up index expression: now we can edit
 //  FIsExpression := ixExpression in Options;
