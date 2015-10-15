@@ -37,6 +37,13 @@ const
   MaxIndexKeyLen = 100;
 
 type
+  // TDbfPointerList (almost) matches TDbfPointerList of older versions of Delphi,
+  // up to at least D2009 and perhaps XE as well.
+  // Delphi XE2 and up use dynamic arrays, not compatible with fixed length arrays:
+  // TPointerList = array of Pointer;
+  PDbfPointerList = ^TDbfPointerList;
+  TDbfPointerList = array[0..(MaxInt div 16) - 1] of Pointer;
+
   EDbfIndexError = class(EDbfError);
 
   TIndexPage = class;
@@ -83,7 +90,7 @@ type
   private
     function GetKeyType: AnsiChar;
   protected
-    FResultLen: Integer; 
+    FResultLen: Integer;
 
     function IsIndex: Boolean; override;
     procedure ValidateExpression(AExpression: string); override;
@@ -318,7 +325,7 @@ type
     procedure WalkLast;
     function  WalkPrev: boolean;
     function  WalkNext: boolean;
-    
+
     function  CompareKeysDate(Key1, Key2: PAnsiChar): Integer;
     function  CompareKeysLevel7(Key1, Key2: PAnsiChar): Integer;
     function  CompareKeysNumericNDX(Key1, Key2: PAnsiChar): Integer;
@@ -373,9 +380,9 @@ type
     procedure CompactFile;
     procedure BulkLoadIndex;
     procedure BulkLoadIndexes;
-    procedure MergeSort(List: pPointerList; L, R: Integer);
-    procedure MergeSort2(List, TempList: pPointerList; L, R: Integer);
-    procedure MergeSort3(List, TempList: pPointerList; L0, L1, R0, R1: Integer);
+    procedure MergeSort(List: PDbfPointerList; L, R: Integer);
+    procedure MergeSort2(List, TempList: PDbfPointerList; L, R: Integer);
+    procedure MergeSort3(List, TempList: PDbfPointerList; L0, L1, R0, R1: Integer);
     procedure MergeSortCheckCancel;
     function  MergeSortCompare(Item1, Item2: Pointer): Integer;
     procedure PrepareRename(NewFileName: string);
@@ -1545,7 +1552,7 @@ end;
 function TNdxPage.GetEntry(AEntryNo: Integer): Pointer;
 begin
   // get base + offset
-  Result := PAnsiChar(@PNdxPage(PageBuffer)^.FirstEntry) + 
+  Result := PAnsiChar(@PNdxPage(PageBuffer)^.FirstEntry) +
     (SwapWordLE(PIndexHdr(FIndexFile.IndexHeader)^.KeyRecLen) * AEntryNo);
 end;
 
@@ -2142,7 +2149,7 @@ begin
     DecodeDate(Now, year, month, day);
     if FIndexVersion = xBaseVII then
       PMdxHdr(Header)^.MdxVersion := 3
-    else  
+    else
       PMdxHdr(Header)^.MdxVersion := 2;
     PMdxHdr(Header)^.Year := year - 1900;
     PMdxHdr(Header)^.Month := month;
@@ -2272,7 +2279,7 @@ begin
   // now adjust keylen to align on DWORD boundaries
   PIndexHdr(FIndexHeader)^.KeyRecLen := SwapWordLE((SwapWordLE(
     PIndexHdr(FIndexHeader)^.KeyLen) + FEntryHeaderSize + 3) and not 3);
-  PIndexHdr(FIndexHeader)^.NumKeys := SwapWordLE((RecordSize - FPageHeaderSize) div 
+  PIndexHdr(FIndexHeader)^.NumKeys := SwapWordLE((RecordSize - FPageHeaderSize) div
     SwapWordLE(PIndexHdr(FIndexHeader)^.KeyRecLen));
 end;
 
@@ -3039,9 +3046,9 @@ begin
     BulkLoadIndex;
 end;
 
-procedure TIndexFile.MergeSort(List: pPointerList; L, R: Integer);
+procedure TIndexFile.MergeSort(List: PDbfPointerList; L, R: Integer);
 var
-  TempList: pPointerList;
+  TempList: PDbfPointerList;
   Size: Integer;
 begin
   if L < R then
@@ -3057,7 +3064,7 @@ begin
   end;
 end;
 
-procedure TIndexFile.MergeSort2(List, TempList: pPointerList; L, R: Integer);
+procedure TIndexFile.MergeSort2(List, TempList: PDbfPointerList; L, R: Integer);
 var
   C: Integer;
   M: Integer;
@@ -3077,7 +3084,7 @@ begin
   end;
 end;
 
-procedure TIndexFile.MergeSort3(List, TempList: pPointerList; L0, L1, R0, R1: Integer);
+procedure TIndexFile.MergeSort3(List, TempList: PDbfPointerList; L0, L1, R0, R1: Integer);
 var
   I: Integer;
 
@@ -3886,6 +3893,19 @@ begin
     if done = 2 then
       TempPage := TempPage.LowerPage;
   until done = 0;
+
+  // For a descending index we actually might have found an item smaller than the key.
+  // In that case, return the preceding item.
+  if not AInsert and FIsDescending then
+  begin
+    if (TempPage.EntryNo>TempPage.LowIndex) and (Result<>0)then
+    begin
+      TempPage.EntryNo := TempPage.EntryNo-1;
+      Result := -TempPage.MatchKey;
+    end
+    else
+      Result := -Result;
+  end;
 end;
 
 function TIndexFile.MatchKey(UserKey: PAnsiChar): Integer;
@@ -4161,7 +4181,7 @@ end;
 
 function TIndexFile.GetSequentialRecordCount: TSequentialRecNo;
 begin
-  Result := TSequentialRecNo(FRoot.Weight) * (TSequentialRecNo(FRoot.HighIndex) + 1);
+  Result := FRoot.Weight * (TSequentialRecNo(FRoot.HighIndex) + 1);
 end;
 
 function TIndexFile.GetSequentialRecNo: TSequentialRecNo;
