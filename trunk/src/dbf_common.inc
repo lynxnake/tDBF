@@ -407,6 +407,7 @@
 {$ifdef Delphi_7}
   {$define SUPPORT_NATIVEINT}
   {$define SUPPORT_INT64_SEEK}
+  {$define SUPPORT_ROUNDTO}
 {$endif}
 
 {$ifdef Delphi_2007}
@@ -424,10 +425,6 @@
   {$define SUPPORT_TRECORDBUFFER}
   {$define SUPPORT_CHARINSET}
   {$define SUPPORT_MAXLISTSIZEDEPRECATED}
-{$endif}
-
-{$ifdef Delphi_2010}
-  {$define SUPPORT_ROUNDTO} // RoundTo was included with 2010 it seems
 {$endif}
 
 {$ifdef Delphi_XE}
