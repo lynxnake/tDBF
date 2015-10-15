@@ -2323,46 +2323,52 @@ var
   lIndexDef: TDbfIndexDef;
   lIndexFile, lSaveIndexFile: TIndexFile;
 begin
-  lCursor := nil;
-  lSaveCursor := nil;
-  lIndexFile := nil;
-  lSaveIndexFile := FIndexFile;
-  if (FCursor is TIndexCursor)
-    and (TIndexCursor(FCursor).IndexFile.Expression = KeyFields) then
+  if not (loCaseInsensitive in Options) then
   begin
-    lCursor := FCursor;
-  end else begin
-    lIndexDef := FIndexDefs.GetIndexByField(KeyFields);
-    if lIndexDef <> nil then
+    lCursor := nil;
+    lSaveCursor := nil;
+    lIndexFile := nil;
+    lSaveIndexFile := FIndexFile;
+    if (FCursor is TIndexCursor)
+      and (TIndexCursor(FCursor).IndexFile.Expression = KeyFields) then
     begin
-      lIndexName := ParseIndexName(lIndexDef.IndexFile);
-      lIndexFile := FDbfFile.GetIndexByName(lIndexName);
-      if lIndexFile <> nil then
+      lCursor := FCursor;
+    end else begin
+      lIndexDef := FIndexDefs.GetIndexByField(KeyFields);
+      if lIndexDef <> nil then
       begin
-        lSaveCursor := FCursor;
-        lCursor := TIndexCursor.Create(lIndexFile);
-        lSaveIndexName := lIndexFile.IndexName;
-        lIndexFile.IndexName := lIndexName;
-        FIndexFile := lIndexFile;
+        lIndexName := ParseIndexName(lIndexDef.IndexFile);
+        lIndexFile := FDbfFile.GetIndexByName(lIndexName);
+        if lIndexFile <> nil then
+        begin
+          lSaveCursor := FCursor;
+          lCursor := TIndexCursor.Create(lIndexFile);
+          lSaveIndexName := lIndexFile.IndexName;
+          lIndexFile.IndexName := lIndexName;
+          FIndexFile := lIndexFile;
+        end;
       end;
     end;
-  end;
-  if lCursor <> nil then
-  begin
-    FCursor := lCursor;
-    Result := LocateRecordIndex(KeyFields, KeyValues, Options);
-    if lSaveCursor <> nil then
+    if (lCursor <> nil) then
     begin
-      FCursor.Free;
-      FCursor := lSaveCursor;
-    end;
-    if lIndexFile <> nil then
-    begin
-      FLocateRecNo := FIndexFile.PhysicalRecNo;
-      lIndexFile.IndexName := lSaveIndexName;
-      FIndexFile := lSaveIndexFile;
-    end;
-  end else
+      FCursor := lCursor;
+      Result := LocateRecordIndex(KeyFields, KeyValues, Options);
+      if lSaveCursor <> nil then
+      begin
+        FCursor.Free;
+        FCursor := lSaveCursor;
+      end;
+      if lIndexFile <> nil then
+      begin
+        FLocateRecNo := FIndexFile.PhysicalRecNo;
+        lIndexFile.IndexName := lSaveIndexName;
+        FIndexFile := lSaveIndexFile;
+      end;
+    end
+    else
+      Result := LocateRecordLinear(KeyFields, KeyValues, Options);    
+  end
+  else
     Result := LocateRecordLinear(KeyFields, KeyValues, Options);
 end;
 
@@ -3261,7 +3267,7 @@ function TDbf.SearchKeyPChar(Key: PAnsiChar; SearchType: TSearchKeyType; KeyIsAN
 var
   StringBuf: array [0..MaxIndexKeyLen] of AnsiChar;
 begin
-  if FCursor = nil then
+  if (FCursor = nil) or not (FCursor is TIndexCursor) then
   begin
     Result := false;
     exit;
