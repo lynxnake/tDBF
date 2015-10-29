@@ -1,4 +1,4 @@
-unit Dbf_Collate;
+unit dbf_collate;
 
 {$i dbf_common.inc}
 
