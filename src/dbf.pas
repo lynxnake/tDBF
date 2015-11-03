@@ -1121,7 +1121,6 @@ var
   TempFieldDef: TDbfFieldDef;
   TempMdxFile: TIndexFile;
   BaseName, lIndexName: string;
-  lIndexDef: TDbfIndexDef;
 begin
   FieldDefs.Clear;
 
@@ -1166,12 +1165,6 @@ begin
     if FDbfFile.IndexNames.Objects[I] = TempMdxFile then
       if FIndexDefs.GetIndexByName(lIndexName) = nil then
         TempMdxFile.GetIndexInfo(lIndexName, FIndexDefs.Add);
-  end;
-  for I := Pred(FIndexDefs.Count) downto 0 do
-  begin
-    lIndexDef := FIndexDefs[I];
-    if FDbfFile.IndexNames.IndexOf(lIndexDef.IndexFile) < 0 then
-      lIndexDef.Free;
   end;
 end;
 
@@ -2920,14 +2913,16 @@ end;
 procedure TDbf.DeleteIndex(const AIndexName: string);
 var
   lIndexFileName: string;
+  lIndexDef: TDbfIndexDef;
 begin
   // extract absolute path if NDX file
   lIndexFileName := ParseIndexName(AIndexName);
   // try to delete index
   FDbfFile.DeleteIndex(lIndexFileName);
 
-  // refresh index defs
-  InternalInitFieldDefs;
+  // remove deleted index from index defs
+  lIndexDef := FIndexDefs.GetIndexByName(AIndexName);
+  lIndexDef.Free;
 end;
 
 procedure TDbf.OpenIndexFile(IndexFile: string);
