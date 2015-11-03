@@ -746,6 +746,7 @@ begin
         NewExprRec.ExprWord := Variable;
         NewExprRec.Oper := NewExprRec.ExprWord.ExprFunc;
         NewExprRec.Args[0] := NewExprRec.ExprWord.AsPointer;
+        NewExprRec.IsNullPtr := @NewExprRec.IsNull;
         CurrentRec := nil;
         DisposeList(ExprRec);
         ExprRec := NewExprRec;
