@@ -1,0 +1,71 @@
+History of TDBF DEMO APP:
+
+------------------------
+Authors:
+
+- Pascal Ganaye - upto V1.1
+- Micha Nelissen - from there
+
+thanks to various people helping on details
+
+------------------------
+V1.3.6
+
+- fixed: 'pack a table' packtable tries to get exclusive access
+- fixed: 'pack a table' show deleted records remembers cursor position
+
+------------------------
+V1.3.5
+
+- add *.dfm and *.res files
+
+------------------------
+V1.3.4
+
+- fixed building with BCB5 (DesignSize property in Index form)
+- changed website links
+- licensed the demo under GPL v2, see COPYING
+
+------------------------
+V1.3.3
+
+- added 'uses' Dbf_Common unit to implementation of Index unit
+
+------------------------
+V1.3.2
+
+- removed bogus references
+
+
+------------------------
+V1.3.1
+
+- dfm files added
+
+
+------------------------
+V1.3
+
+- uses clause modified to find new dbf_* files
+- more index examples: create expressions
+- works with TDbf 5.9.7
+
+
+------------------------
+V1.2.1
+
+- should now compile 'straight out of the box'
+- missing .dbt file included
+
+
+------------------------
+V1.2
+
+- works with TDbf 5.6.5
+- index form changed: range & search support added
+
+
+------------------------
+V1.1 and older
+
+- see website?
