@@ -74,6 +74,7 @@ var
 begin
   with Dbf1 do begin
     Close;
+    TableLevel := 7; // required for AutoInc field
     TableName := 'table1.dbf';
 // Method 2
     TempFieldDefs := TDbfFieldDefs.Create(Self);
