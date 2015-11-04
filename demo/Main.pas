@@ -194,7 +194,7 @@ begin
   DbfDemo.Active:=true;
   DbfDisco.Active:=true;
 
-  DBGrid1.Columns[0].Width := 200;
+  DBGrid1.Columns[0].Width := DBGrid1.ClientWidth;
 end;
 
 
