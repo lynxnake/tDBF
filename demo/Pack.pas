@@ -1,5 +1,7 @@
 unit Pack;
 
+{$I dbf_common.inc}
+
 interface
 
 uses
@@ -154,7 +156,11 @@ end;
 procedure TPackTableForm.RefreshInfo(Sender: TObject);
 var
   nbdeleted,nbnormal:integer;
-  b:string;
+{$IFDEF DELPHI_2009}
+  b: TBookmark;
+{$ELSE}
+  b: TBookmarkStr;
+{$ENDIF}
   OldShowDeleted:boolean;
 begin
   if batchMode then exit;
