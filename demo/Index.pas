@@ -100,12 +100,12 @@ end;
 
 procedure TIndexForm.ApplyButtonClick(Sender: TObject);
 begin
-  MainForm.DbfDisco.SetRangePChar(PChar(Edit1.Text), PChar(Edit2.Text));
+  MainForm.DbfDisco.SetRangePChar(PAnsiChar(AnsiString(Edit1.Text)), PAnsiChar(AnsiString(Edit2.Text)));
 end;
 
 procedure TIndexForm.SearchEditChange(Sender: TObject);
 begin
-  if MainForm.DbfDisco.SearchKeyPChar(PChar(SearchEdit.Text), stGreaterEqual) then
+  if MainForm.DbfDisco.SearchKeyPChar(PAnsiChar(AnsiString(SearchEdit.Text)), stGreaterEqual) then
     SearchResultLabel.Color := clGreen
   else
     SearchResultLabel.Color := clRed
