@@ -78,8 +78,14 @@ uses EditTopics, Simple, Index, Search, Filter, Calc, Schema, Schema2,
   
 
 procedure TMainForm.DbfDemoAfterScroll(DataSet: TDataSet);
+var
+  NameOfDemo: string;
 begin
-  DemoButton.Enabled:=length(trim(DbfDemo.FieldByName('DEMO').AsString))>0;
+  NameOfDemo := trim(DbfDemo.FieldByName('DEMO').AsString);
+  DemoButton.Enabled := length(NameOfDemo)>0;
+  if DemoButton.Enabled then
+    NameOfDemo := QuotedStr(NameOfDemo);
+  DemoButton.Caption := 'Demo ' + NameOfDemo + '...'
 end;
 
 procedure TMainForm.DemoButtonClick(Sender: TObject);
@@ -187,6 +193,8 @@ begin
   LabelVersion.Caption:='TDbf Version: '+DbfDemo.Version;
   DbfDemo.Active:=true;
   DbfDisco.Active:=true;
+
+  DBGrid1.Columns[0].Width := 200;
 end;
 
 
