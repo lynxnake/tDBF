@@ -1,4 +1,5 @@
-To install:
+To install
+==========
 
 Delphi / BCB / Kylix
 --------------------
@@ -23,3 +24,18 @@ TDbf units from the FPC distribution first, because lazarus will detect them,
 and while compiling, this will give problems. They're usually located in 
 fpc/units/fcl/dbf*.{o,ppu}. Then follow the procedure above, but selecting the
 package included in the tdbf directory: tdbf_l.lpk.
+
+To build the demo
+=================
+
+Delphi (requires version 5 or higher) / BCB / Kylix
+---------------------------------------------------
+
+1. Choose File -> Open Project
+2. Select demo/TDbf_Demo.dpr for Delphi or demo/tdbf_demo5.bpr for BCB
+3. Compile
+
+Lazarus
+-------
+
+There is currently no demo for Lazarus
