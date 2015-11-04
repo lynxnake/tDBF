@@ -43,7 +43,7 @@ var
 implementation
 
 uses
-  Main, Dbf_Common;
+  Main, Dbf_Common, multipleuse;
 
 {$R *.DFM}
 
@@ -75,6 +75,9 @@ end;
 procedure TIndexForm.RebuildButtonClick(Sender: TObject);
 begin
   // need exclusive access
+  MultipleUseForm.Dbf1.Close;
+  MultipleUseForm.Dbf2.Close;
+
   MainForm.DbfDisco.Close;
   MainForm.DbfDisco.Exclusive := true;
   MainForm.DbfDisco.Open;
@@ -94,6 +97,10 @@ begin
   MainForm.DbfDisco.Close;
   MainForm.DbfDisco.Exclusive := false;
   MainForm.DbfDisco.Open;
+  
+  MultipleUseForm.Dbf1.Open;
+  MultipleUseForm.Dbf2.Open;
+
   // show message
   Application.MessageBox('Index recreating done.', 'Done', MB_OK or MB_ICONINFORMATION);
 end;
