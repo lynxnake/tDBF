@@ -5,7 +5,7 @@ object MainForm: TMainForm
   VertScrollBar.Visible = False
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
-  Caption = 'TDbf Demo program v1.3.6'
+  Caption = 'Demo program for %s'
   ClientHeight = 432
   ClientWidth = 596
   Color = clBtnFace

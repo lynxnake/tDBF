@@ -176,6 +176,7 @@ procedure TMainForm.FormCreate(Sender: TObject);
 var
   path:string;
 begin
+  Caption := Format(Caption, [DbfDemo.Version]);
   path:=ExtractFilePath(Application.ExeName)+'data';
   createdir(path);
 (*
