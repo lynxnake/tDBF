@@ -9,6 +9,22 @@ Authors:
 thanks to various people helping on details
 
 ------------------------
+V7.0
+
+lploeger and paulenandrew
+- add demo to repository and use corresponding TDbf version in caption of main window
+- fix demo projects so that they compile without additional changes
+- add C++ Builder 10 Seattle project, C++ Builder demo now requires version 10 Seattle or higher
+- convert DFM files to text format, Delphi demo now requires version 5 or higher
+- use VCL/RTL runtime packages
+- fix "DbfDemo: Cannot modify a read-only dataset" error in 'memo' demo
+- fix "Invalid DBF file" error in 'create' demo
+- remove extra space from "Populate the field list  *"
+- remove horizonal scroll bar in "Select Topic" box of main window
+- fix incorrect index, causing incorrect searches by index
+- fix incorrect memo, causing incorrect rich text on main window
+
+------------------------
 V1.3.6
 
 - fixed: 'pack a table' packtable tries to get exclusive access
