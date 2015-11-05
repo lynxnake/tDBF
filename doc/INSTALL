@@ -1,14 +1,14 @@
-To install
-==========
+To install in the IDE
+=====================
 
-Delphi / BCB / Kylix
+Delphi / C++ Builder
 --------------------
 
 1. Choose File -> Open Project
-2. Select the runtime package for your version of delphi / bcb (see packages.txt)
+2. Select the runtime package for your version of Delphi / C++ Builder (see packages.txt)
 3. Compile
 4. Open the design package, and install it
-   (Note BCB 4 and Delphi 3 and 4 don't have run/designtime seperation)
+   (Note BCB 4 and Delphi 3 and 4 don't have run/designtime separation)
 5. All done.
 
 Lazarus
@@ -28,11 +28,13 @@ package included in the tdbf directory: tdbf_l.lpk.
 To build the demo
 =================
 
-Delphi (requires version 5 or higher) / BCB / Kylix
----------------------------------------------------
+Delphi / C++ Builder 
+--------------------
+
+Requires Delphi version 5 or higher or C++ Builder version 10 Seattle or higher
 
 1. Choose File -> Open Project
-2. Select demo/TDbf_Demo.dpr for Delphi or demo/tdbf_demo5.bpr for BCB
+2. Select demo/TDbf_Demo.dpr for Delphi or demo/tdbf_demo.cbproj for C++ Builder
 3. Compile
 
 Lazarus
