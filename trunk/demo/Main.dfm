@@ -1767,7 +1767,6 @@ object MainForm: TMainForm
         Options = []
       end>
     IndexName = 'ID'
-    ReadOnly = True
     TableName = 'tdbf_demo.dbf'
     TableLevel = 4
     AfterScroll = DbfDemoAfterScroll
