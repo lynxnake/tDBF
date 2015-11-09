@@ -2,7 +2,7 @@ object IndexForm: TIndexForm
   Left = 212
   Top = 131
   Width = 473
-  Height = 447
+  Height = 454
   Caption = 'Index Demo'
   Color = clBtnFace
   Constraints.MinHeight = 295

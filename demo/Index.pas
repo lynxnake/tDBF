@@ -81,8 +81,8 @@ begin
   MainForm.DbfDisco.Close;
   MainForm.DbfDisco.Exclusive := true;
   MainForm.DbfDisco.Open;
-  // create descending MDX index for author field
-  MainForm.DbfDisco.AddIndex('AUTHOR', 'AUTHOR', [ixDescending]);
+  // create MDX index for author field
+  MainForm.DbfDisco.AddIndex('AUTHOR', 'AUTHOR', []);
   // create NDX index for title field
   MainForm.DbfDisco.AddIndex('TITLE.NDX', 'TITLE', []);
   if ExpressionCheckBox.Checked then
