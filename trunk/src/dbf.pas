@@ -2345,7 +2345,7 @@ begin
         end;
       end;
     end;
-    if (lCursor <> nil) then
+    if (lCursor <> nil) and (not TIndexCursor(lCursor).IndexFile.IsDescending) then
     begin
       FCursor := lCursor;
       Result := LocateRecordIndex(KeyFields, KeyValues, Options);
