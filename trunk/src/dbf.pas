@@ -1754,12 +1754,15 @@ begin
   IndexName := oldIndexName;
 end;
 
-procedure TDbf.CopyFrom(DataSet: TDataSet; FileName: string; DateTimeAsString: Boolean; Level: Integer);
+procedure TDbf.CopyFrom(DataSet: TDataSet; FileName: string;
+  DateTimeAsString: Boolean; Level: Integer);
 begin
   BatchMove(DataSet, FileName, DateTimeAsString, Level, bmCopy, [], nil);
 end;
 
-procedure TDbf.BatchMove(DataSet: TDataSet; FileName: string; DateTimeAsString: Boolean; Level: Integer; Mode: TDbfBatchMode; Options: TDbfBatchOptions; FieldMappings: TStrings); // 02/25/2011 spb CR 18708
+procedure TDbf.BatchMove(DataSet: TDataSet; FileName: string;
+  DateTimeAsString: Boolean; Level: Integer; Mode: TDbfBatchMode;
+  Options: TDbfBatchOptions; FieldMappings: TStrings);
 var                                                                                                                                                                               // 03/08/2011 spb CR 18716
   lPhysFieldDefs, lFieldDefs: TDbfFieldDefs;                                                                                                                                      // 03/08/2011 pb  CR 18706
   lSrcField, lDestField: TField;
