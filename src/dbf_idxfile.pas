@@ -3893,19 +3893,6 @@ begin
     if done = 2 then
       TempPage := TempPage.LowerPage;
   until done = 0;
-
-  // For a descending index we actually might have found an item smaller than the key.
-  // In that case, return the preceding item.
-  if not AInsert and FIsDescending then
-  begin
-    if (TempPage.EntryNo>TempPage.LowIndex) and (Result<>0)then
-    begin
-      TempPage.EntryNo := TempPage.EntryNo-1;
-      Result := -TempPage.MatchKey;
-    end
-    else
-      Result := -Result;
-  end;
 end;
 
 function TIndexFile.MatchKey(UserKey: PAnsiChar): Integer;
