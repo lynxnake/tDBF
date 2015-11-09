@@ -1,14 +1,16 @@
 object CompatibilityForm: TCompatibilityForm
   Left = 245
   Top = 135
-  Width = 398
-  Height = 385
+  Width = 405
+  Height = 392
   Caption = 'CompatibilityForm'
+  Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
   Font.Style = []
+  OldCreateOrder = True
   PixelsPerInch = 96
   TextHeight = 13
   object Label1: TLabel
@@ -64,12 +66,10 @@ object CompatibilityForm: TCompatibilityForm
     TabOrder = 3
   end
   object Dbf1: TDbf
-    Version = 'TDbf V5.001'
-    Indexes = <>
-    OpenMode = omAutoCreate
-    Storage = stoFile
     FilePath = 'data\'
-    ShowDeleted = False
+    IndexDefs = <>
+    OpenMode = omAutoCreate
+    TableLevel = 5
     Left = 264
     Top = 8
   end

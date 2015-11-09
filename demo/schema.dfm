@@ -1,14 +1,16 @@
 object Schema1Form: TSchema1Form
   Left = 384
   Top = 305
-  Width = 640
-  Height = 434
+  Width = 647
+  Height = 441
   Caption = 'Delphi Database components schema'
+  Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
   Font.Style = []
+  OldCreateOrder = True
   PixelsPerInch = 96
   TextHeight = 13
   object Image1: TImage
