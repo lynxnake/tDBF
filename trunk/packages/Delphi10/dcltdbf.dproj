@@ -46,7 +46,7 @@
         <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <DllSuffix>230</DllSuffix>
         <DCC_ImageBase>00400000</DCC_ImageBase>
-        <DCC_Description>TDbf for Delphi XE8</DCC_Description>
+        <DCC_Description>TDbf for Delphi 10 Seattle</DCC_Description>
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;$(DCC_Namespace)</DCC_Namespace>
         <DCC_OutputNeverBuildDcps>true</DCC_OutputNeverBuildDcps>
         <GenPackage>true</GenPackage>
