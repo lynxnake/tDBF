@@ -25,7 +25,7 @@ package tdbf;
 {$IMAGEBASE $400000}
 {$DEFINE DEBUG}
 {$ENDIF IMPLICITBUILDING}
-{$DESCRIPTION 'TDbf for Delphi XE8 runtime'}
+{$DESCRIPTION 'TDbf for Delphi 10 Seattle runtime'}
 {$LIBSUFFIX '230'}
 {$RUNONLY}
 {$IMPLICITBUILD OFF}
