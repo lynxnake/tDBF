@@ -37,6 +37,7 @@ V7.0.1
 
 following changes thx paulenandrew:
 - fix field attributes for Free Pascal, ftAutoInc should be faReadOnly
+- enforce read only fields, ftAutoInc is read-only
 
 ------------------------
 V7.0

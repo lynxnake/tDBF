@@ -525,7 +525,9 @@ uses
   System.Generics.Collections,
 {$endif}
   SysUtils,
-{$ifndef FPC}
+{$ifdef FPC}
+  dbconst,
+{$else}
   DBConsts,
 {$endif}
 {$ifdef WINDOWS}
@@ -848,6 +850,8 @@ var
 begin
   if (Field.FieldNo >= 0) then
   begin
+    if Field.ReadOnly and not (State in [dsSetKey, dsFilter]) then
+      DatabaseErrorFmt({$ifdef FPC}SReadOnlyField{$else}SFieldReadOnly{$endif}, [Field.DisplayName]);
     if State = dsSetKey then
       Dst := @PDbfRecord(GetKeyBuffer)^.DeletedFlag
     else
