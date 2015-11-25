@@ -282,7 +282,9 @@ begin
     // what a shame :-)
 {$ifdef SUPPORT_FIELDDEF_ATTRIBUTES}
     DbDest.Attributes := [];
+{$ifndef FPC}
     DbDest.ChildDefs.Clear;
+{$endif}
 {$endif}
     DbDest.DataType := FFieldType;
     DbDest.Required := FRequired;
