@@ -741,7 +741,7 @@ end;
 
 function TDbf.AllocRecordBuffer: TDbfRecordBuffer; {override virtual abstract from TDataset}
 begin
-  GetMem(Result, SizeOf(TDbfRecordHeader)+FDbfFile.RecordSize+CalcFieldsSize+1);
+  GetMem(Result, SizeOf(TDbfRecordHeader) + RecordSize + CalcFieldsSize + 1);
 end;
 
 procedure TDbf.FreeRecordBuffer(var Buffer: TDbfRecordBuffer); {override virtual abstract from TDataset}
@@ -3399,7 +3399,7 @@ function TDbf.GetKeyBuffer: PAnsiChar;
 var
   Len: Integer;
 begin
-  Len := SizeOf(TDbfRecordHeader) + RecordSize;
+  Len := SizeOf(TDbfRecordHeader) + RecordSize + CalcFieldsSize + 1;
   if (FKeyBuffer = nil) then
     GetMem(FKeyBuffer, Len)
   else

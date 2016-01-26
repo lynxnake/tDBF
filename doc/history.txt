@@ -33,6 +33,12 @@ BUGS & WARNINGS
 
 
 ------------------------
+V7.0.2
+
+following changes thx paulenandrew:
+- fix potential Access Violation caused by heap corruption if there is a calculated field and SetKey is used
+
+------------------------
 V7.0.1
 
 following changes thx paulenandrew:
