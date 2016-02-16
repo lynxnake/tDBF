@@ -4466,7 +4466,7 @@ begin
   if NeedLocks and (FIndexVersion >= xBaseIV) then
   begin
     try
-      FRoot.Flush;
+      Flush;
       PVersion := @PIndexHdr(FIndexHeader).Version;
       if PVersion^ = High(PVersion^) then
         PVersion^ := 0
