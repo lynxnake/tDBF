@@ -38,6 +38,7 @@ V7.0.2
 following changes thx paulenandrew:
 - fix potential Access Violation caused by heap corruption if there is a calculated field and SetKey is used
 - flush all indexes (not just current or first one) after edit/insert/delete if table opened for shared access
+- correct conversion of integer value to text if it is outside the 32-bit signed range (introduced in v7.0, fixes bug 85)
 
 ------------------------
 V7.0.1
