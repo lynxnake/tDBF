@@ -4223,7 +4223,6 @@ var
 
   procedure MergeAppend(var J: Integer);
   begin
-    Inc(FProgressPosition);
     DoProgress(FProgressPosition, FProgressMax, STRING_PROGRESS_SORTING_RECORDS);
     TempList^[I] := List^[J];
     Inc(I);
@@ -4253,6 +4252,7 @@ begin
   KeyData1 := @PMdxEntry(Item1).KeyData;
   KeyData2 := @PMdxEntry(Item2).KeyData;
   Result:= CompareKeys(KeyData1, KeyData2);
+  Inc(FProgressPosition);
 end;
 
 procedure TIndexFile.CancelRange;
