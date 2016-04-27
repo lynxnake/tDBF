@@ -383,7 +383,6 @@ type
     procedure MergeSort(List: PDbfPointerList; L, R: Integer);
     procedure MergeSort2(List, TempList: PDbfPointerList; L, R: Integer);
     procedure MergeSort3(List, TempList: PDbfPointerList; L0, L1, R0, R1: Integer);
-    procedure MergeSortCheckCancel;
     function  MergeSortCompare(Item1, Item2: Pointer): Integer;
     procedure PrepareRename(NewFileName: string);
     procedure CalcRegenerateIndexes;
@@ -2992,9 +2991,13 @@ begin
           end;
           DoProgress(FProgressPosition, FProgressMax, STRING_PROGRESS_READINGRECORDS);
         end;
-        DoProgress(-1, FProgressMax, STRING_PROGRESS_SORTING_RECORDS);
+        FProgressPosition := 0;
+        FProgressMax := -1;
+        DoProgress(FProgressPosition, FProgressMax, STRING_PROGRESS_SORTING_RECORDS);
         MergeSort(PPEntries, 0, Pred(EntryCount));
-        DoProgress(-1, FProgressMax, STRING_PROGRESS_WRITING_RECORDS);
+        FProgressPosition := 0;
+        FProgressMax := EntryCount;
+        DoProgress(FProgressPosition, FProgressMax, STRING_PROGRESS_WRITING_RECORDS);
         if FUniqueMode = iuUnique then
           AUniqueMode := iuDistinct
         else
@@ -3009,6 +3012,7 @@ begin
           InsertCurrent(AUniqueMode);
           Inc(PAnsiChar(PPEntry), SizeOf(Pointer));
           Inc(EntryIndex);
+          Inc(FProgressPosition);
           DoProgress(FProgressPosition, FProgressMax, STRING_PROGRESS_WRITING_RECORDS);
         end;
       end;
@@ -3090,7 +3094,8 @@ var
 
   procedure MergeAppend(var J: Integer);
   begin
-    MergeSortCheckCancel;
+    Inc(FProgressPosition);
+    DoProgress(FProgressPosition, FProgressMax, STRING_PROGRESS_SORTING_RECORDS);
     TempList^[I] := List^[J];
     Inc(I);
     Inc(J);
@@ -3109,11 +3114,6 @@ begin
     MergeAppend(L0);
   while R0 <= R1 do
     MergeAppend(R0);
-end;
-
-procedure TIndexFile.MergeSortCheckCancel;
-begin
-  DoProgress(FProgressPosition, FProgressMax, STRING_PROGRESS_SORTING_RECORDS);
 end;
 
 function TIndexFile.MergeSortCompare(Item1, Item2: Pointer): Integer;
