@@ -2926,13 +2926,15 @@ var
   BufferList: TList;
   Index: Integer;
   AUniqueMode: TIndexUniqueType;
+  RecNoReading: Integer;
+  RecordCountReading: Integer;
 begin
   ADbfFile := TDbfFile(FDbfFile);
-  FProgressMax := ADbfFile.RecordCount;
+  RecordCountReading := ADbfFile.RecordCount;
   KeyRecLen := SwapWordLE(PIndexHdr(FIndexHeader)^.KeyRecLen);
   EntryMax := BulkLoadMemoryTotal div KeyRecLen;
-  if EntryMax > FProgressMax then
-    EntryMax := FProgressMax;
+  if EntryMax > RecordCountReading then
+    EntryMax := RecordCountReading;
   BufferMax := BulkLoadMemoryAllocSize div KeyRecLen;
   GetMem(PPEntries, EntryMax * SizeOf(Pointer));
   PEntry := nil;
@@ -2941,16 +2943,15 @@ begin
     BufferList := TList.Create;
     try
       KeyLen := SwapWordLE(PIndexHdr(FIndexHeader)^.KeyLen);
-      FProgressPosition := 0;
-      DoProgress(FProgressPosition, FProgressMax, STRING_PROGRESS_READINGRECORDS);
-      while FProgressPosition < FProgressMax do
+      RecNoReading := 0;
+      DoProgress(RecNoReading, RecordCountReading, STRING_PROGRESS_READINGRECORDS);
+      while RecNoReading < RecordCountReading do
       begin
-        DoProgress(-1, FProgressMax, STRING_PROGRESS_READINGRECORDS);
         PPEntry := PPEntries;
         EntryCount := 0;
-        while (FProgressPosition < FProgressMax) and (EntryCount < EntryMax) do
+        while (RecNoReading < RecordCountReading) and (EntryCount < EntryMax) do
         begin
-          if FProgressPosition < EntryMax then
+          if RecNoReading < EntryMax then
           begin
             if (EntryCount mod BufferMax) = 0 then
             begin
@@ -2975,13 +2976,13 @@ begin
           end
           else
             PEntry := PMdxEntry(PPEntry^);
-          Inc(FProgressPosition);
+          Inc(RecNoReading);
           FillChar(PEntry^, KeyRecLen, 0);
-          ADbfFile.ReadRecord(FProgressPosition, ADbfFile.PrevBuffer);
-          FUserKey := ExtractKeyFromBuffer(ADbfFile.PrevBuffer, FProgressPosition);
+          ADbfFile.ReadRecord(RecNoReading, ADbfFile.PrevBuffer);
+          FUserKey := ExtractKeyFromBuffer(ADbfFile.PrevBuffer, RecNoReading);
           if Assigned(FUserKey) then
           begin
-            PEntry^.RecBlockNo := FProgressPosition;
+            PEntry^.RecBlockNo := RecNoReading;
             Len := KeyLen;
             if (FCurrentParser.ResultType=etString) and (Len>FCurrentParser.ResultBufferSize) then
               Len:= FCurrentParser.ResultBufferSize;
@@ -2989,7 +2990,7 @@ begin
             Inc(PAnsiChar(PPEntry), SizeOf(Pointer));
             Inc(EntryCount);
           end;
-          DoProgress(FProgressPosition, FProgressMax, STRING_PROGRESS_READINGRECORDS);
+          DoProgress(RecNoReading, RecordCountReading, STRING_PROGRESS_READINGRECORDS);
         end;
         FProgressPosition := 0;
         FProgressMax := -1;
