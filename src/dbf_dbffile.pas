@@ -1175,6 +1175,10 @@ var
   RestructFieldInfo: PRestructFieldInfo;
   BlobStream: TMemoryStream;
   last: Integer;
+  Buffer: array[0..7] of Char;
+  DoubleValue: Double absolute Buffer;
+  IntValue: Integer absolute Buffer;
+  Int64Value: {$ifdef SUPPORT_INT64}Int64{$else}Integer{$endif};
 begin
   // nothing to do?
   if (RecordSize < 1) or ((DbfFieldDefs = nil) and not Pack) then
@@ -1326,28 +1330,60 @@ begin
             for lFieldNo := 0 to DestFieldDefs.Count-1 do
             begin
               TempDstDef := DestFieldDefs.Items[lFieldNo];
+              if TempDstDef.CopyFrom >= 0 then
+                TempSrcDef := FFieldDefs.Items[TempDstDef.CopyFrom]
+              else
+                TempSrcDef := FFieldDefs.Items[lFieldNo];
               // handle blob fields differently
               // don't try to copy new blob fields!
               // DbfFieldDefs = nil -> pack only
               // TempDstDef.CopyFrom >= 0 -> copy existing (blob) field
               if TempDstDef.IsBlob and ((DbfFieldDefs = nil) or (TempDstDef.CopyFrom >= 0)) then
               begin
-                // get current blob blockno
-                if GetFieldData(lFieldNo, ftInteger, pBuff, @lBlobPageNo, false) and (lBlobPageNo > 0) then
+                if TempSrcDef.IsBlob then
                 begin
-                  BlobStream.Clear;
-                  FMemoFile.ReadMemo(lBlobPageNo, BlobStream);
-                  BlobStream.Position := 0;
-                  // always append
-                  DestDbfFile.FMemoFile.WriteMemo(lBlobPageNo, 0, BlobStream);
-                  // write new blockno
-                  DestDbfFile.SetFieldData(lFieldNo, ftInteger, @lBlobPageNo, pDestBuff, false);
+                  // get current blob blockno
+                  if GetFieldData(lFieldNo, ftInteger, pBuff, @lBlobPageNo, false) and (lBlobPageNo > 0) then
+                  begin
+                    BlobStream.Clear;
+                    FMemoFile.ReadMemo(lBlobPageNo, BlobStream);
+                    BlobStream.Position := 0;
+                    // always append
+                    DestDbfFile.FMemoFile.WriteMemo(lBlobPageNo, 0, BlobStream);
+                    // write new blockno
+                    DestDbfFile.SetFieldData(lFieldNo, ftInteger, @lBlobPageNo, pDestBuff, false);
+                  end;
                 end;
               end else if (DbfFieldDefs <> nil) and (TempDstDef.CopyFrom >= 0) then
               begin
                 // copy content of field
-                with RestructFieldInfo[lFieldNo] do
-                  Move(pBuff[SourceOffset], pDestBuff[DestOffset], Size);
+                if (TempSrcDef.NativeFieldType = TempDstDef.NativeFieldType) or
+                  (CharInSet(TempSrcDef.NativeFieldType, ['F', 'N']) and CharInSet(TempDstDef.NativeFieldType, ['F', 'N'])) or
+                  (CharInSet(TempSrcDef.NativeFieldType, ['+', 'I']) and CharInSet(TempDstDef.NativeFieldType, ['+', 'I'])) then
+                begin
+                  // Source and destination native types are compatible
+                  with RestructFieldInfo[lFieldNo] do
+                    Move(pBuff[SourceOffset], pDestBuff[DestOffset], Size);
+                end
+                else
+                begin
+                  // Source and destination native types are both numeric, but incompatible
+                  if (TempSrcDef.FieldType in [ftFloat, ftInteger, ftAutoInc]) and (TempDstDef.FieldType in [ftFloat, ftInteger, ftAutoInc]) then
+                  begin
+                    if GetFieldData(lFieldNo, TempSrcDef.FieldType, pBuff, @Buffer, True) then
+                    begin
+                      if (TempSrcDef.FieldType = ftFloat) and (TempDstDef.FieldType in [ftInteger, ftAutoInc]) then
+                      begin
+                        Int64Value := Round(DoubleValue);
+                        if (Int64Value >= Low(IntValue)) and (Int64Value <= High(IntValue)) then
+                          IntValue := Int64Value;
+                      end;
+                      if (TempSrcDef.FieldType in [ftInteger, ftAutoInc]) and (TempDstDef.FieldType = ftFloat) then
+                        DoubleValue := IntValue;
+                      DestDbfFile.SetFieldData(lFieldNo, TempDstDef.FieldType, @Buffer, pDestBuff, True);
+                    end;
+                  end;
+                end;
               end;
             end;
           end;
