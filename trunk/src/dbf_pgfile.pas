@@ -325,8 +325,23 @@ begin
     else    // => readonly
                          fileOpenMode := fmOpenRead or fmShareDenyNone;
     end;
-    // open file
-    FStream := TPagedFileStream.Create(FFileName, fileOpenMode);
+    try
+      // open file
+      FStream := TPagedFileStream.Create(FFileName, fileOpenMode);
+    except
+      on EFOpenError do
+      begin
+        // If we write to a file then close it, antivirus software typically
+        // opens the file with an opportunistic lock to scan the new content.
+        // If we immediately try to re-open the same file, the antivirus
+        // software typically aborts the scan and closes the file so that we
+        // can open it. If this does not happen quickly enough, we get a
+        // sharing violation. If there is an error opening the file, we
+        // mitigate this case by waiting and retrying.
+        Sleep(200);
+        FStream := TPagedFileStream.Create(FFileName, fileOpenMode);
+      end;
+    end;
     // if creating, then empty file
     if FileCreated then
       FStream.Size := 0;
