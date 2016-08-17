@@ -956,7 +956,7 @@ begin
       {-----MISC CHECKS-----}
       if (TExprWord(Items[I]).IsVariable) and ((I < Count - 1) and
         (TExprWord(Items[I + 1]).IsVariable)) then
-        raise ExceptionClass.Create('Missing operator between '''+TExprWord(Items[I]).Name+''' and '''+TExprWord(Items[I]).Name+'''');
+        raise ExceptionClass.Create('Missing operator between '''+TExprWord(Items[I]).Name+''' and '''+TExprWord(Items[I + 1]).Name+'''');
       if (TExprWord(Items[I]).ResultType = etLeftBracket) and (I >= Count - 1) then
         raise ExceptionClass.Create('Missing closing bracket');
       if (TExprWord(Items[I]).ResultType = etRightBracket) and ((I < Count - 1) and
