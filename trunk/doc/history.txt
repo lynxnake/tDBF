@@ -44,6 +44,7 @@ following changes thx paulenandrew:
 - retry opening file if there is an error, works around contention with antivirus software
 - fix parser error message "Missing operator between ..."
 - check for extraneous words when parsing an expression that starts with a function
+- allow a TDbfParser to be created without a TDbfFile, to allow checking the syntax of expressions without resolving field references
 
 ------------------------
 V7.0.1

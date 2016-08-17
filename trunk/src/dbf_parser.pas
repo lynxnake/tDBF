@@ -408,6 +408,8 @@ end;
 
 constructor TDbfParser.Create(ADbfFile: Pointer);
 begin
+  // ADbfFile can be nil to check the syntax of expressions
+  // without resolving field references.
   FDbfFile := ADbfFile;
   FFieldVarList := TStringList.Create;
   FCaseInsensitive := true;
@@ -527,7 +529,12 @@ end;
 
 function TDbfParser.GetVariableInfo(VarName: AnsiString): TDbfFieldDef;
 begin
-  Result := TDbfFile(FDbfFile).GetFieldInfo(VarName);
+  if Assigned(FDbfFile) then
+    Result := TDbfFile(FDbfFile).GetFieldInfo(VarName)
+  else
+    // ADbfFile can be nil to check the syntax of expressions
+    // without resolving field references.
+    Result := nil;
 end;
 
 procedure TDbfParser.HandleUnknownVariable(VarName: string);
@@ -536,59 +543,63 @@ var
   TempFieldVar: TFieldVar;
   VariableFieldInfo: TVariableFieldInfo;
 begin
-  // is this variable a fieldname?
-  FieldInfo := GetVariableInfo(AnsiString(VarName));
-  if FieldInfo = nil then
-    raise ExceptionClass.CreateFmt(STRING_PARSER_UNKNOWN_FIELD, [VarName]);
+  if Assigned(FDbfFile) then
+  begin
+    // is this variable a fieldname?
+    FieldInfo := GetVariableInfo(AnsiString(VarName));
+    if FieldInfo = nil then
+      raise ExceptionClass.CreateFmt(STRING_PARSER_UNKNOWN_FIELD, [VarName]);
 
-  // define field in parser
-  FillChar(VariableFieldInfo{%H-}, SizeOf(VariableFieldInfo), 0);
-  VariableFieldInfo.DbfFieldDef := FieldInfo;
-  VariableFieldInfo.NativeFieldType := FieldInfo.NativeFieldType;
-  VariableFieldInfo.Size := FieldInfo.Size;
-  VariableFieldInfo.Precision := FieldInfo.Precision;
-  case FieldInfo.FieldType of
-    ftString:
-      begin
-        TempFieldVar := TStringFieldVar.Create(FieldInfo, TDbfFile(FDbfFile));
-//      TempFieldVar.ExprWord := DefineStringVariable(VarName, TempFieldVar.FieldVal);
-        TempFieldVar.ExprWord := DefineStringVariable(VarName, TempFieldVar.FieldVal, TempFieldVar.IsNullPtr, @VariableFieldInfo);
-        TStringFieldVar(TempFieldVar).RawStringField := FRawStringFields;
-      end;
-    ftBoolean:
-      begin
-        TempFieldVar := TBooleanFieldVar.Create(FieldInfo, TDbfFile(FDbfFile));
-//      TempFieldVar.ExprWord := DefineBooleanVariable(VarName, TempFieldVar.FieldVal);
-        TempFieldVar.ExprWord := DefineBooleanVariable(VarName, TempFieldVar.FieldVal, TempFieldVar.IsNullPtr, @VariableFieldInfo);
-      end;
-    ftFloat:
-      begin
-        TempFieldVar := TFloatFieldVar.Create(FieldInfo, TDbfFile(FDbfFile));
-//      TempFieldVar.ExprWord := DefineFloatVariable(VarName, TempFieldVar.FieldVal);
-        TempFieldVar.ExprWord := DefineFloatVariable(VarName, TempFieldVar.FieldVal, TempFieldVar.IsNullPtr, @VariableFieldInfo);
-      end;
-    ftAutoInc, ftInteger, ftSmallInt:
-      begin
-        TempFieldVar := TIntegerFieldVar.Create(FieldInfo, TDbfFile(FDbfFile));
-//      TempFieldVar.ExprWord := DefineIntegerVariable(VarName, TempFieldVar.FieldVal);
-        TempFieldVar.ExprWord := DefineIntegerVariable(VarName, TempFieldVar.FieldVal, TempFieldVar.IsNullPtr, @VariableFieldInfo);
-      end;
-{$ifdef SUPPORT_INT64}
-    ftLargeInt:
-      begin
-        TempFieldVar := TLargeIntFieldVar.Create(FieldInfo, TDbfFile(FDbfFile));
-//      TempFieldVar.ExprWord := DefineLargeIntVariable(VarName, TempFieldVar.FieldVal);
-        TempFieldVar.ExprWord := DefineLargeIntVariable(VarName, TempFieldVar.FieldVal, TempFieldVar.IsNullPtr, @VariableFieldInfo);
-      end;
-{$endif}
-    ftDate, ftDateTime:
-      begin
-        TempFieldVar := TDateTimeFieldVar.Create(FieldInfo, TDbfFile(FDbfFile));
-//      TempFieldVar.ExprWord := DefineDateTimeVariable(VarName, TempFieldVar.FieldVal);
-        TempFieldVar.ExprWord := DefineDateTimeVariable(VarName, TempFieldVar.FieldVal, TempFieldVar.IsNullPtr, @VariableFieldInfo);
-      end;
+    // define field in parser
+    FillChar(VariableFieldInfo{%H-}, SizeOf(VariableFieldInfo), 0);
+    VariableFieldInfo.DbfFieldDef := FieldInfo;
+    VariableFieldInfo.NativeFieldType := FieldInfo.NativeFieldType;
+    VariableFieldInfo.Size := FieldInfo.Size;
+    VariableFieldInfo.Precision := FieldInfo.Precision;
+    case FieldInfo.FieldType of
+      ftString:
+        begin
+          TempFieldVar := TStringFieldVar.Create(FieldInfo, TDbfFile(FDbfFile));
+          TempFieldVar.ExprWord := DefineStringVariable(VarName, TempFieldVar.FieldVal, TempFieldVar.IsNullPtr, @VariableFieldInfo);
+          TStringFieldVar(TempFieldVar).RawStringField := FRawStringFields;
+        end;
+      ftBoolean:
+        begin
+          TempFieldVar := TBooleanFieldVar.Create(FieldInfo, TDbfFile(FDbfFile));
+          TempFieldVar.ExprWord := DefineBooleanVariable(VarName, TempFieldVar.FieldVal, TempFieldVar.IsNullPtr, @VariableFieldInfo);
+        end;
+      ftFloat:
+        begin
+          TempFieldVar := TFloatFieldVar.Create(FieldInfo, TDbfFile(FDbfFile));
+          TempFieldVar.ExprWord := DefineFloatVariable(VarName, TempFieldVar.FieldVal, TempFieldVar.IsNullPtr, @VariableFieldInfo);
+        end;
+      ftAutoInc, ftInteger, ftSmallInt:
+        begin
+          TempFieldVar := TIntegerFieldVar.Create(FieldInfo, TDbfFile(FDbfFile));
+          TempFieldVar.ExprWord := DefineIntegerVariable(VarName, TempFieldVar.FieldVal, TempFieldVar.IsNullPtr, @VariableFieldInfo);
+        end;
+  {$ifdef SUPPORT_INT64}
+      ftLargeInt:
+        begin
+          TempFieldVar := TLargeIntFieldVar.Create(FieldInfo, TDbfFile(FDbfFile));
+          TempFieldVar.ExprWord := DefineLargeIntVariable(VarName, TempFieldVar.FieldVal, TempFieldVar.IsNullPtr, @VariableFieldInfo);
+        end;
+  {$endif}
+      ftDate, ftDateTime:
+        begin
+          TempFieldVar := TDateTimeFieldVar.Create(FieldInfo, TDbfFile(FDbfFile));
+          TempFieldVar.ExprWord := DefineDateTimeVariable(VarName, TempFieldVar.FieldVal, TempFieldVar.IsNullPtr, @VariableFieldInfo);
+        end;
+    else
+      raise ExceptionClass.CreateFmt(STRING_PARSER_INVALID_FIELDTYPE, [VarName]);
+    end;
+  end
   else
-    raise ExceptionClass.CreateFmt(STRING_PARSER_INVALID_FIELDTYPE, [VarName]);
+  begin
+    // ADbfFile can be nil to check the syntax of expressions
+    // without resolving field references.
+    TempFieldVar := nil;
+    FWordsList.Add(TVariable.Create(VarName, etUnknown, nil, nil, nil));
   end;
 
   // add to our own list
@@ -603,6 +614,7 @@ end;
 procedure TDbfParser.ClearExpressions;
 var
   I: Integer;
+  AFieldVar: TFieldVar;
 begin
   inherited;
 
@@ -615,8 +627,10 @@ begin
     for I := 0 to FFieldVarList.Count - 1 do
     begin
       // replacing with nil = undefining variable
-      FWordsList.DoFree(TFieldVar(FFieldVarList.Objects[I]).FExprWord);
-      TFieldVar(FFieldVarList.Objects[I]).Free;
+      AFieldVar := TFieldVar(FFieldVarList.Objects[I]);
+      if Assigned(AFieldVar) then
+        FWordsList.DoFree(AFieldVar.FExprWord);
+      AFieldVar.Free;
     end;
     FFieldVarList.Clear;
   end;
