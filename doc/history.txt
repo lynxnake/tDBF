@@ -43,6 +43,7 @@ following changes thx paulenandrew:
 - fix RestructureTable method's handling of incompatible field types
 - retry opening file if there is an error, works around contention with antivirus software
 - fix parser error message "Missing operator between ..."
+- check for extraneous words when parsing an expression that starts with a function
 
 ------------------------
 V7.0.1

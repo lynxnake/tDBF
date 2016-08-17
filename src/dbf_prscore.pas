@@ -675,6 +675,7 @@ function TCustomExpressionParser.MakeTree(Expr: TExprCollection;
 var
   I, IArg, IStart, IEnd, lPrec, brCount: Integer;
   ExprWord: TExprWord;
+  Valid: Boolean;
 begin
   // detect empty brackets
   I := FirstItem;
@@ -766,7 +767,8 @@ begin
   end;
 
   // operator found ?
-  if IEnd >= FirstItem then
+  Valid := IEnd >= FirstItem;
+  if Valid then
   begin
     // save operator
     Result^.ExprWord := TExprWord(Expr.Items[IEnd]);
@@ -791,7 +793,8 @@ begin
     IEnd := FirstItem + 1;
     IStart := IEnd;
     brCount := 0;
-    if TExprWord(Expr.Items[IEnd]).ResultType = etLeftBracket then
+    Valid := TExprWord(Expr.Items[IEnd]).ResultType = etLeftBracket;
+    if Valid then
     begin
       // opening bracket found, first argument expression starts at next index
       Inc(brCount);
@@ -813,10 +816,15 @@ begin
         end;
       end;
 
+      // check for extraneous words
+      Valid := IEnd = LastItem;
+
       // parse last argument
-      Result^.ArgList[IArg] := MakeTree(Expr, IStart, IEnd-1);
+      if Valid then
+        Result^.ArgList[IArg] := MakeTree(Expr, IStart, IEnd-1);
     end;
-  end else
+  end;
+  if not Valid then
     raise ExceptionClass.Create('Operator/function missing');
 end;
 
