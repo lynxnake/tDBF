@@ -784,7 +784,8 @@ begin
       Inc(IArg);
     end;
     // recurse into right part if present
-    if IEnd < LastItem then
+    Valid := IEnd < LastItem;
+    if Valid then
       Result^.ArgList[IArg] := MakeTree(Expr, IEnd+1, LastItem);
   end else 
   if TExprWord(Expr.Items[FirstItem]).IsFunction then 
@@ -1269,15 +1270,17 @@ begin
           begin
             Inc(I2);
             I := -1;
-            if (AnExpr[I2] = '+') and FWordsList.Search(PChar('++'), I) then // PChar intended here
-              Inc(I2);
+            if (I2 <= Len) then
+              if (AnExpr[I2] = '+') and FWordsList.Search(PChar('++'), I) then // PChar intended here
+                Inc(I2);
           end;
         '-':
           begin
             Inc(I2);
             I := -1;
-            if (AnExpr[I2] = '-') and FWordsList.Search(PChar('--'), I) then // PChar intended here
-              Inc(I2);
+            if (I2 <= Len) then
+              if (AnExpr[I2] = '-') and FWordsList.Search(PChar('--'), I) then // PChar intended here
+                Inc(I2);
           end;
         '^', '/', '\', '*', '(', ')', '%', '~', '$':
           Inc(I2);
