@@ -199,7 +199,8 @@ end;
 
 procedure TStrCollection.FreeItem(Item: Pointer);
 begin
-  StrDispose(PChar(Item));
+  if Assigned(Item) then
+    StrDispose(PChar(Item));
 end;
 
 {$IFDEF SUPPORT_FORMATSETTINGSTYPE}

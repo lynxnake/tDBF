@@ -388,6 +388,7 @@ var
   TempExprWord: TExprWord;
   I, error, firstFuncIndex, funcIndex: Integer;
   foundAltFunc: Boolean;
+  ArgType: TExpressionType;
 
   procedure FindAlternate;
   begin
@@ -432,7 +433,10 @@ var
           CheckArguments(ArgList[I]);
 
           // test if correct type
-          if (ArgList[I]^.ExprWord.ResultType <> ExprCharToExprType(ExprWord.TypeSpec[I+1])) then
+          // ArgType can be etUnknown when checking the syntax of an expression
+          // with an unresolved reference
+          ArgType := ArgList[I]^.ExprWord.ResultType;
+          if (ArgType <> etUnknown) and (ArgType <> ExprCharToExprType(ExprWord.TypeSpec[I+1])) then
             error := 2;
         end;
 
