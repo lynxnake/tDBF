@@ -42,6 +42,7 @@ following changes thx paulenandrew:
 - correct progress information when building an index (Sorting records and Writing records)
 - fix RestructureTable method's handling of incompatible field types
 - retry opening file if there is an error, works around contention with antivirus software
+- fix parser error message "Missing operator between ..."
 
 ------------------------
 V7.0.1
