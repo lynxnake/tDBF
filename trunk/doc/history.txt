@@ -46,6 +46,7 @@ following changes thx paulenandrew:
 - check for extraneous words when parsing an expression that starts with a function
 - allow a TDbfParser to be created without a TDbfFile, to allow checking the syntax of expressions without resolving field references
 - fix error handling when operator is missing right-side operand (Range Check Error if + or -, otherwise incorrectly validates)
+- add TDbf.RestructureTable2() method that exposes DeleteFiles to control whether or not to delete the original files
 
 ------------------------
 V7.0.1

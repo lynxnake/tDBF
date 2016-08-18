@@ -113,6 +113,7 @@ type
     procedure ApplyAutoIncToBuffer(DestBuf: TDbfRecordBuffer);     // dBase7 support. Writeback last next-autoinc value
     procedure FastPackTable;
     procedure RestructureTable(DbfFieldDefs: TDbfFieldDefs; Pack: Boolean);
+    procedure RestructureTable2(DbfFieldDefs: TDbfFieldDefs; Pack, DeleteFiles: Boolean);
     procedure Rename(DestFileName: string; NewIndexFileNames: TStrings; DeleteFiles: boolean);
     function  GetFieldInfo(const FieldName: AnsiString): TDbfFieldDef;
     function  GetFieldData(Column: Integer; DataType: TFieldType; Src,Dst: Pointer; 
@@ -1162,6 +1163,13 @@ type
   TRestructFieldInfoArray = array[0..8191] of TRestructFieldInfo;
 
 procedure TDbfFile.RestructureTable(DbfFieldDefs: TDbfFieldDefs; Pack: Boolean);
+begin
+  // if restructure -> rename the old dbf files
+  // if pack only -> delete the old dbf files
+  RestructureTable2(DbfFieldDefs, Pack, DbfFieldDefs = nil);
+end;
+
+procedure TDbfFile.RestructureTable2(DbfFieldDefs: TDbfFieldDefs; Pack, DeleteFiles: Boolean);
 var
   DestDbfFile: TDbfFile;
   TempIndexDef: TDbfIndexDef;
@@ -1421,9 +1429,7 @@ begin
       // close dbf
       Close;
 
-      // if restructure -> rename the old dbf files
-      // if pack only -> delete the old dbf files
-      DestDbfFile.Rename(FileName, OldIndexFiles, DbfFieldDefs = nil);
+      DestDbfFile.Rename(FileName, OldIndexFiles, DeleteFiles);
     
       // we have to reinit fielddefs if restructured
       Open;
