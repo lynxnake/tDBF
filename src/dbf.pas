@@ -422,6 +422,7 @@ type
     procedure CopyFrom(DataSet: TDataSet; FileName: string; DateTimeAsString: Boolean; Level: Integer);
     procedure BatchMove(DataSet: TDataSet; FileName: string; DateTimeAsString: Boolean; Level: Integer; Mode: TDbfBatchMode; Options: TDbfBatchOptions; FieldMappings: TStrings);
     procedure RestructureTable(ADbfFieldDefs: TDbfFieldDefs; Pack: Boolean);
+    procedure RestructureTable2(ADbfFieldDefs: TDbfFieldDefs; Pack, DeleteFiles: Boolean);
     procedure PackTable;
     procedure EmptyTable;
     procedure Zap;
@@ -1710,6 +1711,14 @@ end;
 
 procedure TDbf.RestructureTable(ADbfFieldDefs: TDbfFieldDefs; Pack: Boolean);
 begin
+  // if restructure -> rename the old dbf files
+  // if pack only -> delete the old dbf files
+  RestructureTable2(ADbfFieldDefs, Pack, ADbfFieldDefs = nil);
+end;
+
+procedure TDbf.RestructureTable2(ADbfFieldDefs: TDbfFieldDefs;
+  Pack, DeleteFiles: Boolean);
+begin
   CheckInactive;
 
   // check field defs for errors
@@ -1724,7 +1733,7 @@ begin
   try
     BatchStart;
     try
-      FDbfFile.RestructureTable(ADbfFieldDefs, Pack);
+      FDbfFile.RestructureTable2(ADbfFieldDefs, Pack, DeleteFiles);
     finally
       BatchFinish;
     end;
