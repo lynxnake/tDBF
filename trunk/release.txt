@@ -1,0 +1,56 @@
+Release Checklist
+=================
+
+This file lists some of the things you should consider when releasing a new version of TDbf
+
+
+Version
+-------
+
+Determine the version number
+- The version number is 3 parts, each part is 1 digit, eg. 7.0.0
+- If the third digit is 0, it is not displayed to the user and should not be used in user documentation, eg. 7.0
+- Update the TDBF_MAJOR_VERSION, TDBF_MINOR_VERSION and TDBF_SUB_MINOR_VERSION constants 
+
+
+Demo
+----
+
+If there are significant features added, change the demo to show them
+
+
+Documentation
+-------------
+
+Document your changes
+- Document changes to the code in doc/history.txt
+- Document changes to the functionality in doc/tdbf.odt, update the Contents section and export to doc/tdbf.pdf (this can be done in OpenOffice)
+- Document changes to the functionality of the demo in demo/history.txt
+
+
+Testing
+-------
+
+Test your changes on as many compiler versions as you are able to
+
+
+Release
+-------
+
+This requires that GNUWin32 is installed in c:\gnuwin32\
+GNUWin32 can be installed using GetGNUWin32, available at https://sourceforge.net/projects/getgnuwin32/
+
+Make a release
+- If the files are not already in trunk, merge the files into trunk
+- Add a tag named "rel #-#-#", where ### refers to the 3 version digits (eg. "rel 7-0-0")
+- Run archive.bat, which is in the root of the repository
+- When prompted, enter the 3 version digits as the version prefix (eg. 700)
+- tdbf###.zip and tdbf###.tar.gz are in the root of the repository, but should not be added to the repository
+- Release tdbf###.zip and tdbf###.tar.gz in "Files"
+- Announce the release, with a summary of changes, in "News"
+- Announce the release, with a summary of changes, on http://tdbf.sf.net
+
+NOTE: 
+mdv, nashev have access to "Files"
+mdv, nashev, paulenandrew and lpoeger have access to "News"
+mdv (only) has access to http://tdbf.sf.net
