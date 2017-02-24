@@ -390,6 +390,7 @@
   {$define SUPPORT_VARIANTS}
   {$define WINDOWS}
   {$define ENDIAN_LITTLE}
+  {$define SUPPORT_EXPINTF}
 {$endif}
 
 {$ifdef DELPHI_4}
@@ -507,6 +508,8 @@
   {$define SUPPORT_ROUNDTO}
   {$define SUPPORT_INT64_SEEK}
   {$define SUPPORT_FORMATSETTINGSTYPE}
+  {$undef SUPPORT_EXPINTF}
+
 
   // FPC 2.0.x improvements
   {$ifdef VER2}
