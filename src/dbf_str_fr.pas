@@ -15,8 +15,8 @@ initialization
 
   STRING_RECORD_LOCKED                := 'Enregistrement verrouillé.';
   STRING_READ_ERROR                   := 'Erreur de lecture.';
-  STRING_WRITE_ERROR                  := 'Erreur d'écriture'. (Disque plein?)';
-  STRING_WRITE_INDEX_ERROR            := 'Erreur d'écriture; indices probablement corrompus. (Disque plein?)';
+  STRING_WRITE_ERROR                  := 'Erreur d''écriture. (Disque plein?)';
+  STRING_WRITE_INDEX_ERROR            := 'Erreur d''écriture; indices probablement corrompus. (Disque plein?)';
   STRING_KEY_VIOLATION                := 'Violation de clé. (doublon dans un index).'+#13+#10+
                                          'Index: %s'+#13+#10+'Enregistrement=%d Cle=''%s''';
 
