@@ -51,8 +51,10 @@ uses
   dbf_fields,
   dbf_common,
   dbf_str
-{$ifndef FPC}
-  ,ExptIntf
+{$ifdef SUPPORT_EXPINTF}
+  ,ExptIntf // ExptIntf has been deprecated since Delphi 6, but using the ToolsApi just to get
+            // the current project file name is a bit too much work, so once it goes away,
+            // we will just use the same code as in FPC
 {$endif}
 {$ifdef DELPHI_6}
   ,DesignIntf,DesignEditors
@@ -92,6 +94,19 @@ begin
 end;
 *)
 
+function GetProjectDirectory: string;
+begin
+{$ifdef SUPPORT_EXPINTF}
+  if Assigned(ToolServices) then begin
+    Result := ToolServices.GetProjectName;
+    Result := ExtractFileDir(Result);
+  end else
+    Result := '';
+  if Result <> '' then
+{$endif}
+    Result := GetCurrentDir
+end;
+
 //==========================================================
 //============ TTableNameProperty
 //==========================================================
@@ -113,7 +128,7 @@ begin
       Dbf := GetComponent(0) as TDbf;
 {$ifndef FPC}
       if Dbf.FilePath = EmptyStr then
-        FileOpen.InitialDir := ExtractFilePath(ToolServices.GetProjectName)
+        FileOpen.InitialDir := GetProjectDirectory
       else
 {$endif}
         FileOpen.InitialDir := Dbf.AbsolutePath;
@@ -326,12 +341,7 @@ end;
 //==========================================================
 function IDE_DbfDefaultPath:string;
 begin
-{$ifndef FPC}
-  if ToolServices<>nil then
-    Result := ExtractFilePath(ToolServices.GetProjectName)
-  else
-{$endif}
-    Result := GetCurrentDir
+  Result := GetProjectDirectory;
 end;
 
 {$ifdef FPC}
